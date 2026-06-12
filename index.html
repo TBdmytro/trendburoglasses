@@ -2726,36 +2726,53 @@
       return 'https://t.me/' + window.OPTIX_TG_USERNAME + '?text=' + encodeURIComponent(message);
     };
 
-    /* Open manager chat with prefilled text.
-       Telegram Desktop does NOT run decodeURIComponent on the ?text= value,
-       so percent-encoded cyrillic shows up as raw %D0%.. — the fix is to pass
-       RAW utf-8 text (only encoding the few chars that break a URL: # & + and
-       spaces). This is what site builders that "just work" actually do. */
-    window.OPTIX_buildTgUrl = function (message) {
-      var base = 'https://t.me/' + window.OPTIX_TG_USERNAME;
-      if (!message) return base;
-      var safe = message
-        .replace(/%/g, '%25')
-        .replace(/#/g, '%23')
-        .replace(/&/g, '%26')
-        .replace(/\+/g, '%2B')
-        .replace(/ /g, '+');           /* space → + (Telegram shows it as space) */
-      return base + '?text=' + safe;
-    };
-
+    /* Open manager chat with prefilled order text.
+       Strategy per platform — each uses the mechanism that actually works there:
+       1. Telegram Mini App  → native openTelegramLink (decodes correctly)
+       2. Mobile (iOS/Android) → t.me/?text= with proper encoding
+          (mobile Telegram clients decode it correctly)
+       3. Desktop → Telegram Desktop has a known bug: it never runs
+          decodeURIComponent on ?text=, cyrillic arrives as %D0%..
+          So on desktop we copy the text to clipboard, show a hint and
+          open a clean chat — user pastes with Cmd/Ctrl+V. 100% reliable. */
     window.OPTIX_openTgChat = function (message) {
-      var url = window.OPTIX_buildTgUrl(message);
-      var twa = window.Telegram && window.Telegram.WebApp;
+      var user = window.OPTIX_TG_USERNAME;
+      var base = 'https://t.me/' + user;
+      var twa  = window.Telegram && window.Telegram.WebApp;
+
+      /* 1 — inside Telegram Mini App */
       if (twa && twa.initData) {
-        twa.openTelegramLink(url);
+        twa.openTelegramLink(message ? base + '?text=' + encodeURIComponent(message) : base);
+        return;
+      }
+
+      /* no message — just open the chat */
+      if (!message) {
+        window.open(base, '_blank', 'noopener');
+        return;
+      }
+
+      var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+      /* 2 — mobile browsers: encoded deep link works, apps decode it */
+      if (isMobile) {
+        window.open(base + '?text=' + encodeURIComponent(message), '_blank', 'noopener');
+        return;
+      }
+
+      /* 3 — desktop: clipboard + clean chat */
+      function go() { window.open(base, '_blank', 'noopener'); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(message).then(function () {
+          if (window.OPTIX_toast) window.OPTIX_toast('Текст замовлення скопійовано — вставте у чат (Ctrl/Cmd+V)');
+          setTimeout(go, 400);
+        }).catch(go);
       } else {
-        window.open(url, '_blank', 'noopener');
+        go();
       }
     };
 
-    window.OPTIX_openTgChatSimple = function (message) {
-      window.OPTIX_openTgChat(message);
-    };
+    window.OPTIX_openTgChatSimple = window.OPTIX_openTgChat;
 
     /* Telegram Mini App init: full height + ready signal */
     (function () {
