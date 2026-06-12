@@ -2727,17 +2727,34 @@
     };
 
     /* Open manager chat with prefilled text.
-       Standard Telegram deep link — text appears in the chat automatically.
-       Works in real browsers, mobile, and inside the Telegram Mini App. */
+       Telegram Desktop does NOT run decodeURIComponent on the ?text= value,
+       so percent-encoded cyrillic shows up as raw %D0%.. — the fix is to pass
+       RAW utf-8 text (only encoding the few chars that break a URL: # & + and
+       spaces). This is what site builders that "just work" actually do. */
+    window.OPTIX_buildTgUrl = function (message) {
+      var base = 'https://t.me/' + window.OPTIX_TG_USERNAME;
+      if (!message) return base;
+      var safe = message
+        .replace(/%/g, '%25')
+        .replace(/#/g, '%23')
+        .replace(/&/g, '%26')
+        .replace(/\+/g, '%2B')
+        .replace(/ /g, '+');           /* space → + (Telegram shows it as space) */
+      return base + '?text=' + safe;
+    };
+
     window.OPTIX_openTgChat = function (message) {
-      var url = 'https://t.me/' + window.OPTIX_TG_USERNAME +
-                (message ? '?text=' + encodeURIComponent(message) : '');
+      var url = window.OPTIX_buildTgUrl(message);
       var twa = window.Telegram && window.Telegram.WebApp;
       if (twa && twa.initData) {
         twa.openTelegramLink(url);
       } else {
         window.open(url, '_blank', 'noopener');
       }
+    };
+
+    window.OPTIX_openTgChatSimple = function (message) {
+      window.OPTIX_openTgChat(message);
     };
 
     /* Telegram Mini App init: full height + ready signal */
