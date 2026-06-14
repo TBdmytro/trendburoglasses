@@ -1035,7 +1035,7 @@
     .product-card-image {
       aspect-ratio: 1;
       position: relative;
-      background: rgba(27, 45, 64, 0.04);
+      background: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1055,7 +1055,7 @@
     .product-card-image img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       display: block;
     }
 
@@ -1074,7 +1074,7 @@
       flex: 0 0 100%;
       scroll-snap-align: start;
       aspect-ratio: 1;
-      background: rgba(27, 45, 64, 0.04);
+      background: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1083,7 +1083,7 @@
     .product-gallery-slide img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       display: block;
     }
 
@@ -1540,7 +1540,7 @@
     .product-hero {
       position: relative;
       aspect-ratio: 1;
-      background: rgba(27, 45, 64, 0.05);
+      background: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1556,7 +1556,7 @@
     .product-hero-img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       display: block;
     }
     .product-hero-badge {
@@ -2108,6 +2108,36 @@
     .list-move-to-cart:hover { opacity: 1; }
 
     /* ---------- Cart subtotal ---------- */
+    .promo-box {
+      padding-bottom: 14px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    .promo-input-row { display: flex; gap: 8px; }
+    .promo-input {
+      flex: 1; background: var(--surface); border: 1px solid var(--line);
+      border-radius: 10px; padding: 12px 14px; font-size: 14px; color: var(--fg);
+      font-family: var(--font-ui); text-transform: uppercase; letter-spacing: .05em;
+    }
+    .promo-input::placeholder { color: rgba(27,45,64,.4); text-transform: none; letter-spacing: 0; }
+    .promo-apply {
+      flex-shrink: 0; background: var(--fg); color: var(--bg); border: none;
+      border-radius: 10px; padding: 12px 16px; font-size: 12px; font-weight: 600;
+      letter-spacing: .08em; text-transform: uppercase; cursor: pointer; font-family: var(--font-ui);
+    }
+    .promo-applied { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .promo-applied-code {
+      font-size: 13px; font-weight: 600; color: #2f9e6f;
+      background: rgba(47,158,111,.1); padding: 8px 14px; border-radius: 999px;
+    }
+    .promo-remove {
+      background: none; border: none; color: var(--fg-soft, rgba(27,45,64,.55));
+      font-size: 12px; text-decoration: underline; cursor: pointer; font-family: var(--font-ui);
+    }
+    .promo-msg { font-size: 12px; margin-top: 8px; min-height: 0; }
+    .promo-msg:empty { margin-top: 0; }
+    .promo-msg--err { color: #c2483a; }
+
     .cart-summary {
       padding: 16px 20px 8px;
       border-top: 1px solid var(--line);
@@ -2575,7 +2605,7 @@
         '"images": images[].asset->url' +
       '}';
 
-      var PROMO_QUERY = '*[_type == "promo" && active == true] { name, type, discount, scope, startDate, endDate, code }';
+      var PROMO_QUERY = '*[_type == "promo" && active == true] { name, type, discount, brand, scope, startDate, endDate, code }';
 
       var SETTINGS_QUERY = '*[_type == "settings"][0] { tgUsername, deliveryTime }';
 
@@ -2628,7 +2658,7 @@
       q(PROMO_QUERY).then(function (rows) {
         if (!rows) return;
         window.OPTIX_PROMOS = rows.map(function (p) {
-          return { name: p.name, type: p.type, discount: p.discount, scope: p.scope || '', startDate: p.startDate || null, endDate: p.endDate || null, code: p.code || '', active: true };
+          return { name: p.name, type: p.type, discount: p.discount, brand: p.brand || '', scope: p.scope || '', startDate: p.startDate || null, endDate: p.endDate || null, code: p.code || '', active: true };
         });
         if (window.OPTIX_promosRefresh) window.OPTIX_promosRefresh();
       }).catch(function (e) { console.warn('Sanity promos load failed:', e); });
@@ -3910,7 +3940,61 @@
 
       if (!sheet || !openBtn) return;
 
-      function buildOrderMessage(items, total) {
+      /* ----- Promo code state & validation ----- */
+      var appliedPromo = null; /* {code, type, discount} once validated */
+
+      function findPromoByCode(codeInput) {
+        var list = window.OPTIX_PROMOS || [];
+        var wanted = String(codeInput || '').trim().toUpperCase();
+        if (!wanted) return null;
+        var today = new Date(); today.setHours(0,0,0,0);
+        for (var i = 0; i < list.length; i++) {
+          var pr = list[i];
+          if (!pr.code) continue;
+          if (String(pr.code).trim().toUpperCase() !== wanted) continue;
+          if (pr.active === false) return { error: 'Промокод неактивний' };
+          if (pr.endDate) {
+            var end = new Date(pr.endDate); end.setHours(23,59,59,999);
+            if (today > end) return { error: 'Термін промокоду минув' };
+          }
+          if (pr.startDate) {
+            var st = new Date(pr.startDate); st.setHours(0,0,0,0);
+            if (today < st) return { error: 'Промокод ще не діє' };
+          }
+          return pr; /* valid */
+        }
+        return { error: 'Промокод не знайдено' };
+      }
+
+      /* Promo = ADDITIONAL discount % added on top of each matching item's
+         existing discount, for items of the promo's brand (empty brand = all).
+         Item at -10% + promo +5% → customer pays -15% off original.
+         The extra cut per item = originalPrice * promoPct/100 * qty. */
+      function promoDiscountForEntries(promo, entries) {
+        if (!promo) return 0;
+        var pct = parseFloat(promo.discount) || 0;
+        if (pct <= 0) return 0;
+        var brand = String(promo.brand || '').trim().toLowerCase();
+        var cut = 0;
+        entries.forEach(function (it) {
+          var p = it.product;
+          if (brand && String(p.brand || '').trim().toLowerCase() !== brand) return;
+          var orig = parsePrice(p.oldPrice) || parsePrice(p.price) || 0;
+          cut += Math.round(orig * (pct / 100)) * it.qty;
+        });
+        return cut;
+      }
+
+      /* true if at least one cart item matches the promo's brand */
+      function promoMatchesCart(promo, entries) {
+        var brand = String(promo.brand || '').trim().toLowerCase();
+        if (!brand) return true;
+        return entries.some(function (it) {
+          return String(it.product.brand || '').trim().toLowerCase() === brand;
+        });
+      }
+
+      function buildOrderMessage(items, total, promo, cut) {
         var totalQty = items.reduce(function (s, it) { return s + it.qty; }, 0);
         var msg = [
           'Здравствуйте!',
@@ -3931,7 +4015,12 @@
         });
 
         msg.push('');
-        msg.push('Сума: ' + fmtPrice(total));
+        if (promo && cut > 0) {
+          msg.push('Промокод: ' + promo.code + ' (−' + fmtPrice(cut) + ')');
+          msg.push('Сума зі знижкою: ' + fmtPrice(total));
+        } else {
+          msg.push('Сума: ' + fmtPrice(total));
+        }
         msg.push('');
         msg.push('Підкажіть, чи можемо їх замовити?');
         return msg.join('\n');
@@ -4009,10 +4098,30 @@
           savingsHTML = '<p class="cart-summary-row" style="color:#8a6321;opacity:1"><span>Ваша економія</span><span>' + fmtPrice(oldSum - totalSum) + '</span></p>';
         }
 
+        /* promo recalculation */
+        var promoCut = appliedPromo ? promoDiscountForEntries(appliedPromo, entries) : 0;
+        var finalSum = totalSum - promoCut;
+
+        var promoRowHTML = '';
+        if (appliedPromo && promoCut > 0) {
+          promoRowHTML = '<p class="cart-summary-row" style="color:#8a6321;opacity:1"><span>Промокод ' + esc(appliedPromo.code) + '</span><span>−' + fmtPrice(promoCut) + '</span></p>';
+        }
+
         bodyEl.innerHTML +=
           '<div class="cart-summary">' +
+            '<div class="promo-box">' +
+              (appliedPromo
+                ? '<div class="promo-applied"><span class="promo-applied-code">✓ ' + esc(appliedPromo.code) + '</span>' +
+                  '<button type="button" class="promo-remove" id="promoRemove">Прибрати</button></div>'
+                : '<div class="promo-input-row">' +
+                    '<input type="text" class="promo-input" id="promoInput" placeholder="Промокод" autocomplete="off" autocapitalize="characters" />' +
+                    '<button type="button" class="promo-apply" id="promoApply">Застосувати</button>' +
+                  '</div>') +
+              '<p class="promo-msg" id="promoMsg"></p>' +
+            '</div>' +
             savingsHTML +
-            '<p class="cart-summary-row cart-summary-row--total"><span>Загалом</span><span>' + fmtPrice(totalSum) + '</span></p>' +
+            promoRowHTML +
+            '<p class="cart-summary-row cart-summary-row--total"><span>Загалом</span><span>' + fmtPrice(finalSum) + '</span></p>' +
             '<p class="cart-summary-hint">Безкоштовна доставка. При замовленні від 2 моделей зі знижкою — додаткова вигода, уточнюйте у менеджера.</p>' +
           '</div>';
 
@@ -4039,10 +4148,36 @@
         var totalSum = entries.reduce(function (sum, it) {
           return sum + (parsePrice(it.product.price) || 0) * it.qty;
         }, 0);
-        window.OPTIX_openTgChat(buildOrderMessage(entries, totalSum));
+        var cut = appliedPromo ? promoDiscountForEntries(appliedPromo, entries) : 0;
+        window.OPTIX_openTgChat(buildOrderMessage(entries, totalSum - cut, appliedPromo, cut));
       });
 
       bodyEl.addEventListener('click', function (e) {
+        /* promo apply */
+        if (e.target.closest('#promoApply')) {
+          var inp = document.getElementById('promoInput');
+          var msg = document.getElementById('promoMsg');
+          var res = findPromoByCode(inp ? inp.value : '');
+          if (!res) { if (msg) { msg.textContent = 'Введіть промокод'; msg.className = 'promo-msg promo-msg--err'; } return; }
+          if (res.error) { if (msg) { msg.textContent = res.error; msg.className = 'promo-msg promo-msg--err'; } return; }
+          var curEntries = window.OPTIX_cartGet().map(function (it) {
+            return { product: findProduct(it.code), qty: it.qty };
+          }).filter(function (it) { return it.product; });
+          if (!promoMatchesCart(res, curEntries)) {
+            if (msg) { msg.textContent = 'Промокод діє лише на бренд ' + res.brand + ' — у кошику немає таких моделей'; msg.className = 'promo-msg promo-msg--err'; }
+            return;
+          }
+          appliedPromo = res;
+          render();
+          return;
+        }
+        /* promo remove */
+        if (e.target.closest('#promoRemove')) {
+          appliedPromo = null;
+          render();
+          return;
+        }
+
         var actionEl = e.target.closest('[data-action]');
         var action = actionEl && actionEl.dataset.action;
         if (action === 'goto-catalog') {
