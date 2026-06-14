@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Trend Büro — Адмінка</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f2e8d5;
+    --surface: #ffffff;
+    --fg: #1b2d40;
+    --fg-soft: rgba(27,45,64,.55);
+    --line: rgba(27,45,64,.12);
+    --gold: #8a6321;
+    --gold-soft: rgba(200,152,95,.15);
+    --accent: #1b2d40;
+    --green: #2f9e6f;
+    --red: #c2483a;
+    --display: 'Cormorant Garamond', serif;
+    --ui: 'Inter', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    font-family: var(--ui);
+    color: var(--fg);
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+  .app { display: flex; flex-direction: column; height: 100vh; max-width: 520px; margin: 0 auto; background: var(--bg); position: relative; }
+
+  /* top bar */
+  .topbar {
+    padding: 16px 18px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--line); background: var(--bg); flex-shrink: 0;
+  }
+  .topbar .logo { font-family: var(--display); font-size: 21px; font-weight: 500; }
+  .topbar .logo small { display:block; font-family:var(--ui); font-size:7px; letter-spacing:.3em; color:var(--fg-soft); margin-top:-2px; }
+  .topbar .badge { font-size: 11px; color: var(--fg-soft); background: var(--surface); border:1px solid var(--line); padding: 5px 10px; border-radius: 999px; }
+
+  .screen { flex: 1; overflow-y: auto; padding: 16px 14px 88px; -webkit-overflow-scrolling: touch; }
+  .screen::-webkit-scrollbar { display: none; }
+  .screen[hidden] { display: none; }
+
+  .screen-title { font-family: var(--display); font-size: 25px; font-weight: 500; margin-bottom: 3px; }
+  .screen-sub { font-size: 12px; color: var(--fg-soft); margin-bottom: 16px; }
+
+  .add-btn {
+    width:100%; background:var(--accent); color:var(--bg); border:none; border-radius:14px;
+    padding:15px; font-size:13px; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+    margin-bottom:16px; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;
+  }
+  .add-btn .plus { font-size:18px; line-height:1; }
+
+  /* product row */
+  .prod { display:flex; gap:12px; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:10px; margin-bottom:10px; align-items:center; }
+  .prod-img { width:56px; height:56px; border-radius:10px; background:var(--gold-soft); flex-shrink:0; object-fit:cover; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .prod-img img { width:100%; height:100%; object-fit:cover; }
+  .prod-img svg { width:28px; stroke:var(--gold); fill:none; stroke-width:1.2; }
+  .prod-info { flex:1; min-width:0; }
+  .prod-brand { font-family:var(--display); font-size:18px; font-weight:500; line-height:1.1; }
+  .prod-code { font-size:11px; color:var(--fg-soft); margin:2px 0 4px; }
+  .prod-price { font-size:13px; font-weight:600; }
+  .prod-price .old { font-size:11px; color:var(--fg-soft); text-decoration:line-through; margin-left:6px; font-weight:400; }
+  .prod-tags { display:flex; gap:5px; margin-top:5px; }
+  .ptag { font-size:8.5px; font-weight:700; letter-spacing:.06em; padding:2px 6px; border-radius:5px; text-transform:uppercase; }
+  .ptag.sale { background:var(--gold); color:#fff; }
+  .ptag.new { background:var(--red); color:#fff; }
+  .prod-actions { display:flex; flex-direction:column; align-items:center; gap:8px; flex-shrink:0; }
+  .prod-toggle { width:40px; height:24px; border-radius:999px; background:var(--green); position:relative; cursor:pointer; transition:background .15s; }
+  .prod-toggle::after { content:''; position:absolute; top:2px; right:2px; width:20px; height:20px; background:#fff; border-radius:50%; transition:.15s; }
+  .prod-toggle.off { background:var(--line); }
+  .prod-toggle.off::after { right:auto; left:2px; }
+  .prod-del { background:none; border:none; color:var(--fg-soft); font-size:18px; cursor:pointer; line-height:1; padding:2px; }
+
+  /* form */
+  .field { margin-bottom:15px; }
+  .field-label { display:block; font-size:12px; font-weight:600; margin-bottom:7px; }
+  .field-label .opt { color:var(--fg-soft); font-weight:400; }
+  .input { width:100%; background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:13px 14px; font-size:16px; color:var(--fg); font-family:var(--ui); }
+  .input::placeholder { color:rgba(27,45,64,.35); }
+  textarea.input { resize:vertical; min-height:60px; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+  /* photo uploader */
+  .photo-zone { border:2px dashed rgba(27,45,64,.25); border-radius:14px; padding:18px; text-align:center; background:rgba(255,255,255,.5); cursor:pointer; }
+  .photo-zone-icon { width:46px; height:46px; margin:0 auto 8px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; }
+  .photo-zone-icon svg { width:22px; stroke:var(--bg); fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .photo-zone-text { font-size:13px; font-weight:600; }
+  .photo-zone-sub { font-size:11px; color:var(--fg-soft); margin-top:3px; }
+  .photo-thumbs { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:12px; }
+  .photo-thumbs:empty { display:none; }
+  .pthumb { aspect-ratio:1; border-radius:9px; background:var(--gold-soft); position:relative; overflow:hidden; }
+  .pthumb img { width:100%; height:100%; object-fit:cover; }
+  .pthumb.uploading { opacity:.5; }
+  .pthumb .spin { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+  .pthumb .spin::after { content:''; width:18px; height:18px; border:2px solid var(--gold); border-top-color:transparent; border-radius:50%; animation:sp .7s linear infinite; }
+  @keyframes sp { to { transform:rotate(360deg); } }
+  .pthumb.main::after { content:'1'; position:absolute; top:3px; left:3px; width:15px; height:15px; background:var(--accent); color:#fff; border-radius:50%; font-size:9px; display:flex; align-items:center; justify-content:center; font-weight:700; }
+  .pthumb .x { position:absolute; top:3px; right:3px; width:18px; height:18px; background:rgba(27,45,64,.8); color:#fff; border-radius:50%; font-size:12px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+
+  /* discount chips */
+  .disc-row { display:flex; gap:7px; }
+  .disc { flex:1; text-align:center; padding:11px 4px; border-radius:10px; border:1px solid var(--line); background:var(--surface); font-size:13px; font-weight:600; cursor:pointer; }
+  .disc.on { background:var(--accent); color:var(--bg); border-color:var(--accent); }
+
+  /* inline toggle field */
+  .toggle-field { display:flex; align-items:center; justify-content:space-between; background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:12px 14px; margin-bottom:15px; }
+  .toggle-field span { font-size:13px; font-weight:500; }
+  .mini-toggle { width:40px; height:24px; border-radius:999px; background:var(--green); position:relative; cursor:pointer; flex-shrink:0; }
+  .mini-toggle::after { content:''; position:absolute; top:2px; right:2px; width:20px; height:20px; background:#fff; border-radius:50%; transition:.15s; }
+  .mini-toggle.off { background:var(--line); }
+  .mini-toggle.off::after { right:auto; left:2px; }
+
+  .save-bar { position:absolute; bottom:64px; left:0; right:0; padding:12px 14px; background:var(--bg); border-top:1px solid var(--line); display:flex; gap:10px; max-width:520px; margin:0 auto; }
+  .save-bar .cancel { flex:0 0 auto; padding:14px 18px; border-radius:12px; border:1px solid var(--line); background:transparent; font-size:13px; font-weight:600; color:var(--fg); cursor:pointer; }
+  .save-bar .save { flex:1; padding:14px; border-radius:12px; border:none; background:var(--green); color:#fff; font-size:13px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; cursor:pointer; }
+  .save-bar .save:disabled { opacity:.5; }
+
+  /* mgmt cards */
+  .mgmt-card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px; }
+  .mgmt-card-head { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px; }
+  .mgmt-card-title { font-size:14px; font-weight:600; }
+  .mgmt-card-body { font-size:12px; color:var(--fg-soft); line-height:1.5; }
+  .mgmt-del { background:none; border:none; color:var(--red); font-size:12px; cursor:pointer; margin-top:8px; padding:0; }
+
+  /* bottom nav */
+  .botnav { position:absolute; bottom:0; left:0; right:0; height:64px; background:var(--surface); border-top:1px solid var(--line); display:flex; align-items:center; max-width:520px; margin:0 auto; }
+  .botnav button { flex:1; background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:3px; font-size:9.5px; color:var(--fg-soft); padding:0; cursor:pointer; font-family:var(--ui); }
+  .botnav button svg { width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+  .botnav button.active { color:var(--fg); font-weight:600; }
+
+  /* token gate */
+  .gate { position:absolute; inset:0; background:var(--bg); z-index:100; display:flex; flex-direction:column; justify-content:center; padding:30px 22px; }
+  .gate[hidden] { display:none; }
+  .gate h2 { font-family:var(--display); font-size:28px; font-weight:500; margin-bottom:10px; }
+  .gate p { font-size:13px; color:var(--fg-soft); line-height:1.55; margin-bottom:14px; }
+  .gate ol { font-size:12.5px; color:var(--fg-soft); line-height:1.7; padding-left:20px; margin-bottom:16px; }
+  .gate .input { margin-bottom:12px; }
+  .gate .save { width:100%; padding:15px; border-radius:12px; border:none; background:var(--accent); color:var(--bg); font-size:13px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; }
+  .gate .err { color:var(--red); font-size:12px; margin-top:10px; min-height:16px; }
+
+  /* toast */
+  .toast { position:fixed; left:50%; bottom:84px; transform:translateX(-50%) translateY(20px); background:var(--accent); color:var(--bg); font-size:13px; padding:11px 18px; border-radius:999px; opacity:0; transition:.25s; pointer-events:none; z-index:200; max-width:88%; text-align:center; }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .empty { text-align:center; color:var(--fg-soft); font-size:13px; padding:40px 20px; }
+  .loading { text-align:center; color:var(--fg-soft); font-size:13px; padding:30px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOKEN GATE -->
+  <div class="gate" id="gate">
+    <h2>Вхід в адмінку</h2>
+    <p>Щоб керувати каталогом, потрібен ключ доступу до бази (Sanity API token). Він зберігається тільки на цьому пристрої й нікуди більше не передається.</p>
+    <ol>
+      <li>Відкрий <b>manage.sanity.io</b> → проект TrendBuro</li>
+      <li>Вкладка <b>API</b> → <b>Tokens</b> → <b>Add API token</b></li>
+      <li>Назва: <b>admin</b>, права: <b>Editor</b> → Create</li>
+      <li>Скопіюй ключ і встав сюди ↓</li>
+    </ol>
+    <input class="input" id="tokenInput" type="password" placeholder="Встав API token (sk...)" autocomplete="off" />
+    <button class="save" id="tokenSave">Увійти</button>
+    <div class="err" id="tokenErr"></div>
+  </div>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="logo">Trend Büro<small>EYEWEAR · АДМІН</small></div>
+    <span class="badge" id="countBadge">—</span>
+  </div>
+
+  <!-- PRODUCTS -->
+  <div class="screen" data-screen="products">
+    <h1 class="screen-title">Товари</h1>
+    <p class="screen-sub">Керуй каталогом — додавай, ховай, видаляй</p>
+    <button class="add-btn" data-go="add"><span class="plus">+</span> Додати товар</button>
+    <div id="productList"><div class="loading">Завантаження…</div></div>
+  </div>
+
+  <!-- ADD/EDIT PRODUCT -->
+  <div class="screen" data-screen="add" hidden>
+    <h1 class="screen-title" id="addTitle">Новий товар</h1>
+    <p class="screen-sub">Заповни головне — і готово</p>
+
+    <div class="field">
+      <label class="field-label">Фотографії</label>
+      <div class="photo-zone" id="photoZone">
+        <div class="photo-zone-icon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div>
+        <div class="photo-zone-text">Відкрити плівку та вибрати фото</div>
+        <div class="photo-zone-sub">Познач кілька одразу — завантажаться разом</div>
+      </div>
+      <input type="file" id="photoInput" accept="image/*" multiple hidden />
+      <div class="photo-thumbs" id="photoThumbs"></div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Бренд</label>
+      <input class="input" id="fBrand" placeholder="Gucci" />
+    </div>
+    <div class="row2">
+      <div class="field"><label class="field-label">Код</label><input class="input" id="fCode" placeholder="GG 1593S" /></div>
+      <div class="field"><label class="field-label">Ціна, €</label><input class="input" id="fPrice" placeholder="400" inputmode="numeric" /></div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Знижка</label>
+      <div class="disc-row" id="discRow">
+        <div class="disc on" data-d="0">Без</div>
+        <div class="disc" data-d="10">−10%</div>
+        <div class="disc" data-d="15">−15%</div>
+        <div class="disc" data-d="20">−20%</div>
+        <div class="disc" data-d="25">−25%</div>
+      </div>
+    </div>
+
+    <div class="toggle-field"><span>Новинка (NEW)</span><div class="mini-toggle off" id="fNew"></div></div>
+
+    <div class="field">
+      <label class="field-label">Модель <span class="opt">· необов'язково</span></label>
+      <input class="input" id="fModel" placeholder="Lettering" />
+    </div>
+    <div class="field">
+      <label class="field-label">Опис <span class="opt">· необов'язково</span></label>
+      <textarea class="input" id="fDesc" placeholder="Короткий опис"></textarea>
+    </div>
+
+    <div class="save-bar">
+      <button class="cancel" data-go="products">Назад</button>
+      <button class="save" id="saveProduct">Зберегти товар</button>
+    </div>
+  </div>
+
+  <!-- PROMOS -->
+  <div class="screen" data-screen="promos" hidden>
+    <h1 class="screen-title">Акції</h1>
+    <p class="screen-sub">Плашки-промо на головній</p>
+    <button class="add-btn" data-go="addpromo"><span class="plus">+</span> Нова акція</button>
+    <div id="promoList"><div class="loading">Завантаження…</div></div>
+  </div>
+
+  <!-- ADD PROMO -->
+  <div class="screen" data-screen="addpromo" hidden>
+    <h1 class="screen-title">Нова акція</h1>
+    <p class="screen-sub">З'явиться плашкою на головній</p>
+    <div class="field"><label class="field-label">Назва акції</label><input class="input" id="pName" placeholder="Літній розпродаж" /></div>
+    <div class="field"><label class="field-label">Текст плашки</label><input class="input" id="pScope" placeholder="−20% на сонцезахисні" /></div>
+    <div class="row2">
+      <div class="field"><label class="field-label">Промокод <span class="opt">·</span></label><input class="input" id="pCode" placeholder="SUMMER" /></div>
+      <div class="field"><label class="field-label">До дати <span class="opt">·</span></label><input class="input" id="pEnd" type="date" /></div>
+    </div>
+    <div class="save-bar">
+      <button class="cancel" data-go="promos">Назад</button>
+      <button class="save" id="savePromo">Зберегти акцію</button>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="screen" data-screen="settings" hidden>
+    <h1 class="screen-title">Налаштування</h1>
+    <p class="screen-sub">Контакт менеджера та доставка</p>
+    <div class="field"><label class="field-label">Telegram менеджера (без @)</label><input class="input" id="sTg" placeholder="trendburomanager" /></div>
+    <div class="field"><label class="field-label">Термін доставки</label><input class="input" id="sDelivery" placeholder="5-10 днів" /></div>
+    <button class="add-btn" id="saveSettings" style="background:var(--green)">Зберегти</button>
+    <button class="add-btn" id="logout" style="background:transparent;color:var(--red);border:1px solid var(--line)">Вийти (стерти ключ)</button>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="botnav">
+    <button class="active" data-nav="products" data-go="products">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      Товари
+    </button>
+    <button data-nav="promos" data-go="promos">
+      <svg viewBox="0 0 24 24"><path d="M9 5H5a2 2 0 0 0-2 2v4M15 5h4a2 2 0 0 1 2 2v4M3 13v4a2 2 0 0 0 2 2h4M21 13v4a2 2 0 0 1-2 2h-4M8 12l3 3 5-6"/></svg>
+      Акції
+    </button>
+    <button data-nav="settings" data-go="settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>
+      Налашт.
+    </button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  var CFG = { projectId: 'yuw4a1jo', dataset: 'production', apiVersion: 'v2024-01-01' };
+  var TOKEN_KEY = 'tb_admin_token';
+
+  /* Telegram init */
+  try { var twa = window.Telegram && window.Telegram.WebApp; if (twa) { twa.ready(); twa.expand(); } } catch(e){}
+
+  function token() { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch(e){ return ''; } }
+  function setToken(t) { try { localStorage.setItem(TOKEN_KEY, t); } catch(e){} }
+  function clearToken() { try { localStorage.removeItem(TOKEN_KEY); } catch(e){} }
+
+  var API = 'https://' + CFG.projectId + '.api.sanity.io/' + CFG.apiVersion;
+
+  function sanityQuery(groq) {
+    return fetch(API + '/data/query/' + CFG.dataset + '?query=' + encodeURIComponent(groq), {
+      headers: { 'Authorization': 'Bearer ' + token() }
+    }).then(function(r){ if(!r.ok) throw new Error('query ' + r.status); return r.json(); }).then(function(j){ return j.result; });
+  }
+
+  function sanityMutate(mutations) {
+    return fetch(API + '/data/mutate/' + CFG.dataset, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
+      body: JSON.stringify({ mutations: mutations })
+    }).then(function(r){ if(!r.ok) return r.text().then(function(t){ throw new Error(t || ('mutate ' + r.status)); }); return r.json(); });
+  }
+
+  function uploadImage(file) {
+    return fetch(API + '/assets/images/' + CFG.dataset, {
+      method: 'POST',
+      headers: { 'Content-Type': file.type, 'Authorization': 'Bearer ' + token() },
+      body: file
+    }).then(function(r){ if(!r.ok) throw new Error('upload ' + r.status); return r.json(); }).then(function(j){ return j.document._id; });
+  }
+
+  function key() { return Math.random().toString(36).slice(2, 12); }
+
+  function toast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(window.__t); window.__t = setTimeout(function(){ t.classList.remove('show'); }, 2600);
+  }
+
+  /* ---------- navigation ---------- */
+  function show(s) {
+    document.querySelectorAll('.screen').forEach(function(el){ el.hidden = el.dataset.screen !== s; });
+    document.querySelectorAll('.botnav button').forEach(function(b){ b.classList.toggle('active', b.dataset.nav === s); });
+    if (s === 'products') loadProducts();
+    if (s === 'promos') loadPromos();
+    if (s === 'add') resetProductForm();
+    if (s === 'settings') loadSettings();
+  }
+  document.addEventListener('click', function(e){
+    var go = e.target.closest('[data-go]');
+    if (go) { show(go.dataset.go); }
+  });
+
+  /* ---------- token gate ---------- */
+  function showGate(show) { document.getElementById('gate').hidden = !show; }
+  document.getElementById('tokenSave').addEventListener('click', function(){
+    var t = document.getElementById('tokenInput').value.trim();
+    var err = document.getElementById('tokenErr');
+    if (!t) { err.textContent = 'Встав ключ'; return; }
+    setToken(t);
+    err.textContent = 'Перевірка…';
+    sanityQuery('count(*[_type=="product"])').then(function(){
+      err.textContent = ''; showGate(false); show('products');
+    }).catch(function(){
+      err.textContent = 'Ключ невірний або немає доступу. Перевір що це Editor token.';
+      clearToken();
+    });
+  });
+
+  /* ---------- products ---------- */
+  function loadProducts() {
+    var list = document.getElementById('productList');
+    list.innerHTML = '<div class="loading">Завантаження…</div>';
+    sanityQuery('*[_type=="product"]|order(_createdAt desc){_id,brand,code,price,discount,isNew,visible,"img":images[0].asset->url}').then(function(rows){
+      document.getElementById('countBadge').textContent = (rows ? rows.length : 0) + ' товарів';
+      if (!rows || !rows.length) { list.innerHTML = '<div class="empty">Поки немає товарів.<br>Натисни «+ Додати товар».</div>'; return; }
+      list.innerHTML = rows.map(function(p){
+        var d = parseInt(p.discount, 10) || 0;
+        var now = (d > 0) ? Math.round(p.price * (1 - d/100)) : p.price;
+        var priceHtml = (d > 0)
+          ? '€' + now + ' <span class="old">€' + p.price + '</span>'
+          : '€' + p.price;
+        var tags = '';
+        if (d > 0) tags += '<span class="ptag sale">−' + d + '%</span>';
+        if (p.isNew) tags += '<span class="ptag new">New</span>';
+        var img = p.img ? '<img src="' + p.img + '?w=120&h=120&fit=crop">' : '<svg viewBox="0 0 24 24"><circle cx="7.5" cy="13.5" r="4"/><circle cx="16.5" cy="13.5" r="4"/><path d="M11.5 13.5h1"/></svg>';
+        return '<div class="prod" data-id="' + p._id + '">' +
+          '<div class="prod-img">' + img + '</div>' +
+          '<div class="prod-info">' +
+            '<div class="prod-brand">' + esc(p.brand) + '</div>' +
+            '<div class="prod-code">' + esc(p.code || '') + '</div>' +
+            '<div class="prod-price">' + priceHtml + '</div>' +
+            (tags ? '<div class="prod-tags">' + tags + '</div>' : '') +
+          '</div>' +
+          '<div class="prod-actions">' +
+            '<div class="prod-toggle' + (p.visible === false ? ' off' : '') + '" data-toggle="' + p._id + '"></div>' +
+            '<button class="prod-del" data-del="' + p._id + '">✕</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }).catch(function(e){
+      list.innerHTML = '<div class="empty">Помилка завантаження.<br>Перевір ключ у Налаштуваннях.</div>';
+    });
+  }
+
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  /* toggle visible + delete (event delegation on list) */
+  document.getElementById('productList').addEventListener('click', function(e){
+    var tg = e.target.closest('[data-toggle]');
+    if (tg) {
+      var id = tg.dataset.toggle;
+      var willHide = !tg.classList.contains('off');
+      tg.classList.toggle('off');
+      sanityMutate([{ patch: { id: id, set: { visible: !willHide } } }]).then(function(){
+        toast(willHide ? 'Сховано з сайту' : 'Показано на сайті');
+      }).catch(function(){ tg.classList.toggle('off'); toast('Помилка'); });
+      return;
+    }
+    var del = e.target.closest('[data-del]');
+    if (del) {
+      if (!confirm('Видалити цей товар?')) return;
+      var id = del.dataset.del;
+      sanityMutate([{ delete: { id: id } }]).then(function(){ toast('Видалено'); loadProducts(); }).catch(function(){ toast('Помилка'); });
+    }
+  });
+
+  /* ---------- add product ---------- */
+  var photos = []; // {assetId, url}
+  var discount = '0';
+  var isNew = false;
+
+  function resetProductForm() {
+    photos = []; discount = '0'; isNew = false;
+    document.getElementById('photoThumbs').innerHTML = '';
+    ['fBrand','fCode','fPrice','fModel','fDesc'].forEach(function(id){ document.getElementById(id).value=''; });
+    document.querySelectorAll('#discRow .disc').forEach(function(d){ d.classList.toggle('on', d.dataset.d === '0'); });
+    document.getElementById('fNew').classList.add('off');
+    document.getElementById('addTitle').textContent = 'Новий товар';
+  }
+
+  document.getElementById('photoZone').addEventListener('click', function(){ document.getElementById('photoInput').click(); });
+  document.getElementById('photoInput').addEventListener('change', function(e){
+    var files = Array.prototype.slice.call(e.target.files || []);
+    files.forEach(function(file){
+      var slot = { assetId: null, url: URL.createObjectURL(file) };
+      photos.push(slot);
+      renderThumbs();
+      uploadImage(file).then(function(id){ slot.assetId = id; renderThumbs(); })
+        .catch(function(){ var i = photos.indexOf(slot); if(i>-1) photos.splice(i,1); renderThumbs(); toast('Фото не завантажилось'); });
+    });
+    e.target.value = '';
+  });
+
+  function renderThumbs() {
+    document.getElementById('photoThumbs').innerHTML = photos.map(function(p, i){
+      return '<div class="pthumb' + (i===0?' main':'') + (p.assetId?'':' uploading') + '">' +
+        '<img src="' + p.url + '">' +
+        (p.assetId ? '' : '<div class="spin"></div>') +
+        '<div class="x" data-rmphoto="' + i + '">×</div>' +
+      '</div>';
+    }).join('');
+  }
+  document.getElementById('photoThumbs').addEventListener('click', function(e){
+    var rm = e.target.closest('[data-rmphoto]');
+    if (rm) { photos.splice(parseInt(rm.dataset.rmphoto,10), 1); renderThumbs(); }
+  });
+
+  document.getElementById('discRow').addEventListener('click', function(e){
+    var d = e.target.closest('.disc'); if(!d) return;
+    discount = d.dataset.d;
+    document.querySelectorAll('#discRow .disc').forEach(function(x){ x.classList.toggle('on', x===d); });
+  });
+  document.getElementById('fNew').addEventListener('click', function(){ this.classList.toggle('off'); isNew = !this.classList.contains('off'); });
+
+  document.getElementById('saveProduct').addEventListener('click', function(){
+    var brand = document.getElementById('fBrand').value.trim();
+    var code = document.getElementById('fCode').value.trim();
+    var price = parseFloat(document.getElementById('fPrice').value);
+    if (!brand || !code || !price) { toast('Заповни бренд, код і ціну'); return; }
+    if (photos.some(function(p){ return !p.assetId; })) { toast('Зачекай, фото ще вантажаться'); return; }
+
+    var btn = this; btn.disabled = true; btn.textContent = 'Збереження…';
+    var doc = {
+      _type: 'product',
+      brand: brand, code: code, price: price,
+      discount: discount, isNew: isNew, visible: true,
+      images: photos.map(function(p){ return { _type:'image', _key:key(), asset:{ _type:'reference', _ref:p.assetId } }; })
+    };
+    var model = document.getElementById('fModel').value.trim();
+    var desc = document.getElementById('fDesc').value.trim();
+    if (model) doc.model = model;
+    if (desc) doc.description = desc;
+    if (isNew) { doc.newSince = new Date().toISOString().slice(0,10); doc.newDuration = '28'; }
+
+    sanityMutate([{ create: doc }]).then(function(){
+      toast('Товар додано ✓'); btn.disabled=false; btn.textContent='Зберегти товар'; show('products');
+    }).catch(function(err){
+      btn.disabled=false; btn.textContent='Зберегти товар';
+      toast('Помилка збереження');
+    });
+  });
+
+  /* ---------- promos ---------- */
+  function loadPromos() {
+    var list = document.getElementById('promoList');
+    list.innerHTML = '<div class="loading">Завантаження…</div>';
+    sanityQuery('*[_type=="promo"]|order(_createdAt desc){_id,name,scope,code,endDate,active}').then(function(rows){
+      if (!rows || !rows.length) { list.innerHTML = '<div class="empty">Поки немає акцій.</div>'; return; }
+      list.innerHTML = rows.map(function(p){
+        var body = [p.scope, p.code ? ('промокод ' + p.code) : '', p.endDate ? ('до ' + p.endDate) : ''].filter(Boolean).join(' · ');
+        return '<div class="mgmt-card" data-id="' + p._id + '">' +
+          '<div class="mgmt-card-head"><span class="mgmt-card-title">' + esc(p.name) + '</span>' +
+          '<span class="mini-toggle' + (p.active===false?' off':'') + '" data-ptoggle="' + p._id + '"></span></div>' +
+          '<div class="mgmt-card-body">' + esc(body) + '</div>' +
+          '<button class="mgmt-del" data-pdel="' + p._id + '">Видалити</button>' +
+        '</div>';
+      }).join('');
+    }).catch(function(){ list.innerHTML = '<div class="empty">Помилка завантаження.</div>'; });
+  }
+  document.getElementById('promoList').addEventListener('click', function(e){
+    var tg = e.target.closest('[data-ptoggle]');
+    if (tg) { var id=tg.dataset.ptoggle; var willOff=!tg.classList.contains('off'); tg.classList.toggle('off');
+      sanityMutate([{patch:{id:id,set:{active:!willOff}}}]).then(function(){toast('Оновлено');}).catch(function(){tg.classList.toggle('off');}); return; }
+    var del = e.target.closest('[data-pdel]');
+    if (del) { if(!confirm('Видалити акцію?')) return; sanityMutate([{delete:{id:del.dataset.pdel}}]).then(function(){toast('Видалено');loadPromos();}); }
+  });
+  document.getElementById('savePromo').addEventListener('click', function(){
+    var name = document.getElementById('pName').value.trim();
+    var scope = document.getElementById('pScope').value.trim();
+    if (!name) { toast('Введи назву'); return; }
+    var doc = { _type:'promo', name:name, scope:scope, active:true, type:'percentage' };
+    var code = document.getElementById('pCode').value.trim();
+    var end = document.getElementById('pEnd').value;
+    if (code) doc.code = code;
+    if (end) doc.endDate = end;
+    var btn=this; btn.disabled=true;
+    sanityMutate([{create:doc}]).then(function(){ btn.disabled=false; toast('Акцію додано ✓');
+      ['pName','pScope','pCode','pEnd'].forEach(function(id){document.getElementById(id).value='';}); show('promos');
+    }).catch(function(){ btn.disabled=false; toast('Помилка'); });
+  });
+
+  /* ---------- settings ---------- */
+  var settingsId = null;
+  function loadSettings() {
+    sanityQuery('*[_type=="settings"][0]{_id,tgUsername,deliveryTime}').then(function(s){
+      if (s) { settingsId=s._id; document.getElementById('sTg').value=s.tgUsername||''; document.getElementById('sDelivery').value=s.deliveryTime||''; }
+    }).catch(function(){});
+  }
+  document.getElementById('saveSettings').addEventListener('click', function(){
+    var tg = document.getElementById('sTg').value.trim().replace(/^@/,'');
+    var dl = document.getElementById('sDelivery').value.trim();
+    var mut = settingsId
+      ? [{ patch:{ id:settingsId, set:{ tgUsername:tg, deliveryTime:dl } } }]
+      : [{ create:{ _type:'settings', tgUsername:tg, deliveryTime:dl } }];
+    sanityMutate(mut).then(function(){ toast('Збережено ✓'); loadSettings(); }).catch(function(){ toast('Помилка'); });
+  });
+  document.getElementById('logout').addEventListener('click', function(){
+    if (!confirm('Стерти ключ з цього пристрою?')) return;
+    clearToken(); showGate(true);
+  });
+
+  /* ---------- boot ---------- */
+  if (token()) {
+    sanityQuery('count(*[_type=="product"])').then(function(){ showGate(false); show('products'); })
+      .catch(function(){ showGate(true); });
+  } else {
+    showGate(true);
+  }
+</script>
+</body>
+</html>
