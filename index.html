@@ -2263,30 +2263,30 @@
     </div>
   </section>
 
-  <section class="section brands" aria-label="Бренди">
+  <section class="section brands" aria-label="Бренди" id="brandsSection">
     <header class="section-head">
       <h2 class="section-title">Популярні бренди</h2>
-      <a href="#brands-all" class="section-link">Усі бренди →</a>
+      <a href="#catalog" class="section-link" id="allBrandsLink">Усі бренди →</a>
     </header>
 
     <div class="brands-strip">
-      <a href="#brand-miumiu" class="brand-chip">
+      <a href="#catalog" class="brand-chip" data-brand="Miu Miu">
         <span class="brand-chip-name">Miu Miu</span>
         <span class="brand-chip-tag brand-chip-tag--sale">Sale</span>
       </a>
-      <a href="#brand-gucci" class="brand-chip">
+      <a href="#catalog" class="brand-chip" data-brand="Gucci">
         <span class="brand-chip-name">Gucci</span>
         <span class="brand-chip-tag brand-chip-tag--sale">Sale</span>
       </a>
-      <a href="#brand-cartier" class="brand-chip">
+      <a href="#catalog" class="brand-chip" data-brand="Cartier">
         <span class="brand-chip-name">Cartier</span>
         <span class="brand-chip-tag brand-chip-tag--new">New</span>
       </a>
-      <a href="#brand-prada" class="brand-chip">
+      <a href="#catalog" class="brand-chip" data-brand="Prada">
         <span class="brand-chip-name">Prada</span>
         <span class="brand-chip-tag brand-chip-tag--sale">Sale</span>
       </a>
-      <a href="#brand-tomford" class="brand-chip">
+      <a href="#catalog" class="brand-chip" data-brand="Tom Ford">
         <span class="brand-chip-name">Tom Ford</span>
         <span class="brand-chip-tag brand-chip-tag--new">New</span>
       </a>
@@ -3277,6 +3277,22 @@
         render();
       });
 
+      /* Public: select a brand from outside (e.g. home page brand chips).
+         Matches by data-brand; if that brand isn't a filter button, falls
+         back to "all" so the catalog still opens. */
+      window.OPTIX_selectBrand = function (brandName) {
+        var target = null;
+        brandStrip.querySelectorAll('.catalog-filter').forEach(function (b) {
+          if (b.dataset.brand === brandName) target = b;
+        });
+        state.brand = target ? brandName : 'all';
+        brandStrip.querySelectorAll('.catalog-filter').forEach(function (b) {
+          b.classList.toggle('catalog-filter--active',
+            target ? (b === target) : (b.dataset.brand === 'all'));
+        });
+        render();
+      };
+
       /* Shape strip clicks */
       if (shapeStrip) {
         shapeStrip.addEventListener('click', function (e) {
@@ -4237,6 +4253,34 @@
 
       window.OPTIX_saleRefresh = render;
       render();
+    })();
+
+    /* ===== Home brand chips → open catalog filtered by that brand ===== */
+    (function () {
+      var strip = document.querySelector('.brands-strip');
+      var allLink = document.getElementById('allBrandsLink');
+
+      function openBrand(brandName) {
+        if (window.OPTIX_showView) window.OPTIX_showView('catalog');
+        if (window.OPTIX_selectBrand) window.OPTIX_selectBrand(brandName || 'all');
+        window.scrollTo(0, 0);
+      }
+
+      if (strip) {
+        strip.addEventListener('click', function (e) {
+          var chip = e.target.closest('.brand-chip');
+          if (!chip) return;
+          e.preventDefault();
+          openBrand(chip.dataset.brand);
+        });
+      }
+
+      if (allLink) {
+        allLink.addEventListener('click', function (e) {
+          e.preventDefault();
+          openBrand('all');
+        });
+      }
     })();
   </script>
 </body>
