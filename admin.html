@@ -250,13 +250,25 @@
   <!-- ADD PROMO -->
   <div class="screen" data-screen="addpromo" hidden>
     <h1 class="screen-title">Нова акція</h1>
-    <p class="screen-sub">З'явиться плашкою на головній</p>
-    <div class="field"><label class="field-label">Назва акції</label><input class="input" id="pName" placeholder="Літній розпродаж" /></div>
-    <div class="field"><label class="field-label">Текст плашки</label><input class="input" id="pScope" placeholder="−20% на сонцезахисні" /></div>
+    <p class="screen-sub">Промокод зі знижкою на бренд</p>
+    <div class="field"><label class="field-label">Назва акції</label><input class="input" id="pName" placeholder="Розпродаж Gucci" /></div>
     <div class="row2">
-      <div class="field"><label class="field-label">Промокод <span class="opt">·</span></label><input class="input" id="pCode" placeholder="SUMMER" /></div>
-      <div class="field"><label class="field-label">До дати <span class="opt">·</span></label><input class="input" id="pEnd" type="date" /></div>
+      <div class="field"><label class="field-label">Промокод</label><input class="input" id="pCode" placeholder="SUMGUCCI" autocapitalize="characters" /></div>
+      <div class="field"><label class="field-label">Дод. знижка, %</label><input class="input" id="pDiscount" placeholder="5" inputmode="numeric" /></div>
     </div>
+    <div class="field">
+      <label class="field-label">Бренд <span class="opt">· порожньо = всі</span></label>
+      <select class="input" id="pBrand">
+        <option value="">Всі бренди</option>
+        <option>Cartier</option><option>Gucci</option><option>Prada</option><option>Miu Miu</option>
+        <option>Tom Ford</option><option>Chrome Hearts</option><option>Ray-Ban</option><option>Dior</option>
+        <option>Saint Laurent</option><option>Versace</option><option>Chanel</option><option>Bottega Veneta</option>
+        <option>Loewe</option><option>Celine</option><option>Balenciaga</option><option>Fendi</option>
+      </select>
+    </div>
+    <div class="field"><label class="field-label">Текст плашки на головній <span class="opt">·</span></label><input class="input" id="pScope" placeholder="Додатково −5% на Gucci за кодом" /></div>
+    <div class="field"><label class="field-label">Діє до <span class="opt">·</span></label><input class="input" id="pEnd" type="date" /></div>
+    <p class="screen-sub" style="margin-top:4px">Знижка додається поверх існуючої: товар −10% + код 5% = −15% для клієнта.</p>
     <div class="save-bar">
       <button class="cancel" data-go="promos">Назад</button>
       <button class="save" id="savePromo">Зберегти акцію</button>
@@ -503,10 +515,15 @@
   function loadPromos() {
     var list = document.getElementById('promoList');
     list.innerHTML = '<div class="loading">Завантаження…</div>';
-    sanityQuery('*[_type=="promo"]|order(_createdAt desc){_id,name,scope,code,endDate,active}').then(function(rows){
+    sanityQuery('*[_type=="promo"]|order(_createdAt desc){_id,name,scope,code,discount,brand,endDate,active}').then(function(rows){
       if (!rows || !rows.length) { list.innerHTML = '<div class="empty">Поки немає акцій.</div>'; return; }
       list.innerHTML = rows.map(function(p){
-        var body = [p.scope, p.code ? ('промокод ' + p.code) : '', p.endDate ? ('до ' + p.endDate) : ''].filter(Boolean).join(' · ');
+        var parts = [];
+        if (p.code) parts.push('код ' + p.code);
+        if (p.discount) parts.push('+' + p.discount + '%');
+        parts.push(p.brand ? ('бренд ' + p.brand) : 'всі бренди');
+        if (p.endDate) parts.push('до ' + p.endDate);
+        var body = parts.join(' · ');
         return '<div class="mgmt-card" data-id="' + p._id + '">' +
           '<div class="mgmt-card-head"><span class="mgmt-card-title">' + esc(p.name) + '</span>' +
           '<span class="mini-toggle' + (p.active===false?' off':'') + '" data-ptoggle="' + p._id + '"></span></div>' +
@@ -526,15 +543,20 @@
   document.getElementById('savePromo').addEventListener('click', function(){
     var name = document.getElementById('pName').value.trim();
     var scope = document.getElementById('pScope').value.trim();
-    if (!name) { toast('Введи назву'); return; }
-    var doc = { _type:'promo', name:name, scope:scope, active:true, type:'percentage' };
-    var code = document.getElementById('pCode').value.trim();
+    var code = document.getElementById('pCode').value.trim().toUpperCase();
+    var brand = document.getElementById('pBrand').value;
+    var discount = parseFloat(document.getElementById('pDiscount').value);
     var end = document.getElementById('pEnd').value;
-    if (code) doc.code = code;
+    if (!name) { toast('Введи назву'); return; }
+    if (!code) { toast('Введи промокод'); return; }
+    if (!discount || discount <= 0) { toast('Введи додаткову знижку %'); return; }
+    var doc = { _type:'promo', name:name, code:code, discount:discount, scope:scope, active:true, type:'percentage' };
+    if (brand) doc.brand = brand;
     if (end) doc.endDate = end;
     var btn=this; btn.disabled=true;
     sanityMutate([{create:doc}]).then(function(){ btn.disabled=false; toast('Акцію додано ✓');
-      ['pName','pScope','pCode','pEnd'].forEach(function(id){document.getElementById(id).value='';}); show('promos');
+      ['pName','pScope','pCode','pEnd','pDiscount'].forEach(function(id){document.getElementById(id).value='';});
+      document.getElementById('pBrand').value=''; show('promos');
     }).catch(function(){ btn.disabled=false; toast('Помилка'); });
   });
 
