@@ -1802,6 +1802,56 @@
       border-color: #c2483a;
     }
 
+    .product-pair-bonus {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+      padding: 11px 14px;
+      background: rgba(200, 152, 95, 0.12);
+      border: 1px solid rgba(200, 152, 95, 0.3);
+      border-radius: 12px;
+      font-family: var(--font-ui);
+      font-size: 12.5px;
+      line-height: 1.4;
+      color: #8a6321;
+    }
+    .product-pair-bonus-icon {
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #8a6321;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .product-cart-btn {
+      flex: 1;
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--fg);
+      background: transparent;
+      border: 1.5px solid var(--fg);
+      border-radius: 999px;
+      padding: 16px 10px;
+      cursor: pointer;
+      text-align: center;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.15s ease, background-color 0.2s ease;
+    }
+    .product-cart-btn:active { transform: scale(0.98); }
+    .product-cart-btn.is-active {
+      background: rgba(27, 45, 64, 0.08);
+    }
+
     .product-order-btn {
       flex: 1;
       font-family: var(--font-ui);
@@ -3595,6 +3645,17 @@
           }
         }
 
+        var pairBonus = '';
+        if (p.oldPrice) {
+          var cc = parsePrice(p.price), oo = parsePrice(p.oldPrice);
+          if (cc && oo && oo > cc) {
+            pairBonus = '<div class="product-pair-bonus">' +
+              '<span class="product-pair-bonus-icon">%</span>' +
+              '<span>Замовте 2 моделі зі знижкою — отримайте додаткову вигоду</span>' +
+            '</div>';
+          }
+        }
+
         bodyEl.innerHTML =
           '<div class="product-hero">' +
             heroImg +
@@ -3608,6 +3669,7 @@
             '<p class="product-code">' + esc(p.code) + '</p>' +
             orderNote +
             '<div class="product-pricing">' + pricing + '</div>' +
+            pairBonus +
             sizesStrip +
           '</div>';
       }
@@ -3637,6 +3699,9 @@
                 '<path d="M12 20.5 C5 16 3 11 4 8 C5 5 8 4 10 5.5 C11 6.2 12 7 12 7 C12 7 13 6.2 14 5.5 C16 4 19 5 20 8 C21 11 19 16 12 20.5 Z" />' +
               '</svg>' +
             '</button>' +
+            '<button type="button" class="product-cart-btn' + (inCart ? ' is-active' : '') + '" id="productCartBtn">' +
+              (inCart ? 'У кошику ✓' : 'У кошик') +
+            '</button>' +
             '<button type="button" class="product-order-btn" id="productOrderBtn">' +
               'Замовити' +
             '</button>' +
@@ -3645,6 +3710,16 @@
 
         document.getElementById('productHeartBtn').addEventListener('click', function () {
           window.OPTIX_wishlistToggle(p.code);
+          renderFooter(p);
+        });
+        document.getElementById('productCartBtn').addEventListener('click', function () {
+          if (window.OPTIX_cartHas(p.code)) {
+            window.OPTIX_cartRemove(p.code);
+            if (window.OPTIX_toast) window.OPTIX_toast('Прибрано з кошика');
+          } else {
+            window.OPTIX_cartAdd(p.code);
+            if (window.OPTIX_toast) window.OPTIX_toast('Додано в кошик');
+          }
           renderFooter(p);
         });
         document.getElementById('productOrderBtn').addEventListener('click', function () {
@@ -3938,7 +4013,7 @@
           '<div class="cart-summary">' +
             savingsHTML +
             '<p class="cart-summary-row cart-summary-row--total"><span>Загалом</span><span>' + fmtPrice(totalSum) + '</span></p>' +
-            '<p class="cart-summary-hint">Це попередній розрахунок. Після оформлення в Telegram ми підтвердимо наявність та фінальну вартість з урахуванням доставки.</p>' +
+            '<p class="cart-summary-hint">Безкоштовна доставка. При замовленні від 2 моделей зі знижкою — додаткова вигода, уточнюйте у менеджера.</p>' +
           '</div>';
 
         footerEl.innerHTML =
