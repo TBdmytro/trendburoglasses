@@ -2520,7 +2520,7 @@
       }
 
       var PRODUCT_QUERY = '*[_type == "product" && visible != false] | order(orderRank asc) {' +
-        'brand, code, model, description, price, oldPrice, isNew, newSince, newDuration,' +
+        'brand, code, model, description, price, oldPrice, discount, isNew, newSince, newDuration,' +
         'shape, gender, material, inStock, showSizes, lensWidth, bridge, temple, weight,' +
         '"images": images[].asset->url' +
       '}';
@@ -2538,14 +2538,22 @@
             code: p.code,
             model: p.model || '',
             description: p.description || '',
-            price: euro(p.price),
-            oldPrice: p.oldPrice ? euro(p.oldPrice) : null,
+            price: (function () {
+              var d = parseInt(p.discount, 10);
+              if (d > 0 && p.price) return euro(Math.round(p.price * (1 - d / 100)));
+              return euro(p.price);
+            })(),
+            oldPrice: (function () {
+              var d = parseInt(p.discount, 10);
+              if (d > 0 && p.price) return euro(p.price);     /* original becomes struck-through */
+              return p.oldPrice ? euro(p.oldPrice) : null;
+            })(),
             isNew: isNewNow(p),
             shape: p.shape || null,
             gender: p.gender || null,
             material: p.material || null,
             inStock: p.inStock !== false,
-            images: (p.images || []).map(function (u) { return u + '?w=900&q=80&auto=format'; }),
+            images: (p.images || []).map(function (u) { return u + '?w=1200&q=90&auto=format&fit=max'; }),
             lensWidth: p.lensWidth || null,
             bridge: p.bridge || null,
             temple: p.temple || null,
@@ -3228,11 +3236,9 @@
             badge = '<span class="product-card-badge product-card-badge--new">New</span>';
           }
 
-          var stockTag = (p.inStock === false)
-            ? '<span class="product-card-stock-tag">Під замовлення</span>'
-            : '';
+          var stockTag = '';
 
-          var cardClass = 'product-card' + (p.inStock === false ? ' product-card--unavailable' : '');
+          var cardClass = 'product-card';
           var heartClass = 'product-card-heart' + (inWish ? ' is-active' : '');
 
           return '' +
@@ -3542,9 +3548,7 @@
             'Безкоштовна доставка' +
           '</span>';
 
-        var orderNote = (p.inStock === false)
-          ? '<p class="product-order-note">Під замовлення з Європи · привеземо за 5-7 днів</p>'
-          : '';
+        var orderNote = '';
 
         var pricing = '<span class="product-price">' + esc(p.price) + '</span>';
         if (p.oldPrice) {
@@ -3605,7 +3609,6 @@
             '',
             '1. ' + line
           ];
-          if (p.inStock === false) msg.push('   (під замовлення)');
           msg.push('');
           msg.push('Підкажіть, чи можемо її замовити?');
           return msg.join('\n');
@@ -3834,7 +3837,6 @@
           } else {
             msg.push((i + 1) + '. ' + p.brand + (p.model ? ' ' + p.model : '') + ' (' + p.code + ') — ' + p.price);
           }
-          if (p.inStock === false) msg.push('   (під замовлення)');
         });
 
         msg.push('');
@@ -4092,10 +4094,8 @@
           var slug = p.code.replace(/\s+/g, '-').toLowerCase();
           var inWish = wishlist.indexOf(p.code) !== -1;
           var heartClass = 'product-card-heart' + (inWish ? ' is-active' : '');
-          var stockTag = (p.inStock === false)
-            ? '<span class="product-card-stock-tag">Під замовлення</span>'
-            : '';
-          var cardClass = 'product-card' + (p.inStock === false ? ' product-card--unavailable' : '');
+          var stockTag = '';
+          var cardClass = 'product-card';
 
           return '' +
             '<a href="#product-' + esc(slug) + '" class="' + cardClass + '" data-code="' + esc(p.code) + '">' +
