@@ -2025,6 +2025,16 @@
       opacity: 0.45;
       text-decoration: line-through;
     }
+    .list-row-disc {
+      font-family: var(--font-ui);
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
+      background: #c8985f;
+      padding: 1px 6px;
+      border-radius: 5px;
+      letter-spacing: .03em;
+    }
 
     .list-row-actions {
       display: flex;
@@ -2137,6 +2147,90 @@
     .promo-msg { font-size: 12px; margin-top: 8px; min-height: 0; }
     .promo-msg:empty { margin-top: 0; }
     .promo-msg--err { color: #c2483a; }
+
+    .multipair-nudge {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 11px 13px;
+      margin-bottom: 14px;
+      background: rgba(200, 152, 95, 0.12);
+      border: 1px solid rgba(200, 152, 95, 0.3);
+      border-radius: 12px;
+      font-family: var(--font-ui);
+      font-size: 12.5px;
+      line-height: 1.35;
+      color: #8a6321;
+    }
+    .multipair-nudge--max {
+      background: rgba(47, 158, 111, 0.1);
+      border-color: rgba(47, 158, 111, 0.3);
+      color: #2f7d57;
+    }
+    .multipair-nudge-icon {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #8a6321;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 12px;
+    }
+    .multipair-nudge--max .multipair-nudge-icon { background: #2f9e6f; }
+    .cart-gift-note {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      color: #8a6321;
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: rgba(200, 152, 95, 0.08);
+      border-radius: 8px;
+    }
+
+    .cart-summary-row--cut span:last-child { color: #8a6321; }
+    .cart-summary-row--cut span:first-child { color: var(--fg); opacity: 0.7; }
+    .cart-summary-row--was span:last-child {
+      text-decoration: line-through;
+      opacity: 0.45;
+    }
+    .cart-summary-row--was span:first-child { opacity: 0.6; }
+
+    .cart-savings {
+      margin: 14px 0 4px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(200,152,95,0.18), rgba(200,152,95,0.08));
+      border: 1px solid rgba(200,152,95,0.35);
+    }
+    .cart-savings-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+    .cart-savings-label {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: #8a6321;
+    }
+    .cart-savings-amount {
+      font-family: var(--font-display, Georgia, serif);
+      font-size: 24px;
+      font-weight: 600;
+      color: #8a6321;
+    }
+    .cart-savings-sub {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      color: #8a6321;
+      opacity: 0.85;
+      margin-top: 6px;
+    }
 
     .cart-summary {
       padding: 16px 20px 8px;
@@ -2349,28 +2443,7 @@
       <a href="#catalog" class="section-link" id="allBrandsLink">Усі бренди →</a>
     </header>
 
-    <div class="brands-strip">
-      <a href="#catalog" class="brand-chip" data-brand="Miu Miu">
-        <span class="brand-chip-name">Miu Miu</span>
-        <span class="brand-chip-tag brand-chip-tag--sale">Sale</span>
-      </a>
-      <a href="#catalog" class="brand-chip" data-brand="Gucci">
-        <span class="brand-chip-name">Gucci</span>
-        <span class="brand-chip-tag brand-chip-tag--sale">Sale</span>
-      </a>
-      <a href="#catalog" class="brand-chip" data-brand="Cartier">
-        <span class="brand-chip-name">Cartier</span>
-        <span class="brand-chip-tag brand-chip-tag--new">New</span>
-      </a>
-      <a href="#catalog" class="brand-chip" data-brand="Prada">
-        <span class="brand-chip-name">Prada</span>
-        <span class="brand-chip-tag brand-chip-tag--sale">Sale</span>
-      </a>
-      <a href="#catalog" class="brand-chip" data-brand="Tom Ford">
-        <span class="brand-chip-name">Tom Ford</span>
-        <span class="brand-chip-tag brand-chip-tag--new">New</span>
-      </a>
-    </div>
+    <div class="brands-strip" id="homeBrandsStrip"></div>
   </section>
 
   <section class="new-arrivals" aria-label="Новинки">
@@ -2406,12 +2479,6 @@
     <div class="catalog-controls">
       <div class="catalog-filters" id="catalogFilters">
         <button type="button" class="catalog-filter catalog-filter--active" data-brand="all">Усі</button>
-        <button type="button" class="catalog-filter" data-brand="Cartier">Cartier</button>
-        <button type="button" class="catalog-filter" data-brand="Gucci">Gucci</button>
-        <button type="button" class="catalog-filter" data-brand="Miu Miu">Miu Miu</button>
-        <button type="button" class="catalog-filter" data-brand="Prada">Prada</button>
-        <button type="button" class="catalog-filter" data-brand="Tom Ford">Tom Ford</button>
-        <button type="button" class="catalog-filter" data-brand="Chrome Hearts">Chrome Hearts</button>
       </div>
 
       <div class="catalog-shape-strip" id="catalogShapes">
@@ -2538,7 +2605,7 @@
           <button type="button" class="search-suggestion">Gucci</button>
           <button type="button" class="search-suggestion">Miu Miu</button>
           <button type="button" class="search-suggestion">Prada</button>
-          <button type="button" class="search-suggestion">Tom Ford</button>
+          <button type="button" class="search-suggestion">Miu Miu</button>
         </div>
       </div>
 
@@ -2607,7 +2674,7 @@
 
       var PROMO_QUERY = '*[_type == "promo" && active == true] { name, type, discount, brand, scope, startDate, endDate, code }';
 
-      var SETTINGS_QUERY = '*[_type == "settings"][0] { tgUsername, deliveryTime }';
+      var SETTINGS_QUERY = '*[_type == "settings"][0] { tgUsername, deliveryTime, pair2Discount, pair3Discount, giftBrandsNote }';
 
       /* Products */
       q(PRODUCT_QUERY).then(function (rows) {
@@ -2652,6 +2719,7 @@
         if (window.OPTIX_catalogRefresh) window.OPTIX_catalogRefresh();
         if (window.OPTIX_newArrivalsRefresh) window.OPTIX_newArrivalsRefresh();
         if (window.OPTIX_saleRefresh) window.OPTIX_saleRefresh();
+        if (window.OPTIX_homeBrandsRefresh) window.OPTIX_homeBrandsRefresh();
       }).catch(function (e) { console.warn('Sanity products load failed:', e); });
 
       /* Promotions */
@@ -2668,6 +2736,16 @@
         if (!s) return;
         if (s.tgUsername) window.OPTIX_TG_USERNAME = s.tgUsername.replace(/^@/, '');
         if (s.deliveryTime) window.__OPTIX_DELIVERY_TIME = s.deliveryTime;
+        var p2 = parseFloat(s.pair2Discount);
+        var p3 = parseFloat(s.pair3Discount);
+        if (!isNaN(p2) || !isNaN(p3)) {
+          window.__OPTIX_PAIR_TIERS = {
+            pair2: isNaN(p2) ? 0 : p2,
+            pair3: isNaN(p3) ? (isNaN(p2) ? 0 : p2) : p3
+          };
+          if (window.OPTIX_cartRefresh) window.OPTIX_cartRefresh();
+        }
+        if (s.giftBrandsNote) window.__OPTIX_GIFT_NOTE = s.giftBrandsNote;
       }).catch(function (e) { console.warn('Sanity settings load failed:', e); });
     })();
 
@@ -2757,9 +2835,6 @@
       { brand: 'Miu Miu',  code: 'MU 13YS',  model: 'Glimpse',  description: 'Овальні окуляри з гравіруванням Miu Miu на оправі.',                                                          price: '€420',   oldPrice: '€470',  isNew: false, shape: 'oval',        gender: 'women', material: 'acetate', inStock: false },
       { brand: 'Prada',    code: 'PR 17WS',  model: '',         description: 'Класичні чорні з фірмовим трикутником Prada.',                                                                price: '€315',   oldPrice: '€350',  isNew: false, shape: 'rectangular', gender: 'unisex', material: 'acetate', inStock: true  },
       { brand: 'Prada',    code: 'PR 09ZS',  model: '',         description: 'Авіатори в золотистому корпусі. Лінзи з градієнтом.',                                                         price: '€345',   oldPrice: null,    isNew: false, shape: 'aviator',     gender: 'men',    material: 'metal',  inStock: true  },
-      { brand: 'Tom Ford', code: 'TF 1075',  model: 'Renee',    description: 'Жіночі окуляри-бабочки. Лаконічна форма, преміум-ацетат.',                                                    price: '€420',   oldPrice: null,    isNew: true,  shape: 'cat-eye',     gender: 'women', material: 'acetate', inStock: true  },
-      { brand: 'Tom Ford', code: 'TF 0985',  model: 'Hayes',    description: 'Чоловічі прямокутні. Темний ацетат з фірмовою фурнітурою.',                                                  price: '€450',   oldPrice: null,    isNew: false, shape: 'rectangular', gender: 'men',    material: 'acetate', inStock: true  },
-      { brand: 'Chrome Hearts', code: 'CH MEAT', model: '',    description: 'Готичний дизайн з фірмовими хрестами. Колекційна модель.',                                                    price: '€890',   oldPrice: null,    isNew: true,  shape: 'geometric',   gender: 'unisex', material: 'metal', inStock: false }
     ];
 
     /* If admin override is present, use it instead of the defaults above */
@@ -3252,6 +3327,27 @@
         sort: 'default' /* default | price-asc | price-desc | new */
       };
 
+      /* Build brand filter buttons from the brands that actually exist in
+         the catalog. Brands appear only when there is a product for them. */
+      function buildBrandFilters() {
+        var seen = {};
+        var order = [];
+        PRODUCTS.forEach(function (p) {
+          var b = (p.brand || '').trim();
+          if (b && !seen[b]) { seen[b] = true; order.push(b); }
+        });
+        order.sort(function (a, b) { return a.localeCompare(b); });
+        var html = '<button type="button" class="catalog-filter' +
+          (state.brand === 'all' ? ' catalog-filter--active' : '') +
+          '" data-brand="all">Усі</button>';
+        order.forEach(function (b) {
+          html += '<button type="button" class="catalog-filter' +
+            (state.brand === b ? ' catalog-filter--active' : '') +
+            '" data-brand="' + b.replace(/"/g, '&quot;') + '">' + b + '</button>';
+        });
+        brandStrip.innerHTML = html;
+      }
+
       var SORT_LABELS = {
         'default':    'Сортування: за замовч.',
         'price-asc':  'Сортування: спочатку дешевше',
@@ -3290,6 +3386,7 @@
       }
 
       function render() {
+        buildBrandFilters();
         var products = applyFilters();
 
         count.textContent = products.length + ' ' + pluralize(products.length) + ' в наявності';
@@ -3506,6 +3603,7 @@
         if (window.OPTIX_catalogRefresh) window.OPTIX_catalogRefresh();
         if (window.OPTIX_newArrivalsRefresh) window.OPTIX_newArrivalsRefresh();
         if (window.OPTIX_saleRefresh) window.OPTIX_saleRefresh();
+        if (window.OPTIX_homeBrandsRefresh) window.OPTIX_homeBrandsRefresh();
       };
       window.OPTIX_wishlistRemove = function (code) {
         var idx = wishlist.indexOf(code);
@@ -3516,6 +3614,7 @@
           if (window.OPTIX_catalogRefresh) window.OPTIX_catalogRefresh();
           if (window.OPTIX_newArrivalsRefresh) window.OPTIX_newArrivalsRefresh();
         if (window.OPTIX_saleRefresh) window.OPTIX_saleRefresh();
+        if (window.OPTIX_homeBrandsRefresh) window.OPTIX_homeBrandsRefresh();
         }
       };
 
@@ -3966,10 +4065,65 @@
         return { error: 'Промокод не знайдено' };
       }
 
-      /* Promo = ADDITIONAL discount % added on top of each matching item's
-         existing discount, for items of the promo's brand (empty brand = all).
-         Item at -10% + promo +5% → customer pays -15% off original.
-         The extra cut per item = originalPrice * promoPct/100 * qty. */
+      /* Brands that never receive the extra promo discount */
+      var PROMO_EXCLUDE = ['Chanel', 'Cartier'];
+      function isExcluded(brand) {
+        var b = String(brand || '').trim().toLowerCase();
+        return PROMO_EXCLUDE.some(function (x) { return x.toLowerCase() === b; });
+      }
+
+      /* ----- Multi-pair automatic discount -----
+         Tiers come from admin settings (window.__OPTIX_PAIR_TIERS) with a
+         sensible fallback. pair2 = % for 2 pairs, pair3 = % for 3+ pairs.
+         Excluded brands (Chanel/Cartier) don't count and get a gift instead. */
+      var MULTIPAIR = {
+        giftText: 'фірмовий кейс у подарунок'
+      };
+      function pairTiers() {
+        var cfg = window.__OPTIX_PAIR_TIERS || { pair2: 5, pair3: 8 };
+        var tiers = [];
+        if (cfg.pair3 > 0) tiers.push({ pairs: 3, pct: cfg.pair3 });
+        if (cfg.pair2 > 0) tiers.push({ pairs: 2, pct: cfg.pair2 });
+        return tiers; /* checked high → low */
+      }
+      function eligiblePairs(entries) {
+        return entries.reduce(function (n, it) {
+          return isExcluded(it.product.brand) ? n : n + (it.qty || 0);
+        }, 0);
+      }
+      function eligibleSubtotal(entries) {
+        return entries.reduce(function (s, it) {
+          if (isExcluded(it.product.brand)) return s;
+          return s + (parsePrice(it.product.price) || 0) * it.qty;
+        }, 0);
+      }
+      function currentTier(pairs) {
+        var tiers = pairTiers();
+        for (var i = 0; i < tiers.length; i++) {
+          if (pairs >= tiers[i].pairs) return tiers[i];
+        }
+        return null;
+      }
+      function nextTier(pairs) {
+        var best = null;
+        pairTiers().forEach(function (t) {
+          if (t.pairs > pairs) { if (!best || t.pairs < best.pairs) best = t; }
+        });
+        return best;
+      }
+      function multipairDiscount(entries) {
+        var t = currentTier(eligiblePairs(entries));
+        if (!t) return 0;
+        return Math.round(eligibleSubtotal(entries) * (t.pct / 100));
+      }
+      function cartHasExcluded(entries) {
+        return entries.some(function (it) { return isExcluded(it.product.brand); });
+      }
+
+      /* Promo = ADDITIONAL discount applied to the item's CURRENT (already
+         discounted) price — sequential, not additive. Item 890 at -10% = 801,
+         then promo -5% → 801*0.95 = 760.95. If promo has a brand → only that
+         brand; if no brand → all EXCEPT excluded (Chanel, Cartier). */
       function promoDiscountForEntries(promo, entries) {
         if (!promo) return 0;
         var pct = parseFloat(promo.discount) || 0;
@@ -3978,23 +4132,26 @@
         var cut = 0;
         entries.forEach(function (it) {
           var p = it.product;
-          if (brand && String(p.brand || '').trim().toLowerCase() !== brand) return;
-          var orig = parsePrice(p.oldPrice) || parsePrice(p.price) || 0;
-          cut += Math.round(orig * (pct / 100)) * it.qty;
+          var pb = String(p.brand || '').trim().toLowerCase();
+          if (brand) { if (pb !== brand) return; }
+          else { if (isExcluded(p.brand)) return; }
+          var base = parsePrice(p.price) || 0; /* current price */
+          cut += Math.round(base * (pct / 100)) * it.qty;
         });
         return cut;
       }
 
-      /* true if at least one cart item matches the promo's brand */
+      /* true if at least one cart item is eligible for the promo */
       function promoMatchesCart(promo, entries) {
         var brand = String(promo.brand || '').trim().toLowerCase();
-        if (!brand) return true;
         return entries.some(function (it) {
-          return String(it.product.brand || '').trim().toLowerCase() === brand;
+          var pb = String(it.product.brand || '').trim().toLowerCase();
+          if (brand) return pb === brand;
+          return !isExcluded(it.product.brand);
         });
       }
 
-      function buildOrderMessage(items, total, promo, cut) {
+      function buildOrderMessage(items, total, promo, cut, mCut, mTier) {
         var totalQty = items.reduce(function (s, it) { return s + it.qty; }, 0);
         var msg = [
           'Здравствуйте!',
@@ -4015,8 +4172,13 @@
         });
 
         msg.push('');
+        if (mTier && mCut > 0) {
+          msg.push('Знижка за ' + window.OPTIX_pluralModels(eligiblePairs(items)) + ' (−' + mTier.pct + '%): −' + fmtPrice(mCut));
+        }
         if (promo && cut > 0) {
           msg.push('Промокод: ' + promo.code + ' (−' + fmtPrice(cut) + ')');
+        }
+        if ((mTier && mCut > 0) || (promo && cut > 0)) {
           msg.push('Сума зі знижкою: ' + fmtPrice(total));
         } else {
           msg.push('Сума: ' + fmtPrice(total));
@@ -4075,6 +4237,13 @@
                   '<p class="list-row-code">' + esc(p.code) + '</p>' +
                   '<p class="list-row-pricing">' +
                     '<span class="list-row-price">' + esc(p.price) + '</span>' +
+                    (function () {
+                      if (!p.oldPrice) return '';
+                      var cur = parsePrice(p.price), old = parsePrice(p.oldPrice);
+                      var pct = (cur && old && old > cur) ? Math.round((old - cur) / old * 100) : 0;
+                      return '<span class="list-row-old-price">' + esc(p.oldPrice) + '</span>' +
+                        (pct ? '<span class="list-row-disc">−' + pct + '%</span>' : '');
+                    })() +
                   '</p>' +
                 '</div>' +
                 '<div class="list-row-actions">' +
@@ -4093,22 +4262,72 @@
             }).join('') +
           '</ul>';
 
-        var savingsHTML = '';
-        if (oldSum > totalSum) {
-          savingsHTML = '<p class="cart-summary-row" style="color:#8a6321;opacity:1"><span>Ваша економія</span><span>' + fmtPrice(oldSum - totalSum) + '</span></p>';
-        }
+
 
         /* promo recalculation */
         var promoCut = appliedPromo ? promoDiscountForEntries(appliedPromo, entries) : 0;
-        var finalSum = totalSum - promoCut;
+
+        /* multi-pair automatic discount (eligible brands only) */
+        var pairs = eligiblePairs(entries);
+        var tier = currentTier(pairs);
+        var multiCut = multipairDiscount(entries);
+
+        var finalSum = totalSum - promoCut - multiCut;
+        var totalSavings = oldSum - finalSum;              /* full economy vs original */
+        var savingsPct = oldSum > 0 ? Math.round(totalSavings / oldSum * 100) : 0;
 
         var promoRowHTML = '';
         if (appliedPromo && promoCut > 0) {
-          promoRowHTML = '<p class="cart-summary-row" style="color:#8a6321;opacity:1"><span>Промокод ' + esc(appliedPromo.code) + '</span><span>−' + fmtPrice(promoCut) + '</span></p>';
+          promoRowHTML = '<p class="cart-summary-row cart-summary-row--cut"><span>Промокод ' + esc(appliedPromo.code) + '</span><span>−' + fmtPrice(promoCut) + '</span></p>';
+        }
+
+        var multiRowHTML = '';
+        if (tier && multiCut > 0) {
+          multiRowHTML = '<p class="cart-summary-row cart-summary-row--cut"><span>Знижка за ' + pairs + ' ' + window.OPTIX_pluralModels(pairs) + ' (−' + tier.pct + '%)</span><span>−' + fmtPrice(multiCut) + '</span></p>';
+        }
+
+        /* item-level discount (sum of per-item sale discounts) */
+        var itemCut = oldSum - totalSum;
+        var itemRowHTML = '';
+        if (itemCut > 0) {
+          itemRowHTML = '<p class="cart-summary-row cart-summary-row--cut"><span>Знижка на моделі</span><span>−' + fmtPrice(itemCut) + '</span></p>';
+        }
+
+        /* progress nudge */
+        var nudgeHTML = '';
+        var nt = nextTier(pairs);
+        if (nt) {
+          var need = nt.pairs - pairs;
+          var addText = (pairs === 0)
+            ? 'Замовте ' + nt.pairs + ' ' + window.OPTIX_pluralModels(nt.pairs) + ' — отримайте додатково −' + nt.pct + '%'
+            : (tier ? '−' + tier.pct + '% вже діє ✓ Додайте ще ' + need + ' — буде −' + nt.pct + '%'
+                    : 'Додайте ще ' + need + ' ' + window.OPTIX_pluralModels(need) + ' — отримайте −' + nt.pct + '%');
+          nudgeHTML = '<div class="multipair-nudge"><span class="multipair-nudge-icon">%</span><span>' + addText + '</span></div>';
+        } else if (tier) {
+          nudgeHTML = '<div class="multipair-nudge multipair-nudge--max"><span class="multipair-nudge-icon">✓</span><span>−' + tier.pct + '% застосовано — максимальна вигода</span></div>';
+        }
+
+        var giftHTML = '';
+        if (cartHasExcluded(entries)) {
+          giftHTML = '<p class="cart-gift-note">Cartier / Chanel — ' + (window.__OPTIX_GIFT_NOTE || MULTIPAIR.giftText) + ' до замовлення</p>';
+        }
+
+        /* The hero savings banner — shows the WHOLE economy */
+        var savingsBanner = '';
+        if (totalSavings > 0) {
+          savingsBanner =
+            '<div class="cart-savings">' +
+              '<div class="cart-savings-top">' +
+                '<span class="cart-savings-label">Ваша економія</span>' +
+                '<span class="cart-savings-amount">−' + fmtPrice(totalSavings) + '</span>' +
+              '</div>' +
+              '<div class="cart-savings-sub">' + savingsPct + '% від початкової вартості</div>' +
+            '</div>';
         }
 
         bodyEl.innerHTML +=
           '<div class="cart-summary">' +
+            nudgeHTML +
             '<div class="promo-box">' +
               (appliedPromo
                 ? '<div class="promo-applied"><span class="promo-applied-code">✓ ' + esc(appliedPromo.code) + '</span>' +
@@ -4119,10 +4338,14 @@
                   '</div>') +
               '<p class="promo-msg" id="promoMsg"></p>' +
             '</div>' +
-            savingsHTML +
+            (oldSum > finalSum ? '<p class="cart-summary-row cart-summary-row--was"><span>Початкова вартість</span><span>' + fmtPrice(oldSum) + '</span></p>' : '') +
+            itemRowHTML +
+            multiRowHTML +
             promoRowHTML +
-            '<p class="cart-summary-row cart-summary-row--total"><span>Загалом</span><span>' + fmtPrice(finalSum) + '</span></p>' +
-            '<p class="cart-summary-hint">Безкоштовна доставка. При замовленні від 2 моделей зі знижкою — додаткова вигода, уточнюйте у менеджера.</p>' +
+            '<p class="cart-summary-row cart-summary-row--total"><span>До сплати</span><span>' + fmtPrice(finalSum) + '</span></p>' +
+            savingsBanner +
+            giftHTML +
+            '<p class="cart-summary-hint">Безкоштовна доставка по Україні.</p>' +
           '</div>';
 
         footerEl.innerHTML =
@@ -4138,6 +4361,10 @@
 
       backBtn.addEventListener('click', function () { window.OPTIX_sheetClose(sheet); });
 
+      window.OPTIX_cartRefresh = function () {
+        if (sheet && sheet.classList && sheet.classList.contains('is-open')) render();
+      };
+
       footerEl.addEventListener('click', function (e) {
         var btn = e.target.closest('[data-tg-checkout]');
         if (!btn) return;
@@ -4149,7 +4376,9 @@
           return sum + (parsePrice(it.product.price) || 0) * it.qty;
         }, 0);
         var cut = appliedPromo ? promoDiscountForEntries(appliedPromo, entries) : 0;
-        window.OPTIX_openTgChat(buildOrderMessage(entries, totalSum - cut, appliedPromo, cut));
+        var mCut = multipairDiscount(entries);
+        var mTier = currentTier(eligiblePairs(entries));
+        window.OPTIX_openTgChat(buildOrderMessage(entries, totalSum - cut - mCut, appliedPromo, cut, mCut, mTier));
       });
 
       bodyEl.addEventListener('click', function (e) {
@@ -4164,7 +4393,10 @@
             return { product: findProduct(it.code), qty: it.qty };
           }).filter(function (it) { return it.product; });
           if (!promoMatchesCart(res, curEntries)) {
-            if (msg) { msg.textContent = 'Промокод діє лише на бренд ' + res.brand + ' — у кошику немає таких моделей'; msg.className = 'promo-msg promo-msg--err'; }
+            var why = res.brand
+              ? ('Промокод діє лише на бренд ' + res.brand + ' — у кошику немає таких моделей')
+              : 'Промокод не діє на бренди у вашому кошику';
+            if (msg) { msg.textContent = why; msg.className = 'promo-msg promo-msg--err'; }
             return;
           }
           appliedPromo = res;
@@ -4467,8 +4699,29 @@
 
     /* ===== Home brand chips → open catalog filtered by that brand ===== */
     (function () {
-      var strip = document.querySelector('.brands-strip');
+      var strip = document.getElementById('homeBrandsStrip');
       var allLink = document.getElementById('allBrandsLink');
+
+      function buildChips() {
+        if (!strip) return;
+        var prods = window.OPTIX_PRODUCTS || [];
+        var info = {}; var order = [];
+        prods.forEach(function (p) {
+          var b = (p.brand || '').trim();
+          if (!b) return;
+          if (!info[b]) { info[b] = { sale: false, isNew: false }; order.push(b); }
+          if (p.oldPrice) info[b].sale = true;
+          if (p.isNew) info[b].isNew = true;
+        });
+        if (!order.length) { strip.innerHTML = ''; return; }
+        strip.innerHTML = order.map(function (b) {
+          var tag = info[b].sale
+            ? '<span class="brand-chip-tag brand-chip-tag--sale">Sale</span>'
+            : (info[b].isNew ? '<span class="brand-chip-tag brand-chip-tag--new">New</span>' : '');
+          return '<a href="#catalog" class="brand-chip" data-brand="' + b.replace(/"/g,'&quot;') + '">' +
+            '<span class="brand-chip-name">' + b + '</span>' + tag + '</a>';
+        }).join('');
+      }
 
       function openBrand(brandName) {
         if (window.OPTIX_showView) window.OPTIX_showView('catalog');
@@ -4484,13 +4737,15 @@
           openBrand(chip.dataset.brand);
         });
       }
-
       if (allLink) {
         allLink.addEventListener('click', function (e) {
           e.preventDefault();
           openBrand('all');
         });
       }
+
+      buildChips();
+      window.OPTIX_homeBrandsRefresh = buildChips;
     })();
   </script>
 </body>
