@@ -1365,34 +1365,119 @@
       -webkit-backdrop-filter: none;
     }
 
-    .catalog-shape-strip {
+    .catalog-filters-toggle {
       display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      padding: 4px 20px 10px;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
-    .catalog-shape-strip::-webkit-scrollbar { display: none; }
-
-    .catalog-shape {
-      flex-shrink: 0;
+      align-items: center;
+      gap: 6px;
+      margin: 0 20px 4px;
+      padding: 8px 0;
+      background: none;
+      border: none;
+      cursor: pointer;
       font-family: var(--font-ui);
       font-size: 12px;
       letter-spacing: 0.08em;
+      text-transform: uppercase;
       color: var(--fg);
-      opacity: 0.55;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      padding: 4px 2px;
-      white-space: nowrap;
-      transition: opacity 0.2s ease;
+      opacity: 0.6;
       -webkit-tap-highlight-color: transparent;
     }
-    .catalog-shape--active {
-      opacity: 1;
-      border-bottom: 1px solid var(--fg);
+    .catalog-filters-toggle svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: transform 0.25s ease;
+    }
+    .catalog-filters-toggle.is-open { opacity: 1; }
+    .catalog-filters-toggle.is-open svg { transform: rotate(180deg); }
+
+    .catalog-advanced {
+      padding: 6px 20px 14px;
+      animation: filterDrop 0.25s ease;
+    }
+    .catalog-advanced[hidden] { display: none; }
+    @keyframes filterDrop {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .price-filter-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 14px;
+    }
+    .price-filter-head > span:first-child {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--fg);
+      opacity: 0.6;
+    }
+    .price-filter-value {
+      font-family: var(--font-ui);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--fg);
+    }
+
+    .price-slider {
+      position: relative;
+      height: 28px;
+    }
+    .price-slider-track {
+      position: absolute;
+      top: 12px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      border-radius: 999px;
+      background: rgba(27, 45, 64, 0.15);
+    }
+    .price-slider-range {
+      position: absolute;
+      top: 12px;
+      height: 3px;
+      border-radius: 999px;
+      background: var(--fg);
+    }
+    .price-input {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 28px;
+      margin: 0;
+      background: none;
+      pointer-events: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .price-input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      pointer-events: auto;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1.5px solid var(--fg);
+      box-shadow: 0 1px 4px rgba(27, 45, 64, 0.2);
+      cursor: pointer;
+    }
+    .price-input::-moz-range-thumb {
+      pointer-events: auto;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1.5px solid var(--fg);
+      cursor: pointer;
     }
 
     .catalog-toggle-row {
@@ -2481,16 +2566,6 @@
         <button type="button" class="catalog-filter catalog-filter--active" data-brand="all">Усі</button>
       </div>
 
-      <div class="catalog-shape-strip" id="catalogShapes">
-        <button type="button" class="catalog-shape catalog-shape--active" data-shape="all">Усі форми</button>
-        <button type="button" class="catalog-shape" data-shape="aviator">Авіатори</button>
-        <button type="button" class="catalog-shape" data-shape="rectangular">Прямокутні</button>
-        <button type="button" class="catalog-shape" data-shape="cat-eye">Кет-ай</button>
-        <button type="button" class="catalog-shape" data-shape="round">Круглі</button>
-        <button type="button" class="catalog-shape" data-shape="oval">Овальні</button>
-        <button type="button" class="catalog-shape" data-shape="geometric">Геометричні</button>
-      </div>
-
       <div class="catalog-toggle-row">
         <label class="catalog-toggle">
           <input type="checkbox" class="catalog-toggle-input" id="catalogSaleToggle" />
@@ -2498,6 +2573,25 @@
           <span>Тільки знижки</span>
         </label>
         <button type="button" class="catalog-sort-btn" id="catalogSortBtn">Сортування: за замовч. ↓</button>
+      </div>
+
+      <button type="button" class="catalog-filters-toggle" id="catalogFiltersToggle">
+        <span>Фільтри</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="catalog-advanced" id="catalogAdvanced" hidden>
+        <div class="price-filter">
+          <div class="price-filter-head">
+            <span>Ціна</span>
+            <span class="price-filter-value" id="priceValue">€0 – €0</span>
+          </div>
+          <div class="price-slider" id="priceSlider">
+            <div class="price-slider-track"></div>
+            <div class="price-slider-range" id="priceRange"></div>
+            <input type="range" class="price-input price-input--min" id="priceMin" min="0" max="100" value="0" />
+            <input type="range" class="price-input price-input--max" id="priceMax" min="0" max="100" value="100" />
+          </div>
+        </div>
       </div>
     </div>
 
@@ -3314,18 +3408,25 @@
       var grid        = document.getElementById('productsGrid');
       var count       = document.getElementById('catalogCount');
       var brandStrip  = document.getElementById('catalogFilters');
-      var shapeStrip  = document.getElementById('catalogShapes');
       var saleToggle  = document.getElementById('catalogSaleToggle');
       var sortBtn     = document.getElementById('catalogSortBtn');
+      var filtersToggle = document.getElementById('catalogFiltersToggle');
+      var advancedPanel = document.getElementById('catalogAdvanced');
+      var priceMinEl  = document.getElementById('priceMin');
+      var priceMaxEl  = document.getElementById('priceMax');
+      var priceRangeEl = document.getElementById('priceRange');
+      var priceValueEl = document.getElementById('priceValue');
 
       if (!grid || !count || !brandStrip) return;
 
       var state = {
         brand: 'all',
-        shape: 'all',
         saleOnly: false,
+        priceMin: null,    /* active lower bound, € */
+        priceMax: null,    /* active upper bound, € */
         sort: 'default' /* default | price-asc | price-desc | new */
       };
+      var priceBounds = { min: 0, max: 0 }; /* full range derived from products */
 
       /* Build brand filter buttons from the brands that actually exist in
          the catalog. Brands appear only when there is a product for them. */
@@ -3369,8 +3470,13 @@
         if (state.brand !== 'all') {
           result = result.filter(function (p) { return p.brand === state.brand; });
         }
-        if (state.shape !== 'all') {
-          result = result.filter(function (p) { return p.shape === state.shape; });
+        if (state.priceMin != null || state.priceMax != null) {
+          result = result.filter(function (p) {
+            var pr = parsePrice(p.price) || 0;
+            if (state.priceMin != null && pr < state.priceMin) return false;
+            if (state.priceMax != null && pr > state.priceMax) return false;
+            return true;
+          });
         }
         if (state.saleOnly) {
           result = result.filter(function (p) { return !!p.oldPrice; });
@@ -3385,8 +3491,38 @@
         return result;
       }
 
+      /* Compute the min/max price across all products and configure sliders */
+      function syncPriceBounds() {
+        if (!priceMinEl || !priceMaxEl) return;
+        var prices = PRODUCTS.map(function (p) { return parsePrice(p.price) || 0; }).filter(function (n) { return n > 0; });
+        if (!prices.length) { priceBounds = { min: 0, max: 0 }; return; }
+        var lo = Math.floor(Math.min.apply(null, prices));
+        var hi = Math.ceil(Math.max.apply(null, prices));
+        if (lo === hi) hi = lo + 1;
+        priceBounds = { min: lo, max: hi };
+        priceMinEl.min = priceMaxEl.min = lo;
+        priceMinEl.max = priceMaxEl.max = hi;
+        /* keep current selection within bounds, default to full range */
+        if (state.priceMin == null || state.priceMin < lo) { state.priceMin = lo; }
+        if (state.priceMax == null || state.priceMax > hi) { state.priceMax = hi; }
+        priceMinEl.value = state.priceMin;
+        priceMaxEl.value = state.priceMax;
+        paintPrice();
+      }
+
+      function paintPrice() {
+        if (!priceRangeEl) return;
+        var lo = priceBounds.min, hi = priceBounds.max, span = (hi - lo) || 1;
+        var a = (state.priceMin - lo) / span * 100;
+        var b = (state.priceMax - lo) / span * 100;
+        priceRangeEl.style.left = a + '%';
+        priceRangeEl.style.width = (b - a) + '%';
+        if (priceValueEl) priceValueEl.textContent = '€' + state.priceMin + ' – €' + state.priceMax;
+      }
+
       function render() {
         buildBrandFilters();
+        syncPriceBounds();
         var products = applyFilters();
 
         count.textContent = products.length + ' ' + pluralize(products.length) + ' в наявності';
@@ -3470,16 +3606,40 @@
         render();
       };
 
-      /* Shape strip clicks */
-      if (shapeStrip) {
-        shapeStrip.addEventListener('click', function (e) {
-          var btn = e.target.closest('.catalog-shape');
-          if (!btn) return;
-          state.shape = btn.dataset.shape;
-          shapeStrip.querySelectorAll('.catalog-shape').forEach(function (b) {
-            b.classList.toggle('catalog-shape--active', b === btn);
-          });
-          render();
+      /* Collapsible filters panel */
+      if (filtersToggle && advancedPanel) {
+        filtersToggle.addEventListener('click', function () {
+          var open = advancedPanel.hasAttribute('hidden');
+          if (open) { advancedPanel.removeAttribute('hidden'); }
+          else { advancedPanel.setAttribute('hidden', ''); }
+          filtersToggle.classList.toggle('is-open', open);
+        });
+      }
+
+      /* Price slider — keep the two handles from crossing */
+      function onPriceInput() {
+        var lo = parseInt(priceMinEl.value, 10);
+        var hi = parseInt(priceMaxEl.value, 10);
+        if (lo > hi) { var t = lo; lo = hi; hi = t; }
+        state.priceMin = lo;
+        state.priceMax = hi;
+        paintPrice();
+        render();
+      }
+      if (priceMinEl && priceMaxEl) {
+        priceMinEl.addEventListener('input', function () {
+          if (parseInt(priceMinEl.value, 10) > parseInt(priceMaxEl.value, 10)) {
+            priceMinEl.value = priceMaxEl.value;
+          }
+          state.priceMin = parseInt(priceMinEl.value, 10);
+          paintPrice(); render();
+        });
+        priceMaxEl.addEventListener('input', function () {
+          if (parseInt(priceMaxEl.value, 10) < parseInt(priceMinEl.value, 10)) {
+            priceMaxEl.value = priceMinEl.value;
+          }
+          state.priceMax = parseInt(priceMaxEl.value, 10);
+          paintPrice(); render();
         });
       }
 
