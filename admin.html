@@ -58,26 +58,30 @@
   }
   .add-btn .plus { font-size:18px; line-height:1; }
 
-  /* product row */
-  .prod { display:flex; gap:12px; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:10px; margin-bottom:10px; align-items:center; }
-  .prod-img { width:56px; height:56px; border-radius:10px; background:var(--gold-soft); flex-shrink:0; object-fit:cover; display:flex; align-items:center; justify-content:center; overflow:hidden; }
-  .prod-img img { width:100%; height:100%; object-fit:cover; }
-  .prod-img svg { width:28px; stroke:var(--gold); fill:none; stroke-width:1.2; }
-  .prod-info { flex:1; min-width:0; }
-  .prod-brand { font-family:var(--display); font-size:18px; font-weight:500; line-height:1.1; }
-  .prod-code { font-size:11px; color:var(--fg-soft); margin:2px 0 4px; }
-  .prod-price { font-size:13px; font-weight:600; }
-  .prod-price .old { font-size:11px; color:var(--fg-soft); text-decoration:line-through; margin-left:6px; font-weight:400; }
-  .prod-tags { display:flex; gap:5px; margin-top:5px; }
+  /* product grid */
+  .prod-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .pcard { background:var(--surface); border:1px solid var(--line); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; }
+  .pcard.is-hidden { opacity:.6; }
+  .pcard-img { position:relative; aspect-ratio:1; background:#fff; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .pcard-img img { width:100%; height:100%; object-fit:contain; }
+  .pcard-img svg { width:40px; stroke:var(--gold); fill:none; stroke-width:1.2; }
+  .pcard-tags { position:absolute; top:7px; left:7px; display:flex; gap:4px; }
   .ptag { font-size:8.5px; font-weight:700; letter-spacing:.06em; padding:2px 6px; border-radius:5px; text-transform:uppercase; }
   .ptag.sale { background:var(--gold); color:#fff; }
   .ptag.new { background:var(--red); color:#fff; }
-  .prod-actions { display:flex; flex-direction:column; align-items:center; gap:8px; flex-shrink:0; }
-  .prod-toggle { width:40px; height:24px; border-radius:999px; background:var(--green); position:relative; cursor:pointer; transition:background .15s; }
-  .prod-toggle::after { content:''; position:absolute; top:2px; right:2px; width:20px; height:20px; background:#fff; border-radius:50%; transition:.15s; }
-  .prod-toggle.off { background:var(--line); }
-  .prod-toggle.off::after { right:auto; left:2px; }
-  .prod-del { background:none; border:none; color:var(--fg-soft); font-size:18px; cursor:pointer; line-height:1; padding:2px; }
+  .pcard-hidden-badge { position:absolute; bottom:7px; left:7px; font-size:9px; font-weight:600; background:rgba(27,45,64,.8); color:#fff; padding:2px 7px; border-radius:5px; }
+  .pcard-body { padding:9px 11px 4px; flex:1; }
+  .pcard-brand { font-family:var(--display); font-size:17px; font-weight:500; line-height:1.1; }
+  .pcard-code { font-size:10.5px; color:var(--fg-soft); margin:2px 0 4px; }
+  .pcard-price { font-size:13px; font-weight:600; }
+  .pcard-price .old { font-size:10.5px; color:var(--fg-soft); text-decoration:line-through; margin-left:5px; font-weight:400; }
+  .pcard-actions { display:flex; align-items:center; gap:8px; padding:8px 11px 11px; }
+  .pcard-btn { flex:1; background:var(--accent); color:var(--bg); border:none; border-radius:9px; padding:8px; font-size:11px; font-weight:600; cursor:pointer; font-family:var(--ui); }
+  .pcard-toggle { width:34px; height:20px; border-radius:999px; background:var(--green); position:relative; cursor:pointer; flex-shrink:0; transition:background .15s; }
+  .pcard-toggle::after { content:''; position:absolute; top:2px; right:2px; width:16px; height:16px; background:#fff; border-radius:50%; transition:.15s; }
+  .pcard-toggle.off { background:var(--line); }
+  .pcard-toggle.off::after { right:auto; left:2px; }
+  .pcard-del { background:none; border:none; color:var(--fg-soft); font-size:15px; cursor:pointer; line-height:1; padding:2px; flex-shrink:0; }
 
   /* form */
   .field { margin-bottom:15px; }
@@ -209,7 +213,7 @@
       <div class="photo-zone" id="photoZone">
         <div class="photo-zone-icon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div>
         <div class="photo-zone-text">Відкрити плівку та вибрати фото</div>
-        <div class="photo-zone-sub">Познач кілька одразу — завантажаться разом</div>
+        <div class="photo-zone-sub" id="photoHint">Познач кілька одразу — завантажаться разом</div>
       </div>
       <input type="file" id="photoInput" accept="image/*" multiple hidden />
       <div class="photo-thumbs" id="photoThumbs"></div>
@@ -409,10 +413,13 @@
   function loadProducts() {
     var list = document.getElementById('productList');
     list.innerHTML = '<div class="loading">Завантаження…</div>';
-    sanityQuery('*[_type=="product"]|order(_createdAt desc){_id,brand,code,price,discount,isNew,visible,"img":images[0].asset->url}').then(function(rows){
+    sanityQuery('*[_type=="product"]|order(_createdAt desc){_id,brand,code,model,price,discount,isNew,visible,description,"img":images[0].asset->url}').then(function(rows){
       document.getElementById('countBadge').textContent = (rows ? rows.length : 0) + ' товарів';
       if (!rows || !rows.length) { list.innerHTML = '<div class="empty">Поки немає товарів.<br>Натисни «+ Додати товар».</div>'; return; }
+      PRODUCTS_CACHE = {};
+      list.className = 'prod-grid';
       list.innerHTML = rows.map(function(p){
+        PRODUCTS_CACHE[p._id] = p;
         var d = parseInt(p.discount, 10) || 0;
         var now = (d > 0) ? Math.round(p.price * (1 - d/100)) : p.price;
         var priceHtml = (d > 0)
@@ -421,25 +428,30 @@
         var tags = '';
         if (d > 0) tags += '<span class="ptag sale">−' + d + '%</span>';
         if (p.isNew) tags += '<span class="ptag new">New</span>';
-        var img = p.img ? '<img src="' + p.img + '?w=120&h=120&fit=crop">' : '<svg viewBox="0 0 24 24"><circle cx="7.5" cy="13.5" r="4"/><circle cx="16.5" cy="13.5" r="4"/><path d="M11.5 13.5h1"/></svg>';
-        return '<div class="prod" data-id="' + p._id + '">' +
-          '<div class="prod-img">' + img + '</div>' +
-          '<div class="prod-info">' +
-            '<div class="prod-brand">' + esc(p.brand) + '</div>' +
-            '<div class="prod-code">' + esc(p.code || '') + '</div>' +
-            '<div class="prod-price">' + priceHtml + '</div>' +
-            (tags ? '<div class="prod-tags">' + tags + '</div>' : '') +
+        var img = p.img ? '<img src="' + p.img + '?w=300&h=300&fit=fill&bg=ffffff">' : '<svg viewBox="0 0 24 24"><circle cx="7.5" cy="13.5" r="4"/><circle cx="16.5" cy="13.5" r="4"/><path d="M11.5 13.5h1"/></svg>';
+        return '<div class="pcard' + (p.visible === false ? ' is-hidden' : '') + '" data-id="' + p._id + '">' +
+          '<div class="pcard-img">' + img +
+            (tags ? '<div class="pcard-tags">' + tags + '</div>' : '') +
+            (p.visible === false ? '<div class="pcard-hidden-badge">Сховано</div>' : '') +
           '</div>' +
-          '<div class="prod-actions">' +
-            '<div class="prod-toggle' + (p.visible === false ? ' off' : '') + '" data-toggle="' + p._id + '"></div>' +
-            '<button class="prod-del" data-del="' + p._id + '">✕</button>' +
+          '<div class="pcard-body">' +
+            '<div class="pcard-brand">' + esc(p.brand) + '</div>' +
+            '<div class="pcard-code">' + esc(p.code || '') + '</div>' +
+            '<div class="pcard-price">' + priceHtml + '</div>' +
+          '</div>' +
+          '<div class="pcard-actions">' +
+            '<button class="pcard-btn" data-edit="' + p._id + '">Редагувати</button>' +
+            '<div class="pcard-toggle' + (p.visible === false ? ' off' : '') + '" data-toggle="' + p._id + '" title="Показ на сайті"></div>' +
+            '<button class="pcard-del" data-del="' + p._id + '" title="Видалити">✕</button>' +
           '</div>' +
         '</div>';
       }).join('');
     }).catch(function(e){
+      list.className = '';
       list.innerHTML = '<div class="empty">Помилка завантаження.<br>Перевір ключ у Налаштуваннях.</div>';
     });
   }
+  var PRODUCTS_CACHE = {};
 
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 
@@ -460,6 +472,11 @@
       if (!confirm('Видалити цей товар?')) return;
       var id = del.dataset.del;
       sanityMutate([{ delete: { id: id } }]).then(function(){ toast('Видалено'); loadProducts(); }).catch(function(){ toast('Помилка'); });
+      return;
+    }
+    var ed = e.target.closest('[data-edit]');
+    if (ed) {
+      openEditProduct(ed.dataset.edit);
     }
   });
 
@@ -467,6 +484,7 @@
   var photos = []; // {assetId, url}
   var discount = '0';
   var isNew = false;
+  var editingId = null;  /* null = creating new; otherwise editing this _id */
 
   /* Brand memory: starter list + brands the user has already used (localStorage),
      and any brands found in the catalog. */
@@ -500,13 +518,44 @@
   document.getElementById('fBrand').addEventListener('input', function(){ renderBrandPicker(); });
 
   function resetProductForm() {
-    photos = []; discount = '0'; isNew = false;
+    photos = []; discount = '0'; isNew = false; editingId = null;
     document.getElementById('photoThumbs').innerHTML = '';
     ['fBrand','fCode','fPrice','fModel','fDesc'].forEach(function(id){ document.getElementById(id).value=''; });
     var ci = document.getElementById('discCustom'); if (ci) ci.value = '';
     document.querySelectorAll('#discRow .disc').forEach(function(d){ d.classList.toggle('on', d.dataset.d === '0'); });
     document.getElementById('fNew').classList.add('off');
     document.getElementById('addTitle').textContent = 'Новий товар';
+    document.getElementById('photoHint').textContent = 'Познач кілька одразу — завантажаться разом';
+    renderBrandPicker();
+  }
+
+  /* Open the form pre-filled to edit an existing product */
+  function openEditProduct(id) {
+    var p = PRODUCTS_CACHE[id];
+    if (!p) return;
+    show('add');              /* resets the form first */
+    editingId = id;
+    document.getElementById('addTitle').textContent = 'Редагувати товар';
+    document.getElementById('fBrand').value = p.brand || '';
+    document.getElementById('fCode').value = p.code || '';
+    document.getElementById('fPrice').value = p.price != null ? p.price : '';
+    document.getElementById('fModel').value = p.model || '';
+    document.getElementById('fDesc').value = p.description || '';
+    /* discount */
+    var d = parseInt(p.discount, 10) || 0;
+    discount = String(d);
+    var chip = [0,10,15,20,25].indexOf(d) > -1;
+    document.querySelectorAll('#discRow .disc').forEach(function(x){ x.classList.toggle('on', chip && x.dataset.d === String(d)); });
+    var ci = document.getElementById('discCustom'); if (ci) ci.value = (d > 0 && !chip) ? d : '';
+    /* new flag */
+    isNew = !!p.isNew;
+    document.getElementById('fNew').classList.toggle('off', !isNew);
+    /* photos: show existing main photo as a non-removable hint; new uploads replace */
+    photos = [];
+    document.getElementById('photoThumbs').innerHTML = p.img
+      ? '<div class="pthumb main"><img src="' + p.img + '?w=200&h=200&fit=fill&bg=ffffff"></div>'
+      : '';
+    document.getElementById('photoHint').textContent = 'Поточне фото збережеться. Завантаж нові — замінять усі.';
     renderBrandPicker();
   }
 
@@ -566,20 +615,37 @@
     rememberBrand(brand);
 
     var btn = this; btn.disabled = true; btn.textContent = 'Збереження…';
-    var doc = {
-      _type: 'product',
-      brand: brand, code: code, price: price,
-      discount: discount, isNew: isNew, visible: true,
-      images: photos.map(function(p){ return { _type:'image', _key:key(), asset:{ _type:'reference', _ref:p.assetId } }; })
-    };
     var model = document.getElementById('fModel').value.trim();
     var desc = document.getElementById('fDesc').value.trim();
-    if (model) doc.model = model;
-    if (desc) doc.description = desc;
-    if (isNew) { doc.newSince = new Date().toISOString().slice(0,10); doc.newDuration = '28'; }
+    var imgs = photos.map(function(p){ return { _type:'image', _key:key(), asset:{ _type:'reference', _ref:p.assetId } }; });
 
-    sanityMutate([{ create: doc }]).then(function(){
-      toast('Товар додано ✓'); btn.disabled=false; btn.textContent='Зберегти товар'; show('products');
+    var mutation;
+    if (editingId) {
+      /* EDIT: patch existing fields */
+      var setFields = {
+        brand: brand, code: code, price: price, discount: discount, isNew: isNew,
+        model: model || '', description: desc || ''
+      };
+      if (photos.length) setFields.images = imgs; /* only replace photos if any present */
+      if (isNew) { setFields.newSince = new Date().toISOString().slice(0,10); setFields.newDuration = '28'; }
+      mutation = [{ patch: { id: editingId, set: setFields } }];
+    } else {
+      /* CREATE */
+      var doc = {
+        _type: 'product', brand: brand, code: code, price: price,
+        discount: discount, isNew: isNew, visible: true, images: imgs
+      };
+      if (model) doc.model = model;
+      if (desc) doc.description = desc;
+      if (isNew) { doc.newSince = new Date().toISOString().slice(0,10); doc.newDuration = '28'; }
+      mutation = [{ create: doc }];
+    }
+
+    sanityMutate(mutation).then(function(){
+      toast(editingId ? 'Збережено ✓' : 'Товар додано ✓');
+      btn.disabled=false; btn.textContent='Зберегти товар';
+      editingId = null;
+      show('products');
     }).catch(function(err){
       btn.disabled=false; btn.textContent='Зберегти товар';
       toast('Помилка збереження');
