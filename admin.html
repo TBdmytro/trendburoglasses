@@ -109,6 +109,19 @@
   .disc-row { display:flex; gap:7px; }
   .disc { flex:1; text-align:center; padding:11px 4px; border-radius:10px; border:1px solid var(--line); background:var(--surface); font-size:13px; font-weight:600; cursor:pointer; }
   .disc.on { background:var(--accent); color:var(--bg); border-color:var(--accent); }
+  .disc-custom-row { display:flex; align-items:center; gap:8px; margin-top:10px; }
+  .disc-custom-label { font-size:12px; color:var(--fg-soft); flex-shrink:0; }
+  .disc-custom-input { flex:1; max-width:120px; }
+  .disc-custom-pct { font-size:14px; color:var(--fg-soft); }
+  .brand-picker { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:10px; }
+  .brand-picker:empty { display:none; }
+  .brand-chip-pick {
+    padding:8px 14px; border-radius:999px; border:1px solid var(--line);
+    background:var(--surface); font-size:13px; font-weight:500; color:var(--fg);
+    cursor:pointer; font-family:var(--ui);
+  }
+  .brand-chip-pick.on { background:var(--accent); color:var(--bg); border-color:var(--accent); }
+  .settings-divider { font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--fg-soft); margin:22px 0 12px; padding-top:18px; border-top:1px solid var(--line); }
 
   /* inline toggle field */
   .toggle-field { display:flex; align-items:center; justify-content:space-between; background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:12px 14px; margin-bottom:15px; }
@@ -204,7 +217,8 @@
 
     <div class="field">
       <label class="field-label">Бренд</label>
-      <input class="input" id="fBrand" placeholder="Gucci" />
+      <div class="brand-picker" id="brandPicker"></div>
+      <input class="input" id="fBrand" placeholder="Або введи новий бренд" autocomplete="off" />
     </div>
     <div class="row2">
       <div class="field"><label class="field-label">Код</label><input class="input" id="fCode" placeholder="GG 1593S" /></div>
@@ -219,6 +233,11 @@
         <div class="disc" data-d="15">−15%</div>
         <div class="disc" data-d="20">−20%</div>
         <div class="disc" data-d="25">−25%</div>
+      </div>
+      <div class="disc-custom-row">
+        <span class="disc-custom-label">Або своя:</span>
+        <input class="input disc-custom-input" id="discCustom" inputmode="numeric" placeholder="напр. 12" />
+        <span class="disc-custom-pct">%</span>
       </div>
     </div>
 
@@ -278,9 +297,18 @@
   <!-- SETTINGS -->
   <div class="screen" data-screen="settings" hidden>
     <h1 class="screen-title">Налаштування</h1>
-    <p class="screen-sub">Контакт менеджера та доставка</p>
+    <p class="screen-sub">Контакт, доставка та знижки за пари</p>
     <div class="field"><label class="field-label">Telegram менеджера (без @)</label><input class="input" id="sTg" placeholder="trendburomanager" /></div>
     <div class="field"><label class="field-label">Термін доставки</label><input class="input" id="sDelivery" placeholder="5-10 днів" /></div>
+
+    <div class="settings-divider">Знижка за кілька пар</div>
+    <p class="screen-sub" style="margin-top:-4px">Діє на всі бренди, крім Cartier і Chanel. Залиш 0 щоб вимкнути.</p>
+    <div class="row2">
+      <div class="field"><label class="field-label">За 2 пари, %</label><input class="input" id="sPair2" inputmode="numeric" placeholder="5" /></div>
+      <div class="field"><label class="field-label">За 3+ пари, %</label><input class="input" id="sPair3" inputmode="numeric" placeholder="8" /></div>
+    </div>
+    <div class="field"><label class="field-label">Подарунок для Cartier/Chanel</label><input class="input" id="sGift" placeholder="фірмовий кейс у подарунок" /></div>
+
     <button class="add-btn" id="saveSettings" style="background:var(--green)">Зберегти</button>
     <button class="add-btn" id="logout" style="background:transparent;color:var(--red);border:1px solid var(--line)">Вийти (стерти ключ)</button>
   </div>
@@ -440,13 +468,46 @@
   var discount = '0';
   var isNew = false;
 
+  /* Brand memory: starter list + brands the user has already used (localStorage),
+     and any brands found in the catalog. */
+  var BRAND_BASE = ['Gucci','Prada','Miu Miu','Cartier','Chanel','Versace','Dior','Saint Laurent'];
+  var BRAND_KEY = 'tb_brands';
+  function savedBrands() {
+    try { return JSON.parse(localStorage.getItem(BRAND_KEY) || '[]'); } catch(e){ return []; }
+  }
+  function rememberBrand(b) {
+    if (!b) return;
+    var list = savedBrands();
+    if (list.indexOf(b) === -1) { list.push(b); try { localStorage.setItem(BRAND_KEY, JSON.stringify(list)); } catch(e){} }
+  }
+  function allBrands() {
+    var set = {}; var out = [];
+    BRAND_BASE.concat(savedBrands()).forEach(function(b){ if(b && !set[b]){set[b]=1;out.push(b);} });
+    return out;
+  }
+  function renderBrandPicker() {
+    var el = document.getElementById('brandPicker'); if(!el) return;
+    var cur = (document.getElementById('fBrand').value || '').trim();
+    el.innerHTML = allBrands().map(function(b){
+      return '<button type="button" class="brand-chip-pick' + (b===cur?' on':'') + '" data-brand="' + b.replace(/"/g,'&quot;') + '">' + b + '</button>';
+    }).join('');
+  }
+  document.getElementById('brandPicker').addEventListener('click', function(e){
+    var c = e.target.closest('.brand-chip-pick'); if(!c) return;
+    document.getElementById('fBrand').value = c.dataset.brand;
+    renderBrandPicker();
+  });
+  document.getElementById('fBrand').addEventListener('input', function(){ renderBrandPicker(); });
+
   function resetProductForm() {
     photos = []; discount = '0'; isNew = false;
     document.getElementById('photoThumbs').innerHTML = '';
     ['fBrand','fCode','fPrice','fModel','fDesc'].forEach(function(id){ document.getElementById(id).value=''; });
+    var ci = document.getElementById('discCustom'); if (ci) ci.value = '';
     document.querySelectorAll('#discRow .disc').forEach(function(d){ d.classList.toggle('on', d.dataset.d === '0'); });
     document.getElementById('fNew').classList.add('off');
     document.getElementById('addTitle').textContent = 'Новий товар';
+    renderBrandPicker();
   }
 
   document.getElementById('photoZone').addEventListener('click', function(){ document.getElementById('photoInput').click(); });
@@ -480,6 +541,19 @@
     var d = e.target.closest('.disc'); if(!d) return;
     discount = d.dataset.d;
     document.querySelectorAll('#discRow .disc').forEach(function(x){ x.classList.toggle('on', x===d); });
+    var ci = document.getElementById('discCustom'); if (ci) ci.value = '';
+  });
+  document.getElementById('discCustom').addEventListener('input', function(){
+    var v = parseInt(this.value, 10);
+    if (this.value.trim() === '' || isNaN(v)) {
+      /* empty → fall back to "Без" chip */
+      discount = '0';
+      document.querySelectorAll('#discRow .disc').forEach(function(x){ x.classList.toggle('on', x.dataset.d === '0'); });
+      return;
+    }
+    if (v < 0) v = 0; if (v > 95) v = 95;
+    discount = String(v);
+    document.querySelectorAll('#discRow .disc').forEach(function(x){ x.classList.remove('on'); });
   });
   document.getElementById('fNew').addEventListener('click', function(){ this.classList.toggle('off'); isNew = !this.classList.contains('off'); });
 
@@ -489,6 +563,7 @@
     var price = parseFloat(document.getElementById('fPrice').value);
     if (!brand || !code || !price) { toast('Заповни бренд, код і ціну'); return; }
     if (photos.some(function(p){ return !p.assetId; })) { toast('Зачекай, фото ще вантажаться'); return; }
+    rememberBrand(brand);
 
     var btn = this; btn.disabled = true; btn.textContent = 'Збереження…';
     var doc = {
@@ -563,16 +638,27 @@
   /* ---------- settings ---------- */
   var settingsId = null;
   function loadSettings() {
-    sanityQuery('*[_type=="settings"][0]{_id,tgUsername,deliveryTime}').then(function(s){
-      if (s) { settingsId=s._id; document.getElementById('sTg').value=s.tgUsername||''; document.getElementById('sDelivery').value=s.deliveryTime||''; }
+    sanityQuery('*[_type=="settings"][0]{_id,tgUsername,deliveryTime,pair2Discount,pair3Discount,giftBrandsNote}').then(function(s){
+      if (s) {
+        settingsId=s._id;
+        document.getElementById('sTg').value=s.tgUsername||'';
+        document.getElementById('sDelivery').value=s.deliveryTime||'';
+        document.getElementById('sPair2').value=(s.pair2Discount!=null?s.pair2Discount:'');
+        document.getElementById('sPair3').value=(s.pair3Discount!=null?s.pair3Discount:'');
+        document.getElementById('sGift').value=s.giftBrandsNote||'';
+      }
     }).catch(function(){});
   }
   document.getElementById('saveSettings').addEventListener('click', function(){
     var tg = document.getElementById('sTg').value.trim().replace(/^@/,'');
     var dl = document.getElementById('sDelivery').value.trim();
+    var p2 = parseFloat(document.getElementById('sPair2').value) || 0;
+    var p3 = parseFloat(document.getElementById('sPair3').value) || 0;
+    var gift = document.getElementById('sGift').value.trim();
+    var data = { tgUsername:tg, deliveryTime:dl, pair2Discount:p2, pair3Discount:p3, giftBrandsNote:gift };
     var mut = settingsId
-      ? [{ patch:{ id:settingsId, set:{ tgUsername:tg, deliveryTime:dl } } }]
-      : [{ create:{ _type:'settings', tgUsername:tg, deliveryTime:dl } }];
+      ? [{ patch:{ id:settingsId, set:data } }]
+      : [{ create:Object.assign({ _type:'settings' }, data) }];
     sanityMutate(mut).then(function(){ toast('Збережено ✓'); loadSettings(); }).catch(function(){ toast('Помилка'); });
   });
   document.getElementById('logout').addEventListener('click', function(){
