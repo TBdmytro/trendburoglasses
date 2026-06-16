@@ -1135,6 +1135,23 @@
     .product-card-badge--sale { background: #c8985f; }
     .product-card-badge--new  { background: #c2483a; }
 
+    /* stacked badges (used in New rail where both can appear) */
+    .product-card-badges {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 5px;
+      z-index: 2;
+    }
+    .product-card-badges .product-card-badge {
+      position: static;
+      top: auto;
+      right: auto;
+    }
+
     .product-card-info {
       padding: 11px 12px 14px;
     }
@@ -4707,13 +4724,23 @@
       function render() {
         var items = PRODUCTS.filter(function (p) { return p.isNew; });
         var wishlist = (window.OPTIX_wishlistGet && window.OPTIX_wishlistGet()) || [];
+        var parsePrice = window.OPTIX_parsePrice;
 
         strip.innerHTML = items.map(function (p) {
           var slug = p.code.replace(/\s+/g, '-').toLowerCase();
           var inWish = wishlist.indexOf(p.code) !== -1;
           var heartClass = 'product-card-heart' + (inWish ? ' is-active' : '');
-          var stockTag = '';
           var cardClass = 'product-card';
+
+          /* Both badges: New always (this is the New rail) + discount if any */
+          var badges = '<span class="product-card-badge product-card-badge--new">New</span>';
+          if (p.oldPrice) {
+            var cur = parsePrice(p.price), old = parsePrice(p.oldPrice);
+            if (cur && old && old > cur) {
+              var pct = Math.round((1 - cur / old) * 100);
+              badges += '<span class="product-card-badge product-card-badge--sale">−' + pct + '%</span>';
+            }
+          }
 
           return '' +
             '<a href="#product-' + esc(slug) + '" class="' + cardClass + '" data-code="' + esc(p.code) + '">' +
@@ -4724,7 +4751,7 @@
                   '</svg>' +
                 '</button>' +
                 window.OPTIX_productImage(p) +
-                stockTag +
+                '<div class="product-card-badges">' + badges + '</div>' +
               '</div>' +
               '<div class="product-card-info">' +
                 '<p class="product-card-brand">' + esc(p.brand) + '</p>' +
