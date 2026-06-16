@@ -59,6 +59,13 @@
   .add-btn .plus { font-size:18px; line-height:1; }
 
   /* product grid */
+  .prod-search { margin-bottom:12px; }
+  .prod-brandbar { display:flex; gap:7px; overflow-x:auto; padding-bottom:10px; margin-bottom:14px; scrollbar-width:none; }
+  .prod-brandbar::-webkit-scrollbar { display:none; }
+  .prod-bchip { flex-shrink:0; padding:7px 13px; border-radius:999px; border:1px solid var(--line); background:var(--surface); font-size:12.5px; font-weight:500; color:var(--fg); cursor:pointer; font-family:var(--ui); white-space:nowrap; }
+  .prod-bchip.on { background:var(--accent); color:var(--bg); border-color:var(--accent); }
+  .prod-bchip-n { opacity:.5; font-size:11px; margin-left:2px; }
+  .prod-bchip.on .prod-bchip-n { opacity:.7; }
   .prod-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .pcard { background:var(--surface); border:1px solid var(--line); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; }
   .pcard.is-hidden { opacity:.6; }
@@ -198,8 +205,10 @@
   <!-- PRODUCTS -->
   <div class="screen" data-screen="products">
     <h1 class="screen-title">Товари</h1>
-    <p class="screen-sub">Керуй каталогом — додавай, ховай, видаляй</p>
+    <p class="screen-sub">Керуй каталогом — додавай, ховай, редагуй</p>
     <button class="add-btn" data-go="add"><span class="plus">+</span> Додати товар</button>
+    <input class="input prod-search" id="prodSearch" placeholder="Пошук за брендом або кодом…" autocomplete="off" />
+    <div class="prod-brandbar" id="prodBrandbar"></div>
     <div id="productList"><div class="loading">Завантаження…</div></div>
   </div>
 
@@ -410,48 +419,85 @@
   });
 
   /* ---------- products ---------- */
+  var ALL_PRODUCTS = [];      /* full fetched list */
+  var prodFilterBrand = 'all';
+  var prodSearchQuery = '';
+
   function loadProducts() {
     var list = document.getElementById('productList');
+    list.className = '';
     list.innerHTML = '<div class="loading">Завантаження…</div>';
     sanityQuery('*[_type=="product"]|order(_createdAt desc){_id,brand,code,model,price,discount,isNew,visible,description,"img":images[0].asset->url}').then(function(rows){
-      document.getElementById('countBadge').textContent = (rows ? rows.length : 0) + ' товарів';
-      if (!rows || !rows.length) { list.innerHTML = '<div class="empty">Поки немає товарів.<br>Натисни «+ Додати товар».</div>'; return; }
+      ALL_PRODUCTS = rows || [];
+      document.getElementById('countBadge').textContent = ALL_PRODUCTS.length + ' товарів';
       PRODUCTS_CACHE = {};
-      list.className = 'prod-grid';
-      list.innerHTML = rows.map(function(p){
-        PRODUCTS_CACHE[p._id] = p;
-        var d = parseInt(p.discount, 10) || 0;
-        var now = (d > 0) ? Math.round(p.price * (1 - d/100)) : p.price;
-        var priceHtml = (d > 0)
-          ? '€' + now + ' <span class="old">€' + p.price + '</span>'
-          : '€' + p.price;
-        var tags = '';
-        if (d > 0) tags += '<span class="ptag sale">−' + d + '%</span>';
-        if (p.isNew) tags += '<span class="ptag new">New</span>';
-        var img = p.img ? '<img src="' + p.img + '?w=300&h=300&fit=fill&bg=ffffff">' : '<svg viewBox="0 0 24 24"><circle cx="7.5" cy="13.5" r="4"/><circle cx="16.5" cy="13.5" r="4"/><path d="M11.5 13.5h1"/></svg>';
-        return '<div class="pcard' + (p.visible === false ? ' is-hidden' : '') + '" data-id="' + p._id + '">' +
-          '<div class="pcard-img">' + img +
-            (tags ? '<div class="pcard-tags">' + tags + '</div>' : '') +
-            (p.visible === false ? '<div class="pcard-hidden-badge">Сховано</div>' : '') +
-          '</div>' +
-          '<div class="pcard-body">' +
-            '<div class="pcard-brand">' + esc(p.brand) + '</div>' +
-            '<div class="pcard-code">' + esc(p.code || '') + '</div>' +
-            '<div class="pcard-price">' + priceHtml + '</div>' +
-          '</div>' +
-          '<div class="pcard-actions">' +
-            '<button class="pcard-btn" data-edit="' + p._id + '">Редагувати</button>' +
-            '<div class="pcard-toggle' + (p.visible === false ? ' off' : '') + '" data-toggle="' + p._id + '" title="Показ на сайті"></div>' +
-            '<button class="pcard-del" data-del="' + p._id + '" title="Видалити">✕</button>' +
-          '</div>' +
-        '</div>';
-      }).join('');
+      ALL_PRODUCTS.forEach(function(p){ PRODUCTS_CACHE[p._id] = p; });
+      buildProdBrandbar();
+      renderProductGrid();
     }).catch(function(e){
       list.className = '';
       list.innerHTML = '<div class="empty">Помилка завантаження.<br>Перевір ключ у Налаштуваннях.</div>';
     });
   }
   var PRODUCTS_CACHE = {};
+
+  function buildProdBrandbar() {
+    var bar = document.getElementById('prodBrandbar'); if (!bar) return;
+    var seen = {}, order = [];
+    ALL_PRODUCTS.forEach(function(p){ var b=(p.brand||'').trim(); if(b&&!seen[b]){seen[b]=1;order.push(b);} });
+    order.sort(function(a,b){ return a.localeCompare(b); });
+    if (prodFilterBrand !== 'all' && order.indexOf(prodFilterBrand) === -1) prodFilterBrand = 'all';
+    var html = '<button type="button" class="prod-bchip' + (prodFilterBrand==='all'?' on':'') + '" data-fbrand="all">Усі</button>';
+    order.forEach(function(b){
+      var n = ALL_PRODUCTS.filter(function(p){ return (p.brand||'').trim()===b; }).length;
+      html += '<button type="button" class="prod-bchip' + (prodFilterBrand===b?' on':'') + '" data-fbrand="' + b.replace(/"/g,'&quot;') + '">' + esc(b) + ' <span class="prod-bchip-n">' + n + '</span></button>';
+    });
+    bar.innerHTML = html;
+  }
+
+  function renderProductGrid() {
+    var list = document.getElementById('productList');
+    var q = prodSearchQuery.trim().toLowerCase();
+    var rows = ALL_PRODUCTS.filter(function(p){
+      if (prodFilterBrand !== 'all' && (p.brand||'').trim() !== prodFilterBrand) return false;
+      if (q) {
+        var hay = ((p.brand||'') + ' ' + (p.code||'') + ' ' + (p.model||'')).toLowerCase();
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+    if (!rows.length) {
+      list.className = '';
+      list.innerHTML = '<div class="empty">' + (ALL_PRODUCTS.length ? 'Нічого не знайдено за фільтром.' : 'Поки немає товарів.<br>Натисни «+ Додати товар».') + '</div>';
+      return;
+    }
+    list.className = 'prod-grid';
+    list.innerHTML = rows.map(function(p){
+      var d = parseInt(p.discount, 10) || 0;
+      var now = (d > 0) ? Math.round(p.price * (1 - d/100)) : p.price;
+      var priceHtml = (d > 0) ? '€' + now + ' <span class="old">€' + p.price + '</span>' : '€' + p.price;
+      var tags = '';
+      if (d > 0) tags += '<span class="ptag sale">−' + d + '%</span>';
+      if (p.isNew) tags += '<span class="ptag new">New</span>';
+      var img = p.img ? '<img src="' + p.img + '?w=300&h=300&fit=fill&bg=ffffff">' : '<svg viewBox="0 0 24 24"><circle cx="7.5" cy="13.5" r="4"/><circle cx="16.5" cy="13.5" r="4"/><path d="M11.5 13.5h1"/></svg>';
+      return '<div class="pcard' + (p.visible === false ? ' is-hidden' : '') + '" data-id="' + p._id + '">' +
+        '<div class="pcard-img">' + img +
+          (tags ? '<div class="pcard-tags">' + tags + '</div>' : '') +
+          (p.visible === false ? '<div class="pcard-hidden-badge">Сховано</div>' : '') +
+        '</div>' +
+        '<div class="pcard-body">' +
+          '<div class="pcard-brand">' + esc(p.brand) + '</div>' +
+          '<div class="pcard-code">' + esc(p.code || '') + '</div>' +
+          '<div class="pcard-price">' + priceHtml + '</div>' +
+        '</div>' +
+        '<div class="pcard-actions">' +
+          '<button class="pcard-btn" data-edit="' + p._id + '">Редагувати</button>' +
+          '<div class="pcard-toggle' + (p.visible === false ? ' off' : '') + '" data-toggle="' + p._id + '" title="Показ на сайті"></div>' +
+          '<button class="pcard-del" data-del="' + p._id + '" title="Видалити">✕</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
 
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 
@@ -478,6 +524,19 @@
     if (ed) {
       openEditProduct(ed.dataset.edit);
     }
+  });
+
+  /* brand filter chips */
+  document.getElementById('prodBrandbar').addEventListener('click', function(e){
+    var c = e.target.closest('[data-fbrand]'); if(!c) return;
+    prodFilterBrand = c.dataset.fbrand;
+    document.querySelectorAll('#prodBrandbar .prod-bchip').forEach(function(x){ x.classList.toggle('on', x===c); });
+    renderProductGrid();
+  });
+  /* search */
+  document.getElementById('prodSearch').addEventListener('input', function(){
+    prodSearchQuery = this.value || '';
+    renderProductGrid();
   });
 
   /* ---------- add product ---------- */
