@@ -100,7 +100,34 @@
     .actions {
       display: flex;
       align-items: center;
-      gap: 18px;
+      gap: 14px;
+    }
+
+    .currency-switch {
+      display: inline-flex;
+      border: 1px solid var(--line, rgba(27,45,64,0.15));
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(27, 45, 64, 0.04);
+    }
+    .currency-opt {
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--fg);
+      opacity: 0.5;
+      padding: 5px 9px;
+      line-height: 1;
+      transition: background 0.15s ease, opacity 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .currency-opt.is-active {
+      background: var(--fg);
+      color: var(--bg);
+      opacity: 1;
     }
 
     .icon-btn {
@@ -2439,6 +2466,12 @@
     </div>
 
     <div class="actions">
+      <div class="currency-switch" id="currencySwitch" role="group" aria-label="Валюта">
+        <button type="button" class="currency-opt is-active" data-cur="EUR">€</button>
+        <button type="button" class="currency-opt" data-cur="UAH">₴</button>
+        <button type="button" class="currency-opt" data-cur="USDT">₮</button>
+      </div>
+
       <button class="icon-btn" id="wishlistOpenBtn" aria-label="Обране" type="button">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <path d="M12 20.5 C5 16 3 11 4 8 C5 5 8 4 10 5.5 C11 6.2 12 7 12 7 C12 7 13 6.2 14 5.5 C16 4 19 5 20 8 C21 11 19 16 12 20.5 Z" />
@@ -2792,7 +2825,7 @@
 
       var PROMO_QUERY = '*[_type == "promo" && active == true] { name, type, discount, brand, scope, startDate, endDate, code }';
 
-      var SETTINGS_QUERY = '*[_type == "settings"][0] { tgUsername, deliveryTime, pair2Discount, pair3Discount, giftBrandsNote }';
+      var SETTINGS_QUERY = '*[_type == "settings"][0] { tgUsername, deliveryTime, pair2Discount, pair3Discount, giftBrandsNote, rateUAH, rateUSDT }';
 
       /* Products */
       q(PRODUCT_QUERY).then(function (rows) {
@@ -2864,6 +2897,13 @@
           if (window.OPTIX_cartRefresh) window.OPTIX_cartRefresh();
         }
         if (s.giftBrandsNote) window.__OPTIX_GIFT_NOTE = s.giftBrandsNote;
+        var rU = parseFloat(s.rateUAH), rT = parseFloat(s.rateUSDT);
+        window.__OPTIX_RATES = {
+          UAH: isNaN(rU) ? 0 : rU,
+          USDT: isNaN(rT) ? 0 : rT
+        };
+        if (window.OPTIX_currencyRefreshUI) window.OPTIX_currencyRefreshUI();
+        if (window.OPTIX_applyCurrency) window.OPTIX_applyCurrency();
       }).catch(function (e) { console.warn('Sanity settings load failed:', e); });
     })();
 
@@ -2973,9 +3013,39 @@
       return isNaN(n) ? null : n;
     };
 
-    /* format number → "€1,100" */
+    /* format number → "€1,100" (EUR, canonical — used for cart math & TG order) */
     window.OPTIX_fmtPrice = function (n) {
       return '€' + Math.round(n).toLocaleString('en-US');
+    };
+
+    /* ===== Currency display (base is always EUR) ===== */
+    window.__OPTIX_RATES = { UAH: 0, USDT: 0 };   /* per 1 € — set from admin settings */
+    try { window.__OPTIX_CURRENCY = localStorage.getItem('tb_currency') || 'EUR'; }
+    catch (e) { window.__OPTIX_CURRENCY = 'EUR'; }
+
+    /* Convert an EUR amount (number or "€890" string) to the chosen display currency */
+    window.OPTIX_money = function (eur) {
+      var n = (typeof eur === 'number') ? eur : window.OPTIX_parsePrice(eur);
+      if (n == null) return '';
+      var cur = window.__OPTIX_CURRENCY || 'EUR';
+      var r = window.__OPTIX_RATES || {};
+      if (cur === 'UAH' && r.UAH > 0) {
+        return Math.round(n * r.UAH).toLocaleString('en-US').replace(/,/g, ' ') + ' ₴';
+      }
+      if (cur === 'USDT' && r.USDT > 0) {
+        return (Math.round(n * r.USDT * 100) / 100).toLocaleString('en-US') + ' USDT';
+      }
+      return '€' + Math.round(n).toLocaleString('en-US');
+    };
+
+    /* Re-render everything that shows prices after a currency change */
+    window.OPTIX_applyCurrency = function () {
+      [ 'OPTIX_catalogRefresh', 'OPTIX_newArrivalsRefresh', 'OPTIX_saleRefresh',
+        'OPTIX_cartRefresh', 'OPTIX_wishlistRefresh', 'OPTIX_searchRefresh'
+      ].forEach(function (fn) { if (typeof window[fn] === 'function') window[fn](); });
+      if (window.__OPTIX_OPEN_PRODUCT && window.OPTIX_openProduct) {
+        window.OPTIX_openProduct(window.__OPTIX_OPEN_PRODUCT, true);
+      }
     };
 
     /* find product by code */
@@ -3367,7 +3437,7 @@
                   '<p class="search-result-brand">' + highlight(brandLabel, query) + '</p>' +
                   '<p class="search-result-code">' + highlight(p.code, query) + '</p>' +
                 '</div>' +
-                (p.price ? '<span class="search-result-price">' + esc(p.price) + '</span>' : '') +
+                (p.price ? '<span class="search-result-price">' + window.OPTIX_money(p.price) + '</span>' : '') +
               '</a>' +
             '</li>';
         }).join('');
@@ -3594,8 +3664,8 @@
                 '<p class="product-card-brand">' + esc(p.brand) + '</p>' +
                 '<p class="product-card-code">' + esc(p.code) + '</p>' +
                 '<p class="product-card-pricing">' +
-                  '<span class="product-card-price">' + esc(p.price) + '</span>' +
-                  (p.oldPrice ? '<span class="product-card-old-price">' + esc(p.oldPrice) + '</span>' : '') +
+                  '<span class="product-card-price">' + window.OPTIX_money(p.price) + '</span>' +
+                  (p.oldPrice ? '<span class="product-card-old-price">' + window.OPTIX_money(p.oldPrice) + '</span>' : '') +
                 '</p>' +
               '</div>' +
             '</a>';
@@ -3929,12 +3999,12 @@
 
         var orderNote = '';
 
-        var pricing = '<span class="product-price">' + esc(p.price) + '</span>';
+        var pricing = '<span class="product-price">' + window.OPTIX_money(p.price) + '</span>';
         if (p.oldPrice) {
-          pricing += '<span class="product-old-price">' + esc(p.oldPrice) + '</span>';
+          pricing += '<span class="product-old-price">' + window.OPTIX_money(p.oldPrice) + '</span>';
           var c = parsePrice(p.price), o = parsePrice(p.oldPrice);
           if (c && o && o > c) {
-            var savings = window.OPTIX_fmtPrice(o - c);
+            var savings = window.OPTIX_money(o - c);
             pricing += '<span class="product-discount">Економія ' + savings + '</span>';
           }
         }
@@ -4040,15 +4110,18 @@
         });
       }
 
-      window.OPTIX_openProduct = function (code) {
+      window.OPTIX_openProduct = function (code, silent) {
         var p = findProduct(code);
         if (!p) return;
         currentCode = code;
+        window.__OPTIX_OPEN_PRODUCT = code;
         titleEl.textContent = p.brand;
         renderBody(p);
         renderFooter(p);
-        bodyEl.scrollTop = 0;
-        window.OPTIX_sheetOpen(sheet);
+        if (!silent) {
+          bodyEl.scrollTop = 0;
+          window.OPTIX_sheetOpen(sheet);
+        }
 
         /* Wire up gallery (if multiple images) — scroll syncs with dots, dots scroll gallery */
         var gallery = document.getElementById('productGallery');
@@ -4072,7 +4145,10 @@
         }
       };
 
-      backBtn.addEventListener('click', function () { window.OPTIX_sheetClose(sheet); });
+      backBtn.addEventListener('click', function () {
+        window.__OPTIX_OPEN_PRODUCT = null;
+        window.OPTIX_sheetClose(sheet);
+      });
     })();
 
     /* ===== Wishlist sheet ===== */
@@ -4146,8 +4222,8 @@
                   '<p class="list-row-brand">' + esc(p.brand) + '</p>' +
                   '<p class="list-row-code">' + esc(p.code) + '</p>' +
                   '<p class="list-row-pricing">' +
-                    '<span class="list-row-price">' + esc(p.price) + '</span>' +
-                    (p.oldPrice ? '<span class="list-row-old-price">' + esc(p.oldPrice) + '</span>' : '') +
+                    '<span class="list-row-price">' + window.OPTIX_money(p.price) + '</span>' +
+                    (p.oldPrice ? '<span class="list-row-old-price">' + window.OPTIX_money(p.oldPrice) + '</span>' : '') +
                   '</p>' +
                 '</div>' +
                 '<div class="list-row-actions">' +
@@ -4420,12 +4496,12 @@
                   '<p class="list-row-brand">' + esc(p.brand) + '</p>' +
                   '<p class="list-row-code">' + esc(p.code) + '</p>' +
                   '<p class="list-row-pricing">' +
-                    '<span class="list-row-price">' + esc(p.price) + '</span>' +
+                    '<span class="list-row-price">' + window.OPTIX_money(p.price) + '</span>' +
                     (function () {
                       if (!p.oldPrice) return '';
                       var cur = parsePrice(p.price), old = parsePrice(p.oldPrice);
                       var pct = (cur && old && old > cur) ? Math.round((old - cur) / old * 100) : 0;
-                      return '<span class="list-row-old-price">' + esc(p.oldPrice) + '</span>' +
+                      return '<span class="list-row-old-price">' + window.OPTIX_money(p.oldPrice) + '</span>' +
                         (pct ? '<span class="list-row-disc">−' + pct + '%</span>' : '');
                     })() +
                   '</p>' +
@@ -4462,19 +4538,19 @@
 
         var promoRowHTML = '';
         if (appliedPromo && promoCut > 0) {
-          promoRowHTML = '<p class="cart-summary-row cart-summary-row--cut"><span>Промокод ' + esc(appliedPromo.code) + '</span><span>−' + fmtPrice(promoCut) + '</span></p>';
+          promoRowHTML = '<p class="cart-summary-row cart-summary-row--cut"><span>Промокод ' + esc(appliedPromo.code) + '</span><span>−' + window.OPTIX_money(promoCut) + '</span></p>';
         }
 
         var multiRowHTML = '';
         if (tier && multiCut > 0) {
-          multiRowHTML = '<p class="cart-summary-row cart-summary-row--cut"><span>Знижка за ' + pairs + ' ' + window.OPTIX_pluralModels(pairs) + ' (−' + tier.pct + '%)</span><span>−' + fmtPrice(multiCut) + '</span></p>';
+          multiRowHTML = '<p class="cart-summary-row cart-summary-row--cut"><span>Знижка за ' + pairs + ' ' + window.OPTIX_pluralModels(pairs) + ' (−' + tier.pct + '%)</span><span>−' + window.OPTIX_money(multiCut) + '</span></p>';
         }
 
         /* item-level discount (sum of per-item sale discounts) */
         var itemCut = oldSum - totalSum;
         var itemRowHTML = '';
         if (itemCut > 0) {
-          itemRowHTML = '<p class="cart-summary-row cart-summary-row--cut"><span>Знижка на моделі</span><span>−' + fmtPrice(itemCut) + '</span></p>';
+          itemRowHTML = '<p class="cart-summary-row cart-summary-row--cut"><span>Знижка на моделі</span><span>−' + window.OPTIX_money(itemCut) + '</span></p>';
         }
 
         /* progress nudge */
@@ -4503,7 +4579,7 @@
             '<div class="cart-savings">' +
               '<div class="cart-savings-top">' +
                 '<span class="cart-savings-label">Ваша економія</span>' +
-                '<span class="cart-savings-amount">−' + fmtPrice(totalSavings) + '</span>' +
+                '<span class="cart-savings-amount">−' + window.OPTIX_money(totalSavings) + '</span>' +
               '</div>' +
               '<div class="cart-savings-sub">' + savingsPct + '% від початкової вартості</div>' +
             '</div>';
@@ -4522,11 +4598,11 @@
                   '</div>') +
               '<p class="promo-msg" id="promoMsg"></p>' +
             '</div>' +
-            (oldSum > finalSum ? '<p class="cart-summary-row cart-summary-row--was"><span>Початкова вартість</span><span>' + fmtPrice(oldSum) + '</span></p>' : '') +
+            (oldSum > finalSum ? '<p class="cart-summary-row cart-summary-row--was"><span>Початкова вартість</span><span>' + window.OPTIX_money(oldSum) + '</span></p>' : '') +
             itemRowHTML +
             multiRowHTML +
             promoRowHTML +
-            '<p class="cart-summary-row cart-summary-row--total"><span>До сплати</span><span>' + fmtPrice(finalSum) + '</span></p>' +
+            '<p class="cart-summary-row cart-summary-row--total"><span>До сплати</span><span>' + window.OPTIX_money(finalSum) + '</span></p>' +
             savingsBanner +
             giftHTML +
             '<p class="cart-summary-hint">Безкоштовна доставка по Україні.</p>' +
@@ -4756,8 +4832,8 @@
               '<p class="product-card-brand">' + esc(p.brand) + '</p>' +
               '<p class="product-card-code">' + esc(p.code) + '</p>' +
               '<p class="product-card-pricing">' +
-                '<span class="product-card-price">' + esc(p.price) + '</span>' +
-                (p.oldPrice ? '<span class="product-card-old-price">' + esc(p.oldPrice) + '</span>' : '') +
+                '<span class="product-card-price">' + window.OPTIX_money(p.price) + '</span>' +
+                (p.oldPrice ? '<span class="product-card-old-price">' + window.OPTIX_money(p.oldPrice) + '</span>' : '') +
               '</p>' +
             '</div>' +
           '</a>';
@@ -4889,8 +4965,8 @@
                 '<p class="product-card-brand">' + esc(p.brand) + '</p>' +
                 '<p class="product-card-code">' + esc(p.code) + '</p>' +
                 '<p class="product-card-pricing">' +
-                  '<span class="product-card-price">' + esc(p.price) + '</span>' +
-                  '<span class="product-card-old-price">' + esc(p.oldPrice) + '</span>' +
+                  '<span class="product-card-price">' + window.OPTIX_money(p.price) + '</span>' +
+                  '<span class="product-card-old-price">' + window.OPTIX_money(p.oldPrice) + '</span>' +
                 '</p>' +
               '</div>' +
             '</a>';
@@ -4924,6 +5000,38 @@
 
       window.OPTIX_saleRefresh = render;
       render();
+    })();
+
+    /* ===== Currency switcher (EUR base → UAH / USDT) ===== */
+    (function () {
+      var sw = document.getElementById('currencySwitch');
+      if (!sw) return;
+
+      function paint() {
+        var cur = window.__OPTIX_CURRENCY || 'EUR';
+        sw.querySelectorAll('.currency-opt').forEach(function (b) {
+          b.classList.toggle('is-active', b.dataset.cur === cur);
+          /* hide ₴/₮ until a rate exists, so we never show a broken 0 price */
+          if (b.dataset.cur === 'UAH') b.style.display = (window.__OPTIX_RATES && window.__OPTIX_RATES.UAH > 0) ? '' : 'none';
+          if (b.dataset.cur === 'USDT') b.style.display = (window.__OPTIX_RATES && window.__OPTIX_RATES.USDT > 0) ? '' : 'none';
+        });
+      }
+      window.OPTIX_currencyRefreshUI = paint;
+
+      sw.addEventListener('click', function (e) {
+        var btn = e.target.closest('.currency-opt');
+        if (!btn) return;
+        var cur = btn.dataset.cur;
+        /* guard: if no rate for this currency, ignore */
+        if (cur === 'UAH' && !(window.__OPTIX_RATES && window.__OPTIX_RATES.UAH > 0)) return;
+        if (cur === 'USDT' && !(window.__OPTIX_RATES && window.__OPTIX_RATES.USDT > 0)) return;
+        window.__OPTIX_CURRENCY = cur;
+        try { localStorage.setItem('tb_currency', cur); } catch (e2) {}
+        paint();
+        if (window.OPTIX_applyCurrency) window.OPTIX_applyCurrency();
+      });
+
+      paint();
     })();
 
     /* ===== Home brand chips → open catalog filtered by that brand ===== */
