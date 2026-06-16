@@ -3475,6 +3475,7 @@
         sort: 'default' /* default | price-asc | price-desc | new */
       };
       var priceBounds = { min: 0, max: 0 }; /* full range derived from products */
+      var priceTouched = false;             /* price filter applies only after user moves a handle */
 
       /* Build brand filter buttons from the brands that actually exist in
          the catalog. Brands appear only when there is a product for them. */
@@ -3518,7 +3519,7 @@
         if (state.brand !== 'all') {
           result = result.filter(function (p) { return p.brand === state.brand; });
         }
-        if (state.priceMin != null || state.priceMax != null) {
+        if (priceTouched && (state.priceMin != null || state.priceMax != null)) {
           result = result.filter(function (p) {
             var pr = parsePrice(p.price) || 0;
             if (state.priceMin != null && pr < state.priceMin) return false;
@@ -3550,9 +3551,15 @@
         priceBounds = { min: lo, max: hi };
         priceMinEl.min = priceMaxEl.min = lo;
         priceMinEl.max = priceMaxEl.max = hi;
-        /* keep current selection within bounds, default to full range */
-        if (state.priceMin == null || state.priceMin < lo) { state.priceMin = lo; }
-        if (state.priceMax == null || state.priceMax > hi) { state.priceMax = hi; }
+        if (!priceTouched) {
+          /* untouched → handles span the FULL range, nothing filtered */
+          state.priceMin = lo;
+          state.priceMax = hi;
+        } else {
+          /* touched → clamp the existing selection into the new bounds */
+          if (state.priceMin == null || state.priceMin < lo) state.priceMin = lo;
+          if (state.priceMax == null || state.priceMax > hi) state.priceMax = hi;
+        }
         priceMinEl.value = state.priceMin;
         priceMaxEl.value = state.priceMax;
         paintPrice();
@@ -3676,6 +3683,7 @@
       }
       if (priceMinEl && priceMaxEl) {
         priceMinEl.addEventListener('input', function () {
+          priceTouched = true;
           if (parseInt(priceMinEl.value, 10) > parseInt(priceMaxEl.value, 10)) {
             priceMinEl.value = priceMaxEl.value;
           }
@@ -3683,6 +3691,7 @@
           paintPrice(); render();
         });
         priceMaxEl.addEventListener('input', function () {
+          priceTouched = true;
           if (parseInt(priceMaxEl.value, 10) < parseInt(priceMinEl.value, 10)) {
             priceMaxEl.value = priceMinEl.value;
           }
@@ -4521,11 +4530,6 @@
           nudgeHTML = '<div class="multipair-nudge multipair-nudge--max"><span class="multipair-nudge-icon">✓</span><span>−' + tier.pct + '% застосовано — максимальна вигода</span></div>';
         }
 
-        var giftHTML = '';
-        if (cartHasExcluded(entries)) {
-          giftHTML = '<p class="cart-gift-note">Cartier / Chanel — ' + (window.__OPTIX_GIFT_NOTE || MULTIPAIR.giftText) + ' до замовлення</p>';
-        }
-
         /* The hero savings banner — shows the WHOLE economy */
         var savingsBanner = '';
         if (totalSavings > 0) {
@@ -4558,8 +4562,6 @@
             promoRowHTML +
             '<p class="cart-summary-row cart-summary-row--total"><span>До сплати</span><span>' + window.OPTIX_money(finalSum) + '</span></p>' +
             savingsBanner +
-            giftHTML +
-            '<p class="cart-summary-hint">Безкоштовна доставка по Україні.</p>' +
           '</div>';
 
         footerEl.innerHTML =
