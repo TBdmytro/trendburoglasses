@@ -509,6 +509,13 @@
       scroll-snap-align: start;
     }
 
+    .new-arrivals-strip.is-looping {
+      scroll-snap-type: none;
+    }
+    .new-arrivals-strip.is-looping .product-card {
+      scroll-snap-align: none;
+    }
+
     /* ---------- Sale section (horizontal scroll, gold accents) ---------- */
     .sale-section {
       padding: 32px 20px 8px;
@@ -4721,49 +4728,78 @@
       var link  = document.getElementById('newArrivalsLink');
       if (!strip) return;
 
+      function cardHTML(p, wishlist) {
+        var slug = p.code.replace(/\s+/g, '-').toLowerCase();
+        var inWish = wishlist.indexOf(p.code) !== -1;
+        var heartClass = 'product-card-heart' + (inWish ? ' is-active' : '');
+
+        var badges = '<span class="product-card-badge product-card-badge--new">New</span>';
+        if (p.oldPrice) {
+          var cur = parsePrice(p.price), old = parsePrice(p.oldPrice);
+          if (cur && old && old > cur) {
+            var pct = Math.round((1 - cur / old) * 100);
+            badges += '<span class="product-card-badge product-card-badge--sale">−' + pct + '%</span>';
+          }
+        }
+        return '' +
+          '<a href="#product-' + esc(slug) + '" class="product-card" data-code="' + esc(p.code) + '">' +
+            '<div class="product-card-image">' +
+              '<button type="button" class="' + heartClass + '" data-heart="' + esc(p.code) + '" aria-label="Додати в обране">' +
+                '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+                  '<path d="M12 20.5 C5 16 3 11 4 8 C5 5 8 4 10 5.5 C11 6.2 12 7 12 7 C12 7 13 6.2 14 5.5 C16 4 19 5 20 8 C21 11 19 16 12 20.5 Z" />' +
+                '</svg>' +
+              '</button>' +
+              window.OPTIX_productImage(p) +
+              '<div class="product-card-badges">' + badges + '</div>' +
+            '</div>' +
+            '<div class="product-card-info">' +
+              '<p class="product-card-brand">' + esc(p.brand) + '</p>' +
+              '<p class="product-card-code">' + esc(p.code) + '</p>' +
+              '<p class="product-card-pricing">' +
+                '<span class="product-card-price">' + esc(p.price) + '</span>' +
+                (p.oldPrice ? '<span class="product-card-old-price">' + esc(p.oldPrice) + '</span>' : '') +
+              '</p>' +
+            '</div>' +
+          '</a>';
+      }
+
+      var looping = false;
       function render() {
         var items = PRODUCTS.filter(function (p) { return p.isNew; });
         var wishlist = (window.OPTIX_wishlistGet && window.OPTIX_wishlistGet()) || [];
-        var parsePrice = window.OPTIX_parsePrice;
-
-        strip.innerHTML = items.map(function (p) {
-          var slug = p.code.replace(/\s+/g, '-').toLowerCase();
-          var inWish = wishlist.indexOf(p.code) !== -1;
-          var heartClass = 'product-card-heart' + (inWish ? ' is-active' : '');
-          var cardClass = 'product-card';
-
-          /* Both badges: New always (this is the New rail) + discount if any */
-          var badges = '<span class="product-card-badge product-card-badge--new">New</span>';
-          if (p.oldPrice) {
-            var cur = parsePrice(p.price), old = parsePrice(p.oldPrice);
-            if (cur && old && old > cur) {
-              var pct = Math.round((1 - cur / old) * 100);
-              badges += '<span class="product-card-badge product-card-badge--sale">−' + pct + '%</span>';
-            }
-          }
-
-          return '' +
-            '<a href="#product-' + esc(slug) + '" class="' + cardClass + '" data-code="' + esc(p.code) + '">' +
-              '<div class="product-card-image">' +
-                '<button type="button" class="' + heartClass + '" data-heart="' + esc(p.code) + '" aria-label="Додати в обране">' +
-                  '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
-                    '<path d="M12 20.5 C5 16 3 11 4 8 C5 5 8 4 10 5.5 C11 6.2 12 7 12 7 C12 7 13 6.2 14 5.5 C16 4 19 5 20 8 C21 11 19 16 12 20.5 Z" />' +
-                  '</svg>' +
-                '</button>' +
-                window.OPTIX_productImage(p) +
-                '<div class="product-card-badges">' + badges + '</div>' +
-              '</div>' +
-              '<div class="product-card-info">' +
-                '<p class="product-card-brand">' + esc(p.brand) + '</p>' +
-                '<p class="product-card-code">' + esc(p.code) + '</p>' +
-                '<p class="product-card-pricing">' +
-                  '<span class="product-card-price">' + esc(p.price) + '</span>' +
-                  (p.oldPrice ? '<span class="product-card-old-price">' + esc(p.oldPrice) + '</span>' : '') +
-                '</p>' +
-              '</div>' +
-            '</a>';
-        }).join('');
+        var html = items.map(function (p) { return cardHTML(p, wishlist); }).join('');
+        /* Duplicate the set so auto-scroll can loop seamlessly (needs ≥3 items) */
+        looping = items.length >= 3;
+        strip.innerHTML = looping ? (html + html) : html;
+        strip.classList.toggle('is-looping', looping);
       }
+
+      /* ----- Auto-scroll: glide continuously, loop forever ----- */
+      var paused = false, resumeTimer = null, rafId = null;
+      var reduceMotion = false;
+      try { reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+
+      function tick() {
+        if (looping && !paused) {
+          strip.scrollLeft += 0.4;                 /* gentle pace */
+          var half = strip.scrollWidth / 2;
+          if (half > 0 && strip.scrollLeft >= half) strip.scrollLeft -= half;
+        }
+        rafId = window.requestAnimationFrame(tick);
+      }
+      function startAuto() {
+        if (reduceMotion || rafId) return;
+        rafId = window.requestAnimationFrame(tick);
+      }
+      function pauseAuto() {
+        paused = true;
+        if (resumeTimer) clearTimeout(resumeTimer);
+        resumeTimer = setTimeout(function () { paused = false; }, 3000);
+      }
+      /* Pause on user intent (these don't fire from programmatic scrollLeft) */
+      strip.addEventListener('touchstart', pauseAuto, { passive: true });
+      strip.addEventListener('pointerdown', pauseAuto);
+      strip.addEventListener('wheel', pauseAuto, { passive: true });
 
       strip.addEventListener('click', function (e) {
         var heart = e.target.closest('.product-card-heart');
@@ -4771,8 +4807,8 @@
           e.preventDefault();
           e.stopPropagation();
           if (window.OPTIX_wishlistToggle) {
+            /* wishlistToggle re-renders this strip, so hearts re-sync automatically */
             window.OPTIX_wishlistToggle(heart.dataset.heart);
-            heart.classList.toggle('is-active');
           }
           return;
         }
@@ -4791,10 +4827,16 @@
         });
       }
 
-      /* expose so wishlist toggling elsewhere can refresh us */
-      window.OPTIX_newArrivalsRefresh = render;
+      /* expose so wishlist/Sanity refresh can rebuild us without losing the loop */
+      window.OPTIX_newArrivalsRefresh = function () {
+        var pos = strip.scrollLeft;
+        render();
+        /* keep position sane after re-render */
+        if (strip.scrollWidth / 2 > 0 && pos < strip.scrollWidth) strip.scrollLeft = pos;
+      };
 
       render();
+      startAuto();
     })();
 
     /* ===== Sale strip on home page ===== */
