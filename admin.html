@@ -322,6 +322,13 @@
     </div>
     <div class="field"><label class="field-label">Подарунок для Cartier/Chanel</label><input class="input" id="sGift" placeholder="фірмовий кейс у подарунок" /></div>
 
+    <div class="settings-divider">Курс валют</div>
+    <p class="screen-sub" style="margin-top:-4px">Базова ціна — завжди €. Вкажи свій курс, за яким рахувати ₴ та USDT.</p>
+    <div class="row2">
+      <div class="field"><label class="field-label">1 € = ₴</label><input class="input" id="sRateUAH" inputmode="decimal" placeholder="46" /></div>
+      <div class="field"><label class="field-label">1 € = USDT</label><input class="input" id="sRateUSDT" inputmode="decimal" placeholder="1.08" /></div>
+    </div>
+
     <button class="add-btn" id="saveSettings" style="background:var(--green)">Зберегти</button>
     <button class="add-btn" id="logout" style="background:transparent;color:var(--red);border:1px solid var(--line)">Вийти (стерти ключ)</button>
   </div>
@@ -763,7 +770,7 @@
   /* ---------- settings ---------- */
   var settingsId = null;
   function loadSettings() {
-    sanityQuery('*[_type=="settings"][0]{_id,tgUsername,deliveryTime,pair2Discount,pair3Discount,giftBrandsNote}').then(function(s){
+    sanityQuery('*[_type=="settings"][0]{_id,tgUsername,deliveryTime,pair2Discount,pair3Discount,giftBrandsNote,rateUAH,rateUSDT}').then(function(s){
       if (s) {
         settingsId=s._id;
         document.getElementById('sTg').value=s.tgUsername||'';
@@ -771,6 +778,8 @@
         document.getElementById('sPair2').value=(s.pair2Discount!=null?s.pair2Discount:'');
         document.getElementById('sPair3').value=(s.pair3Discount!=null?s.pair3Discount:'');
         document.getElementById('sGift').value=s.giftBrandsNote||'';
+        document.getElementById('sRateUAH').value=(s.rateUAH!=null?s.rateUAH:'');
+        document.getElementById('sRateUSDT').value=(s.rateUSDT!=null?s.rateUSDT:'');
       }
     }).catch(function(){});
   }
@@ -780,7 +789,9 @@
     var p2 = parseFloat(document.getElementById('sPair2').value) || 0;
     var p3 = parseFloat(document.getElementById('sPair3').value) || 0;
     var gift = document.getElementById('sGift').value.trim();
-    var data = { tgUsername:tg, deliveryTime:dl, pair2Discount:p2, pair3Discount:p3, giftBrandsNote:gift };
+    var rUAH = parseFloat(document.getElementById('sRateUAH').value) || 0;
+    var rUSDT = parseFloat(document.getElementById('sRateUSDT').value) || 0;
+    var data = { tgUsername:tg, deliveryTime:dl, pair2Discount:p2, pair3Discount:p3, giftBrandsNote:gift, rateUAH:rUAH, rateUSDT:rUSDT };
     var mut = settingsId
       ? [{ patch:{ id:settingsId, set:data } }]
       : [{ create:Object.assign({ _type:'settings' }, data) }];
