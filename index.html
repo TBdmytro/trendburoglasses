@@ -2853,6 +2853,7 @@
         if (window.OPTIX_newArrivalsRefresh) window.OPTIX_newArrivalsRefresh();
         if (window.OPTIX_saleRefresh) window.OPTIX_saleRefresh();
         if (window.OPTIX_homeBrandsRefresh) window.OPTIX_homeBrandsRefresh();
+        if (window.OPTIX_cartPrune) window.OPTIX_cartPrune();
       }).catch(function (e) { console.warn('Sanity products load failed:', e); });
 
       /* Promotions */
@@ -3785,6 +3786,16 @@
       var cartBadge       = document.getElementById('cartBadge');
       var wishlistOpenBtn = document.getElementById('wishlistOpenBtn');
 
+      /* Count only cart entries whose product still exists in the catalog.
+         (Before products load we can't validate, so count all then.) */
+      function cartValidQty() {
+        var prods = window.OPTIX_PRODUCTS || [];
+        if (!prods.length) return cart.reduce(function (s, it) { return s + (it.qty || 0); }, 0);
+        var codes = {};
+        prods.forEach(function (p) { codes[p.code] = 1; });
+        return cart.reduce(function (s, it) { return s + (codes[it.code] ? (it.qty || 0) : 0); }, 0);
+      }
+
       function updateBadges() {
         if (wishlistBadge) {
           if (wishlist.length > 0) {
@@ -3798,7 +3809,7 @@
           wishlistOpenBtn.classList.toggle('has-items', wishlist.length > 0);
         }
         if (cartBadge) {
-          var total = cart.reduce(function (s, it) { return s + (it.qty || 0); }, 0);
+          var total = cartValidQty();
           if (total > 0) {
             cartBadge.textContent = total;
             cartBadge.classList.add('is-visible');
@@ -3807,6 +3818,20 @@
           }
         }
       }
+
+      /* Drop cart entries whose product no longer exists (e.g. deleted / old demo).
+         Only runs once the catalog is actually loaded. */
+      window.OPTIX_cartPrune = function () {
+        var prods = window.OPTIX_PRODUCTS || [];
+        if (!prods.length) return;
+        var codes = {};
+        prods.forEach(function (p) { codes[p.code] = 1; });
+        var before = cart.length;
+        cart = cart.filter(function (it) { return codes[it.code]; });
+        if (cart.length !== before) storage.save('cart', cart);
+        updateBadges();
+        if (window.OPTIX_cartRefresh) window.OPTIX_cartRefresh();
+      };
 
       /* ===== Wishlist API ===== */
       window.OPTIX_wishlistGet = function () { return wishlist.slice(); };
