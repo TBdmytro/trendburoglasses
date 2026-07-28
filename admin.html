@@ -76,6 +76,8 @@
   .ptag { font-size:8.5px; font-weight:700; letter-spacing:.06em; padding:2px 6px; border-radius:5px; text-transform:uppercase; }
   .ptag.sale { background:var(--gold); color:#fff; }
   .ptag.new { background:var(--red); color:#fff; }
+  .ptag.oos { background:rgba(27,45,64,.75); color:#fff; }
+  .pcard.is-oos .pcard-img img { opacity:.45; }
   .pcard-hidden-badge { position:absolute; bottom:7px; left:7px; font-size:9px; font-weight:600; background:rgba(27,45,64,.8); color:#fff; padding:2px 7px; border-radius:5px; }
   .pcard-body { padding:9px 11px 4px; flex:1; }
   .pcard-brand { font-family:var(--display); font-size:17px; font-weight:500; line-height:1.1; }
@@ -255,6 +257,7 @@
     </div>
 
     <div class="toggle-field"><span>Новинка (NEW)</span><div class="mini-toggle off" id="fNew"></div></div>
+    <div class="toggle-field"><span>Є в наявності</span><div class="mini-toggle" id="fStock"></div></div>
 
     <div class="field">
       <label class="field-label">Модель <span class="opt">· необов'язково</span></label>
@@ -434,7 +437,7 @@
     var list = document.getElementById('productList');
     list.className = '';
     list.innerHTML = '<div class="loading">Завантаження…</div>';
-    sanityQuery('*[_type=="product"]|order(_createdAt desc){_id,brand,code,model,price,discount,isNew,visible,description,"img":images[0].asset->url}').then(function(rows){
+    sanityQuery('*[_type=="product"]|order(_createdAt desc){_id,brand,code,model,price,discount,isNew,visible,inStock,description,"img":images[0].asset->url}').then(function(rows){
       ALL_PRODUCTS = rows || [];
       document.getElementById('countBadge').textContent = ALL_PRODUCTS.length + ' товарів';
       PRODUCTS_CACHE = {};
@@ -486,8 +489,9 @@
       var tags = '';
       if (d > 0) tags += '<span class="ptag sale">−' + d + '%</span>';
       if (p.isNew) tags += '<span class="ptag new">New</span>';
+      if (p.inStock === false) tags += '<span class="ptag oos">Немає</span>';
       var img = p.img ? '<img src="' + p.img + '?w=300&h=300&fit=fill&bg=ffffff">' : '<svg viewBox="0 0 24 24"><circle cx="7.5" cy="13.5" r="4"/><circle cx="16.5" cy="13.5" r="4"/><path d="M11.5 13.5h1"/></svg>';
-      return '<div class="pcard' + (p.visible === false ? ' is-hidden' : '') + '" data-id="' + p._id + '">' +
+      return '<div class="pcard' + (p.visible === false ? ' is-hidden' : '') + (p.inStock === false ? ' is-oos' : '') + '" data-id="' + p._id + '">' +
         '<div class="pcard-img">' + img +
           (tags ? '<div class="pcard-tags">' + tags + '</div>' : '') +
           (p.visible === false ? '<div class="pcard-hidden-badge">Сховано</div>' : '') +
@@ -550,6 +554,7 @@
   var photos = []; // {assetId, url}
   var discount = '0';
   var isNew = false;
+  var inStock = true;
   var editingId = null;  /* null = creating new; otherwise editing this _id */
 
   /* Brand memory: starter list + brands the user has already used (localStorage),
@@ -584,12 +589,13 @@
   document.getElementById('fBrand').addEventListener('input', function(){ renderBrandPicker(); });
 
   function resetProductForm() {
-    photos = []; discount = '0'; isNew = false; editingId = null;
+    photos = []; discount = '0'; isNew = false; inStock = true; editingId = null;
     document.getElementById('photoThumbs').innerHTML = '';
     ['fBrand','fCode','fPrice','fModel','fDesc'].forEach(function(id){ document.getElementById(id).value=''; });
     var ci = document.getElementById('discCustom'); if (ci) ci.value = '';
     document.querySelectorAll('#discRow .disc').forEach(function(d){ d.classList.toggle('on', d.dataset.d === '0'); });
     document.getElementById('fNew').classList.add('off');
+    document.getElementById('fStock').classList.remove('off');
     document.getElementById('addTitle').textContent = 'Новий товар';
     document.getElementById('photoHint').textContent = 'Познач кілька одразу — завантажаться разом';
     renderBrandPicker();
@@ -616,6 +622,9 @@
     /* new flag */
     isNew = !!p.isNew;
     document.getElementById('fNew').classList.toggle('off', !isNew);
+    /* stock flag — missing field counts as in stock */
+    inStock = p.inStock !== false;
+    document.getElementById('fStock').classList.toggle('off', !inStock);
     /* photos: show existing main photo as a non-removable hint; new uploads replace */
     photos = [];
     document.getElementById('photoThumbs').innerHTML = p.img
@@ -671,6 +680,7 @@
     document.querySelectorAll('#discRow .disc').forEach(function(x){ x.classList.remove('on'); });
   });
   document.getElementById('fNew').addEventListener('click', function(){ this.classList.toggle('off'); isNew = !this.classList.contains('off'); });
+  document.getElementById('fStock').addEventListener('click', function(){ this.classList.toggle('off'); inStock = !this.classList.contains('off'); });
 
   document.getElementById('saveProduct').addEventListener('click', function(){
     var brand = document.getElementById('fBrand').value.trim();
@@ -689,7 +699,7 @@
     if (editingId) {
       /* EDIT: patch existing fields */
       var setFields = {
-        brand: brand, code: code, price: price, discount: discount, isNew: isNew,
+        brand: brand, code: code, price: price, discount: discount, isNew: isNew, inStock: inStock,
         model: model || '', description: desc || ''
       };
       if (photos.length) setFields.images = imgs; /* only replace photos if any present */
@@ -699,7 +709,7 @@
       /* CREATE */
       var doc = {
         _type: 'product', brand: brand, code: code, price: price,
-        discount: discount, isNew: isNew, visible: true, images: imgs
+        discount: discount, isNew: isNew, inStock: inStock, visible: true, images: imgs
       };
       if (model) doc.model = model;
       if (desc) doc.description = desc;
