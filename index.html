@@ -2904,9 +2904,12 @@
         return true;
       }
 
-      var PRODUCT_QUERY = '*[_type == "product" && visible != false] | order(_createdAt desc) {' +
+      /* Порядок: спершу бестселери, потім решта. Усередині кожної групи —
+         новіші вгорі. coalesce потрібен, бо у старих товарів поля ще немає. */
+      var PRODUCT_QUERY = '*[_type == "product" && visible != false] ' +
+        '| order(coalesce(bestseller, false) desc, _createdAt desc) {' +
         'brand, code, model, description, price, oldPrice, discount, isNew, newSince, newDuration,' +
-        'shape, gender, material, inStock, showSizes, lensWidth, bridge, temple, weight,' +
+        'shape, gender, material, inStock, bestseller, showSizes, lensWidth, bridge, temple, weight,' +
         '"images": images[].asset->url' +
       '}';
 
@@ -2938,6 +2941,7 @@
             gender: p.gender || null,
             material: p.material || null,
             inStock: p.inStock !== false,
+            bestseller: !!p.bestseller,
             images: (p.images || []).map(function (u) { return u + '?w=1200&q=90&auto=format&fit=max'; }),
             lensWidth: p.lensWidth || null,
             bridge: p.bridge || null,
