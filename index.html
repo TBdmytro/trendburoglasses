@@ -1023,8 +1023,12 @@
     .products-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      padding: 14px 20px 28px;
+      /* Повітря між картками. Було 12px — каталог читався суцільною
+         стіною. Вертикальний проміжок більший за горизонтальний:
+         так ряди відокремлюються, а пара в ряду тримається разом. */
+      column-gap: 14px;
+      row-gap: 30px;
+      padding: 16px 20px 32px;
     }
 
     .products-empty {
@@ -1038,10 +1042,12 @@
     }
 
     .product-card {
-      background: rgba(255, 255, 255, 0.85);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      overflow: hidden;
+      /* Рамку і фон прибрано з картки — тепер їх має саме фото.
+         Так товар «стоїть» на сторінці, а не сидить у коробці. */
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      overflow: visible;
       text-decoration: none;
       color: var(--fg);
       display: flex;
@@ -1055,9 +1061,13 @@
     }
 
     .product-card-image {
-      aspect-ratio: 1;
+      /* Оправа широка, тож і кадр робимо ширшим за квадрат —
+         окуляри займають більше місця, менше порожнечі згори й знизу. */
+      aspect-ratio: 1.25;
       position: relative;
       background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1156,6 +1166,7 @@
 
     .product-card-badge--sale { background: #c8985f; }
     .product-card-badge--new  { background: #c2483a; }
+    .product-card-badge--best { background: #2f9e6f; }
 
     /* stacked badges (used in New rail where both can appear) */
     .product-card-badges {
@@ -1175,7 +1186,7 @@
     }
 
     .product-card-info {
-      padding: 11px 12px 14px;
+      padding: 9px 2px 0;
     }
 
     .product-card-brand {
@@ -2716,6 +2727,11 @@
           <span class="catalog-toggle-knob"></span>
           <span>Тільки знижки</span>
         </label>
+        <label class="catalog-toggle">
+          <input type="checkbox" class="catalog-toggle-input" id="catalogBestToggle" />
+          <span class="catalog-toggle-knob"></span>
+          <span>Тільки хіти</span>
+        </label>
         <button type="button" class="catalog-sort-btn" id="catalogSortBtn">Сортування: за замовч. ↓</button>
       </div>
 
@@ -3640,6 +3656,7 @@
       var state = {
         brand: 'all',
         saleOnly: false,
+        bestOnly: false,   /* тільки популярні моделі */
         priceMin: null,    /* active lower bound, € */
         priceMax: null,    /* active upper bound, € */
         sort: 'default' /* default | price-asc | price-desc | new */
@@ -3699,6 +3716,9 @@
         }
         if (state.saleOnly) {
           result = result.filter(function (p) { return !!p.oldPrice; });
+        }
+        if (state.bestOnly) {
+          result = result.filter(function (p) { return !!p.bestseller; });
         }
         if (state.sort === 'price-asc') {
           result.sort(function (a, b) { return (parsePrice(a.price) || 0) - (parsePrice(b.price) || 0); });
@@ -3763,8 +3783,11 @@
           var slug = p.code.replace(/\s+/g, '-').toLowerCase();
           var inWish = wishlist.indexOf(p.code) !== -1;
 
+          /* Лише один значок на картку — інакше вони змагаються за увагу */
           var badge = '';
-          if (p.oldPrice) {
+          if (p.bestseller) {
+            badge = '<span class="product-card-badge product-card-badge--best">Хіт</span>';
+          } else if (p.oldPrice) {
             var cur = parsePrice(p.price), old = parsePrice(p.oldPrice);
             if (cur && old && old > cur) {
               var pct = Math.round((1 - cur / old) * 100);
@@ -3782,29 +3805,34 @@
           var cardClass = 'product-card' + (outOfStock ? ' product-card--unavailable' : '');
           var heartClass = 'product-card-heart' + (inWish ? ' is-active' : '');
 
+          /* Картка навмисно скупа: фото, бренд, ціна — і все.
+             Артикул, стара ціна і серце переїхали на сторінку товару:
+             при виборі окулярів вони не допомагають, а створюють рябизну.
+             Значок показуємо лише один — найважливіший для цього товару. */
           return '' +
             '<a href="#product-' + esc(slug) + '" class="' + cardClass + '" data-code="' + esc(p.code) + '">' +
               '<div class="product-card-image">' +
-                '<button type="button" class="' + heartClass + '" data-heart="' + esc(p.code) + '" aria-label="Додати в обране">' +
-                  '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
-                    '<path d="M12 20.5 C5 16 3 11 4 8 C5 5 8 4 10 5.5 C11 6.2 12 7 12 7 C12 7 13 6.2 14 5.5 C16 4 19 5 20 8 C21 11 19 16 12 20.5 Z" />' +
-                  '</svg>' +
-                '</button>' +
                 badge +
                 window.OPTIX_productImage(p) +
                 stockTag +
               '</div>' +
               '<div class="product-card-info">' +
                 '<p class="product-card-brand">' + esc(p.brand) + '</p>' +
-                '<p class="product-card-code">' + esc(p.code) + '</p>' +
                 '<p class="product-card-pricing">' +
                   '<span class="product-card-price">' + window.OPTIX_money(p.price) + '</span>' +
-                  (p.oldPrice ? '<span class="product-card-old-price">' + window.OPTIX_money(p.oldPrice) + '</span>' : '') +
                 '</p>' +
               '</div>' +
             '</a>';
         }).join('');
       }
+
+      /* Домальовуємо, коли людина дійшла до низу списку */
+      window.addEventListener('scroll', function () {
+        if (shownCount >= shownList.length) return;
+        var doc = document.documentElement;
+        var left = doc.scrollHeight - (window.scrollY + window.innerHeight);
+        if (left < 900) renderMore();
+      }, { passive: true });
 
       /* Brand chip clicks */
       brandStrip.addEventListener('click', function (e) {
@@ -3877,6 +3905,15 @@
       if (saleToggle) {
         saleToggle.addEventListener('change', function (e) {
           state.saleOnly = e.target.checked;
+          render();
+        });
+      }
+
+      /* Хіти — показати лише популярні моделі */
+      var bestToggle = document.getElementById('catalogBestToggle');
+      if (bestToggle) {
+        bestToggle.addEventListener('change', function (e) {
+          state.bestOnly = e.target.checked;
           render();
         });
       }
