@@ -19,6 +19,10 @@
       --fg: #1b2d40;
       --line: rgba(27, 45, 64, 0.85);
       --header-height: 65px;
+      /* Заповнюються з Телеграма. У браузері лишаються нулями,
+         тому та сама верстка працює і там, і там. */
+      --tg-top: 0px;
+      --tg-bottom: 0px;
       /* Font system — change these two lines to swap typography globally */
       --font-display: 'Fraunces', 'Cormorant Garamond', Georgia, serif;
       --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
@@ -61,7 +65,10 @@
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      padding: 22px 20px 18px;
+      /* + --tg-top: у повноекранному режимі зверху висять плашки
+         «Закрити» і «...», і без цього відступу вони лягають
+         просто на логотип. У браузері змінна дорівнює нулю. */
+      padding: calc(22px + var(--tg-top)) 20px 18px;
       min-height: 64px;
       transition: background-color 0.35s ease, border-color 0.35s ease;
     }
@@ -142,7 +149,7 @@
 
     .hero-pin {
       position: sticky;
-      top: var(--header-height);
+      top: calc(var(--header-height) + var(--tg-top));
       height: calc(100vh - var(--header-height));
       width: 100%;
       padding: 14px;
@@ -985,7 +992,7 @@
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
       position: sticky;
-      top: var(--header-height);
+      top: calc(var(--header-height) + var(--tg-top));
       z-index: 20;
       background: linear-gradient(to bottom,
         var(--bg) 0%,
@@ -1390,7 +1397,7 @@
     /* ---------- Catalog: sale toggle + shape strip ---------- */
     .catalog-controls {
       position: sticky;
-      top: var(--header-height);
+      top: calc(var(--header-height) + var(--tg-top));
       z-index: 20;
       background: var(--bg);
       padding-top: 4px;
@@ -3272,6 +3279,21 @@
       try {
         if (twa.setHeaderColor)     twa.setHeaderColor('#f2e8d5');
         if (twa.setBackgroundColor) twa.setBackgroundColor('#f2e8d5');
+      } catch (e) {}
+
+      /* Повноекранний режим — те, що робить із сайту «застосунок»:
+         шапка Телеграма зникає, лишаються тільки плашки «Закрити»
+         поверх вмісту. Просимо лише на телефоні: на комп'ютері
+         Телеграм і так показує застосунок у вікні, і повний екран
+         там виглядає зламано. */
+      try {
+        var mobile = (twa.platform === 'ios' || twa.platform === 'android');
+        if (mobile && twa.requestFullscreen && !twa.isFullscreen) {
+          twa.requestFullscreen();
+        }
+        /* Якщо клієнт старий або відмовив — просто лишаємось у
+           звичайному режимі, нічого не ламається. */
+        twa.onEvent('fullscreenFailed', function () {});
       } catch (e) {}
 
       /* Відступи під «чубчик» телефона й під панель Телеграма.
