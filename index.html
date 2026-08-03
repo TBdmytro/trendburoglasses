@@ -3257,9 +3257,38 @@
     /* Telegram Mini App init: full height + ready signal */
     (function () {
       var twa = window.Telegram && window.Telegram.WebApp;
-      if (twa) {
-        try { twa.ready(); twa.expand(); } catch (e) {}
+      if (!twa) return;                 // відкрито у звичайному браузері
+
+      try { twa.ready(); twa.expand(); } catch (e) {}
+
+      /* Головне для каталогу: без цього свайп униз під час гортання
+         Телеграм приймає за жест «згорнути» і закриває застосунок
+         посеред перегляду. З'явилось у Bot API 7.7, тому перевіряємо
+         наявність — на старих клієнтах просто не спрацює. */
+      try { if (twa.disableVerticalSwipes) twa.disableVerticalSwipes(); } catch (e) {}
+
+      /* Смуга Телеграма над застосунком і тло під ним — у колір сайту.
+         Інакше зверху лишається чужа біла (або чорна) полоска. */
+      try {
+        if (twa.setHeaderColor)     twa.setHeaderColor('#f2e8d5');
+        if (twa.setBackgroundColor) twa.setBackgroundColor('#f2e8d5');
+      } catch (e) {}
+
+      /* Відступи під «чубчик» телефона й під панель Телеграма.
+         Віддаємо їх у CSS змінними, щоб верстка могла ними
+         користуватись, а в браузері вони просто дорівнюють нулю. */
+      function applyInsets() {
+        var s = twa.contentSafeAreaInset || twa.safeAreaInset || {};
+        var r = document.documentElement;
+        r.style.setProperty('--tg-top', (s.top || 0) + 'px');
+        r.style.setProperty('--tg-bottom', (s.bottom || 0) + 'px');
       }
+      applyInsets();
+      try {
+        twa.onEvent('safeAreaChanged', applyInsets);
+        twa.onEvent('contentSafeAreaChanged', applyInsets);
+        twa.onEvent('viewportChanged', applyInsets);
+      } catch (e) {}
     })();
 
     /* Ukrainian plural for "модель": 1 модель / 2-4 моделі / 5+ моделей */
