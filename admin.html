@@ -313,6 +313,31 @@
   </div>
 
   <!-- SETTINGS -->
+  <div class="screen" data-screen="home" hidden>
+    <h1 class="screen-title">Головна сторінка</h1>
+    <p class="screen-sub">Фото, текст і банер акції</p>
+
+    <div class="settings-divider">Головне фото</div>
+    <p class="screen-sub" style="margin-top:-4px">Горизонтальне, від 1200 px по ширині. Порожньо — лишиться те, що вшите в сайт.</p>
+    <div id="heroPreviewWrap" style="margin-bottom:10px"></div>
+    <label class="add-btn" style="background:transparent;color:var(--fg);border:1px solid var(--line);display:block;text-align:center;cursor:pointer">
+      Вибрати фото
+      <input type="file" id="heroFile" accept="image/*" hidden />
+    </label>
+    <button class="add-btn" id="heroClear" style="background:transparent;color:var(--red);border:1px solid var(--line)">Прибрати фото</button>
+
+    <div class="settings-divider">Текст на фото</div>
+    <div class="field"><label class="field-label">Заголовок (Enter — новий рядок)</label><textarea class="input" id="hTitle" rows="2" placeholder="Великий вибір.&#10;Великі знижки."></textarea></div>
+    <div class="field"><label class="field-label">Напис на кнопці</label><input class="input" id="hCta" placeholder="Переходь та обирай" /></div>
+
+    <div class="settings-divider">Банер акції</div>
+    <p class="screen-sub" style="margin-top:-4px">Порожньо — сайт напише сам: «Sale · до −25%» і порахує моделі.</p>
+    <div class="field"><label class="field-label">Заголовок банера</label><input class="input" id="hSaleTitle" placeholder="Sale · до −25%" /></div>
+    <div class="field"><label class="field-label">Підпис під ним</label><input class="input" id="hSaleSub" placeholder="5 моделей зі знижкою просто зараз" /></div>
+
+    <button class="add-btn" id="saveHome" style="background:var(--green)">Зберегти</button>
+  </div>
+
   <div class="screen" data-screen="settings" hidden>
     <h1 class="screen-title">Налаштування</h1>
     <p class="screen-sub">Контакт, доставка та знижки за пари</p>
@@ -340,6 +365,10 @@
 
   <!-- BOTTOM NAV -->
   <div class="botnav">
+    <button data-nav="home" data-go="home">
+      <svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>
+      Головна
+    </button>
     <button class="active" data-nav="products" data-go="products">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
       Товари
@@ -408,6 +437,7 @@
     if (s === 'promos') loadPromos();
     if (s === 'add') resetProductForm();
     if (s === 'settings') loadSettings();
+    if (s === 'home') loadHome();
   }
   document.addEventListener('click', function(e){
     var go = e.target.closest('[data-go]');
@@ -787,6 +817,82 @@
 
   /* ---------- settings ---------- */
   var settingsId = null;
+  /* ---------- Головна сторінка ----------
+     Усе лежить у тому самому документі settings, що й решта
+     налаштувань: не треба ні нового типу, ні другого запиту з сайту. */
+  var heroAssetId = null;
+
+  function renderHeroPreview() {
+    var wrap = document.getElementById('heroPreviewWrap');
+    if (!heroAssetId) {
+      wrap.innerHTML = '<p class="screen-sub" style="margin:0">Фото не вибране — сайт покаже вшите.</p>';
+      return;
+    }
+    var url = 'https://cdn.sanity.io/images/' + CFG.projectId + '/' + CFG.dataset + '/' +
+              heroAssetId.replace(/^image-/, '').replace(/-(\w+)$/, '.$1') + '?w=600&fit=max';
+    wrap.innerHTML = '<img src="' + url + '" style="width:100%;border-radius:12px;display:block" alt="">';
+  }
+
+  function loadHome() {
+    sanityQuery('*[_type=="settings"][0]{_id,"heroAsset":heroImage.asset._ref,heroTitle,heroCta,saleTitle,saleSubtitle}')
+      .then(function (s) {
+        if (!s) { heroAssetId = null; renderHeroPreview(); return; }
+        settingsId = s._id;
+        heroAssetId = s.heroAsset || null;
+        document.getElementById('hTitle').value = s.heroTitle || '';
+        document.getElementById('hCta').value = s.heroCta || '';
+        document.getElementById('hSaleTitle').value = s.saleTitle || '';
+        document.getElementById('hSaleSub').value = s.saleSubtitle || '';
+        renderHeroPreview();
+      }).catch(function () {});
+  }
+
+  document.getElementById('heroFile').addEventListener('change', function (e) {
+    var file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    toast('Завантажую…');
+    uploadImage(file)
+      .then(function (id) { heroAssetId = id; renderHeroPreview(); toast('Фото готове — натисни «Зберегти»'); })
+      .catch(function () { toast('Фото не завантажилось'); });
+  });
+
+  document.getElementById('heroClear').addEventListener('click', function () {
+    heroAssetId = null;
+    renderHeroPreview();
+    toast('Прибрано — натисни «Зберегти»');
+  });
+
+  document.getElementById('saveHome').addEventListener('click', function () {
+    var data = {
+      heroTitle: document.getElementById('hTitle').value.trim(),
+      heroCta: document.getElementById('hCta').value.trim(),
+      saleTitle: document.getElementById('hSaleTitle').value.trim(),
+      saleSubtitle: document.getElementById('hSaleSub').value.trim()
+    };
+    /* Порожнє поле треба саме стерти, а не лишити старе значення —
+       інакше «прибрати фото» не спрацює. */
+    var mut;
+    if (settingsId) {
+      var patch = { id: settingsId, set: data };
+      if (heroAssetId) {
+        patch.set.heroImage = { _type: 'image', asset: { _type: 'reference', _ref: heroAssetId } };
+      } else {
+        patch.unset = ['heroImage'];
+      }
+      mut = [{ patch: patch }];
+    } else {
+      var doc = Object.assign({ _type: 'settings' }, data);
+      if (heroAssetId) {
+        doc.heroImage = { _type: 'image', asset: { _type: 'reference', _ref: heroAssetId } };
+      }
+      mut = [{ create: doc }];
+    }
+    sanityMutate(mut)
+      .then(function () { toast('Збережено ✓'); loadHome(); })
+      .catch(function () { toast('Помилка'); });
+  });
+
   function loadSettings() {
     sanityQuery('*[_type=="settings"][0]{_id,tgUsername,deliveryTime,pair2Discount,pair3Discount,giftBrandsNote,rateUAH,rateUSDT}').then(function(s){
       if (s) {
