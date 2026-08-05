@@ -254,8 +254,7 @@
       cursor: pointer;
       transition: background-color 0.2s ease, color 0.2s ease;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-      backdrop-filter: blur(2px);
-      -webkit-backdrop-filter: blur(2px);
+
     }
     .banner-cta:hover {
       background: var(--bg);
@@ -519,7 +518,7 @@
     .product-card-sale-badge {
       position: absolute;
       top: 8px;
-      right: 8px;
+      left: 8px;          /* усі бейджі ліворуч, серце — праворуч */
       z-index: 2;
       font-family: var(--font-ui);
       font-size: 10px;
@@ -544,9 +543,11 @@
       justify-content: space-around;
       padding: 10px 8px;
       padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-      background: rgba(242, 232, 213, 0.92);
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      /* Було blur(20px) saturate(180%). Це смуга на весь екран, і
+         телефон перераховував розмиття щокадру, поки під нею щось
+         рухалось — саме через це смикалась бігуча стрічка. Суцільний
+         фон коштує нуль і виглядає так само. */
+      background: #f4ecdb;
       border-top: 1px solid var(--line);
     }
 
@@ -962,8 +963,8 @@
         var(--bg) 0%,
         var(--bg) 70%,
         rgba(242, 232, 213, 0.85) 100%);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      /* Без розмиття: цей блок липкий, тобто перемальовується
+         під час кожної прокрутки каталогу. */
     }
     .catalog-filters::-webkit-scrollbar { display: none; }
 
@@ -1153,12 +1154,15 @@
     }
     .sale-banner:active { transform: scale(0.99); }
     .sale-banner-title {
+      display: block;      /* без цього заголовок і підпис злипались в рядок */
       font-family: var(--font-display);
       font-size: 16px;
       font-weight: 700;
+      line-height: 1.25;
       margin: 0;
     }
     .sale-banner-sub {
+      display: block;
       font-family: var(--font-ui);
       font-size: 11.5px;
       color: var(--fg);
@@ -1396,13 +1400,14 @@
        інакше він їхав би вбік разом зі слайдами при гортанні фото. */
     .product-hero-wrap { position: relative; }
     .product-hero-wrap::after {
-      content: 'OPTIX';
+      content: 'OX';
       position: absolute;
       bottom: 14px;
-      left: 16px;
-      font-family: var(--font-display);
-      font-size: 11px;
-      letter-spacing: 0.22em;
+      right: 18px;        /* праворуч, як і на картках у каталозі */
+      font-family: var(--font-logo);
+      font-size: 13px;
+      letter-spacing: 0.16em;
+      padding-left: 0.16em;
       color: var(--fg);
       opacity: 0.32;
       pointer-events: none;
@@ -1435,9 +1440,7 @@
       display: flex;
       gap: 6px;
       padding: 7px 10px;
-      background: rgba(242, 232, 213, 0.7);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      background: rgba(242, 232, 213, 0.94);
       border-radius: 999px;
       z-index: 2;
     }
@@ -1566,18 +1569,20 @@
       margin: 3px 0 0;
     }
 
-    /* Знак «ox» на фото — підпис магазину. Малюнок вшитий у стиль,
-       тому не робить зайвого запиту і не блимає при завантаженні. */
+    /* Монограма OX — скорочення від OPTIX. Тією ж антиквою, що логотип,
+       прописними й з широкою розрядкою: так марки клеймують дужки оправ.
+       Вшита у стиль, тому не робить зайвого запиту і не блимає. */
     .product-card-image::after {
-      content: 'OPTIX';
+      content: 'OX';
       position: absolute;
       bottom: 8px;
       right: 11px;
       font-family: var(--font-logo);
-      font-size: 8.5px;
-      letter-spacing: 0.22em;
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      padding-left: 0.16em;
       color: var(--fg);
-      opacity: 0.26;
+      opacity: 0.3;
       pointer-events: none;
       z-index: 1;
     }
@@ -2049,7 +2054,7 @@
     .product-hero-badge {
       position: absolute;
       top: 14px;
-      right: 14px;
+      left: 14px;         /* так само, як на картках у каталозі */
       font-family: var(--font-ui);
       font-size: 11px;
       font-weight: 600;
@@ -3309,20 +3314,36 @@
       var SETTINGS_QUERY = '*[_type == "settings"][0] { tgUsername, deliveryTime, pair2Discount, pair3Discount, giftBrandsNote, rateUAH, rateUSDT, "heroUrl": heroImage.asset->url, heroTitle, heroCta, saleTitle, saleSubtitle }';
 
       /* Products */
+      /* Показові товари з коду потрібні у двох місцях: щоб сторінку
+         можна було відкрити локально без бази, і щоб у передпоказі
+         було видно верстку. Але справжньому покупцеві всередині
+         Телеграму вони зашкодять — він побачить окуляри, яких немає,
+         і напише про них. Тому розрізняємо: всередині застосунку
+         кажемо правду, у браузері лишаємо приклади.
+         initData заповнений лише при запуску з бота. */
+      function insideTelegram() {
+        var t = window.Telegram && window.Telegram.WebApp;
+        return !!(t && t.initData);
+      }
+
+      function dropDemoProducts() {
+        window.__OPTIX_LOAD_FAILED = true;
+        var arr = window.OPTIX_PRODUCTS;
+        if (arr && arr.length !== undefined) arr.length = 0;
+        if (window.OPTIX_catalogRefresh) window.OPTIX_catalogRefresh();
+        if (window.OPTIX_newArrivalsRefresh) window.OPTIX_newArrivalsRefresh();
+        if (window.OPTIX_bestRefresh) window.OPTIX_bestRefresh();
+        if (window.OPTIX_saleRefresh) window.OPTIX_saleRefresh();
+        if (window.OPTIX_homeBrandsRefresh) window.OPTIX_homeBrandsRefresh();
+        if (window.OPTIX_searchSuggestionsRefresh) window.OPTIX_searchSuggestionsRefresh();
+      }
+
       q(PRODUCT_QUERY).then(function (rows) {
         /* Порожня, але успішна відповідь — це теж привід прибрати
            показові товари. Інакше вони лишились би на сайті назавжди,
            а не на частку секунди до приходу справжніх. */
         if (!rows || !rows.length) {
-          window.__OPTIX_LOAD_FAILED = true;
-          var empty = window.OPTIX_PRODUCTS;
-          if (empty && empty.length !== undefined) empty.length = 0;
-          if (window.OPTIX_catalogRefresh) window.OPTIX_catalogRefresh();
-          if (window.OPTIX_newArrivalsRefresh) window.OPTIX_newArrivalsRefresh();
-          if (window.OPTIX_bestRefresh) window.OPTIX_bestRefresh();
-          if (window.OPTIX_saleRefresh) window.OPTIX_saleRefresh();
-          if (window.OPTIX_homeBrandsRefresh) window.OPTIX_homeBrandsRefresh();
-          if (window.OPTIX_searchSuggestionsRefresh) window.OPTIX_searchSuggestionsRefresh();
+          if (insideTelegram()) dropDemoProducts();
           return;
         }
         var mapped = rows.map(function (p) {
@@ -3378,15 +3399,7 @@
            окуляри, яких немає, з цінами, яких немає, і написала б про
            них менеджеру. Тому прибираємо їх і кажемо правду. */
         console.warn('Sanity products load failed:', e);
-        window.__OPTIX_LOAD_FAILED = true;
-        var arr = window.OPTIX_PRODUCTS;
-        if (arr && arr.length !== undefined) arr.length = 0;
-        if (window.OPTIX_catalogRefresh) window.OPTIX_catalogRefresh();
-        if (window.OPTIX_newArrivalsRefresh) window.OPTIX_newArrivalsRefresh();
-        if (window.OPTIX_bestRefresh) window.OPTIX_bestRefresh();
-        if (window.OPTIX_saleRefresh) window.OPTIX_saleRefresh();
-        if (window.OPTIX_homeBrandsRefresh) window.OPTIX_homeBrandsRefresh();
-        if (window.OPTIX_searchSuggestionsRefresh) window.OPTIX_searchSuggestionsRefresh();
+        if (insideTelegram()) dropDemoProducts();
       });
 
       /* Promotions */
