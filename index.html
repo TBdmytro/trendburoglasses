@@ -2307,6 +2307,47 @@
       stroke-linecap: round;
     }
 
+    /* Гортання просто в перегляді: стрілки працюють на будь-якому
+       масштабі, тому не сваряться з щипком і перетягуванням. */
+    .zoom-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 3;
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.14);
+      color: #ffffff;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .zoom-nav[hidden] { display: none; }
+    .zoom-nav--prev { left: 10px; }
+    .zoom-nav--next { right: 10px; }
+    .zoom-nav svg {
+      width: 20px; height: 20px;
+      fill: none; stroke: currentColor; stroke-width: 1.9;
+      stroke-linecap: round; stroke-linejoin: round;
+    }
+    .zoom-count {
+      position: absolute;
+      left: 0; right: 0;
+      top: calc(20px + var(--tg-top));
+      z-index: 3;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: rgba(255, 255, 255, 0.72);
+      pointer-events: none;
+    }
+    .zoom-count[hidden] { display: none; }
+
     .zoom-hint {
       position: absolute;
       left: 0;
@@ -2809,9 +2850,14 @@
       background: var(--surface);
       transition: background 0.3s ease;
     }
+    /* Кадр знімка. Пропорцію ставить JS за реальним файлом
+       (--gal-ar), тому смуг згори й знизу не лишається.
+       До завантаження тримаємо 16:9, щоб сторінка не стрибала. */
     .pdp-gal-track {
       background: var(--surface);
       display: flex;
+      align-items: center;
+      aspect-ratio: var(--gal-ar, 16 / 9);
       overflow-x: auto;
       scroll-snap-type: x mandatory;
       -webkit-overflow-scrolling: touch;
@@ -2821,15 +2867,16 @@
     /* Знімки постачальника зняті на білому. Режим multiply кладе білий
        фон знімка на колір плитки — фон зникає, шва немає, рамки немає.
        Плитка вища за сам знімок: це запас під шапку і шторку. */
+    /* contain, а не cover. На сторінці товару людина вирішує, чи
+       подобається їй форма оправи — обрізати дужки чи край рамки
+       не можна. Порожнє поле збігається кольором з підкладкою,
+       тому візуально його не видно. */
     .pdp-gal-track img {
       flex: 0 0 100%;
+      width: 100%;
+      height: 100%;
       scroll-snap-align: center;
-      /* Пропорція знімка постачальника — близько 1.9:1. Плитка
-         майже така сама, тому знімок заповнює кадр по ширині цілком
-         і нічого не втрачає. У квадраті він займав половину висоти,
-         а решта кадру була порожньою. */
-      aspect-ratio: 16 / 9;
-      object-fit: cover;
+      object-fit: contain;
       object-position: center;
       padding: 0;
       display: block;
@@ -4078,7 +4125,14 @@
     <div class="zoom-stage" id="zoomStage">
       <img class="zoom-img" id="zoomImg" alt="" />
     </div>
-    <div class="zoom-hint" id="zoomHint">Подвійний дотик або щипок — збільшити</div>
+    <button type="button" class="zoom-nav zoom-nav--prev" id="zoomPrev" aria-label="Попереднє фото" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6 9 12l6 6"/></svg>
+    </button>
+    <button type="button" class="zoom-nav zoom-nav--next" id="zoomNext" aria-label="Наступне фото" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+    <div class="zoom-count" id="zoomCount" hidden></div>
+    <div class="zoom-hint" id="zoomHint">Подвійний дотик або щипок — збільшити - стрілки гортають</div>
   </div>
 
   <!-- About sheet -->
@@ -6114,8 +6168,10 @@
             var pics = track ? track.querySelectorAll('img') : [];
             if (!pics.length) return;
             var i = track.clientWidth ? Math.round(track.scrollLeft / track.clientWidth) : 0;
-            var pic = pics[Math.min(i, pics.length - 1)];
-            window.OPTIX_zoomOpen(pic.getAttribute('src'), pic.getAttribute('alt'));
+            var all = [].map.call(pics, function (el) {
+              return { src: el.getAttribute('src'), alt: el.getAttribute('alt') };
+            });
+            window.OPTIX_zoomOpen(all, Math.min(i, all.length - 1));
           });
         }
 
@@ -6210,6 +6266,24 @@
         /* Wire up gallery (if multiple images) — scroll syncs with dots, dots scroll gallery */
         var gallery = document.getElementById('productGallery');
         var dotsWrap = document.getElementById('productGalleryDots');
+
+        /* Кадр підганяємо під сам знімок. Постачальники віддають
+           різні пропорції; фіксована рамка або ріже оправу, або
+           лишає широкі порожні поля. Обмежуємо розумними межами,
+           щоб дуже вузьке чи дуже високе фото не ламало сторінку. */
+        if (gallery) {
+          var first = gallery.querySelector('img');
+          if (first) {
+            var fit = function () {
+              var w = first.naturalWidth, h = first.naturalHeight;
+              if (!w || !h) return;
+              var ar = Math.min(2.1, Math.max(1.15, w / h));
+              var host = gallery.closest('.pdp-gal') || gallery;
+              host.style.setProperty('--gal-ar', ar.toFixed(3));
+            };
+            if (first.complete) fit(); else first.addEventListener('load', fit, { once: true });
+          }
+        }
         if (gallery && dotsWrap) {
           var dots = dotsWrap.querySelectorAll('.pdp-gal-dot');
           gallery.addEventListener('scroll', function () {
@@ -6431,6 +6505,9 @@
       var img   = document.getElementById('zoomImg');
       var closeBtn = document.getElementById('zoomClose');
       var hint  = document.getElementById('zoomHint');
+      var prevBtn = document.getElementById('zoomPrev');
+      var nextBtn = document.getElementById('zoomNext');
+      var countEl = document.getElementById('zoomCount');
       if (!view || !img) return;
 
       var MIN = 1, MAX = 4;
@@ -6465,15 +6542,40 @@
         apply(animate);
       }
 
+      /* Перегляд тримає весь набір знімків товару, а не один.
+         Інакше, щоб глянути друге фото зблизька, треба вийти,
+         прогорнути стрічку й зайти знову. */
+      var list = [], idx = 0;
+
+      function show(i, animate) {
+        if (!list.length) return;
+        idx = (i + list.length) % list.length;
+        var it = list[idx];
+        img.src = it.src;
+        img.alt = it.alt || '';
+        var go = function () { reset(animate); };
+        if (img.complete) go(); else img.onload = go;
+        if (countEl) countEl.textContent = (idx + 1) + ' / ' + list.length;
+        var many = list.length > 1;
+        if (countEl) countEl.hidden = !many;
+        if (prevBtn) prevBtn.hidden = !many;
+        if (nextBtn) nextBtn.hidden = !many;
+      }
+
       function open(src, alt) {
-        img.src = src;
-        img.alt = alt || '';
+        /* Приймаємо і один знімок, і масив {src, alt} з номером. */
+        if (Array.isArray(src)) {
+          list = src.slice();
+          idx = Math.min(Math.max(alt | 0, 0), list.length - 1);
+        } else {
+          list = [{ src: src, alt: alt || '' }];
+          idx = 0;
+        }
         view.classList.add('is-open');
         view.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
         if (hint) hint.classList.remove('is-hidden');
-        var go = function () { reset(false); };
-        if (img.complete) go(); else img.onload = go;
+        show(idx, false);
         /* Підказка потрібна один раз — далі вона тільки заважає. */
         setTimeout(function () { if (hint) hint.classList.add('is-hidden'); }, 2600);
       }
@@ -6486,6 +6588,18 @@
       window.OPTIX_zoomOpen = open;
 
       closeBtn.addEventListener('click', close);
+      if (prevBtn) prevBtn.addEventListener('click', function (e) {
+        e.stopPropagation(); show(idx - 1, false);
+      });
+      if (nextBtn) nextBtn.addEventListener('click', function (e) {
+        e.stopPropagation(); show(idx + 1, false);
+      });
+      document.addEventListener('keydown', function (e) {
+        if (!view.classList.contains('is-open')) return;
+        if (e.key === 'ArrowLeft')  show(idx - 1, false);
+        if (e.key === 'ArrowRight') show(idx + 1, false);
+        if (e.key === 'Escape')     close();
+      });
       view.addEventListener('click', function (e) {
         /* Клік повз знімок закриває — звична поведінка перегляду. */
         if (e.target === view || e.target === stage) close();
