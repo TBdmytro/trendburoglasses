@@ -36,16 +36,17 @@
       --fg: #1a1a1c;          /* графіт замість чорного */
       --fg-2: #5a5c60;        /* другорядний текст, контраст 5.97 */
       --fg-3: #9b9da1;        /* підказки */
-      --line: #e7e4de;        /* волосяні лінії */
-      --line-strong: rgba(26, 26, 28, 0.28);
-      --line-hard: var(--fg); /* там, де потрібен жорсткий контур */
+      --line: #e7e4de;        /* волосяні лінії */ /* там, де потрібен жорсткий контур */
       --acc: #3f6480;         /* акцент, контраст 6.02 */
-      --acc-2: #5b7f9c;
       --new: #b23b30;
       --sale: #3f6480;
       --ok: #2f7a4a;
       --shadow: 0 1px 2px rgba(20, 22, 26, 0.05), 0 8px 24px rgba(20, 22, 26, 0.07);
       --panel: #ffffff;
+  /* Висота нижнього меню. На неї спираються .to-top і нижні відступи
+     екранів — тримаємо в одному місці, щоб не розповзалось. */
+  --nav-h: 64px;
+  --fg-soft: color-mix(in srgb, var(--fg) 55%, transparent);
   --panel-hi: #ffffff;
   --header-height: 56px;
       /* Заповнюються з Телеграма, у браузері лишаються нулями. */
@@ -73,9 +74,7 @@
       --fg-2: #a0a5ad;
       --fg-3: #6d737b;
       --line: #272c33;
-      --line-strong: rgba(241, 238, 232, 0.3);
       --acc: #8fb3cc;         /* на темному золото й синь мусять світлішати */
-      --acc-2: #8fb3cc;
       --new: #e0685a;
       --sale: #8fb3cc;
       --ok: #63b27f;
@@ -311,16 +310,6 @@
     }
     .banner-cta:active { transform: scale(0.97); }
 
-    /* ---------- Marquee (feature ticker below hero) ---------- */
-
-
-
-
-
-
-
-    @media (prefers-reduced-motion: reduce) {
-    }
 
     /* ---------- Sections (Brands, New, Catalog) ---------- */
     .section {
@@ -557,8 +546,6 @@
     .new-arrivals-strip.is-static::-webkit-scrollbar { display: none; }
     .new-arrivals-strip.is-static .product-card { flex: 0 0 160px; width: 160px; }
 
-    @media (prefers-reduced-motion: reduce) {
-    }
 
     /* ---------- Sale section (horizontal scroll, gold accents) ---------- */
     .sale-section {
@@ -605,6 +592,7 @@
 
     /* ---------- Bottom navigation (fixed) ---------- */
     .bottomnav {
+      min-height: var(--nav-h);
       position: fixed;
       left: 0;
       right: 0;
@@ -614,7 +602,7 @@
       align-items: stretch;
       justify-content: space-around;
       padding: 10px 8px;
-      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+      padding-bottom: calc(10px + max(env(safe-area-inset-bottom, 0px), var(--tg-bottom)));
       /* Було blur(20px) saturate(180%). Це смуга на весь екран, і
          телефон перераховував розмиття щокадру, поки під нею щось
          рухалось — саме через це смикалась бігуча стрічка. Суцільний
@@ -736,7 +724,7 @@
       align-items: center;
       gap: 12px;
       padding: 14px 16px;
-      padding-top: calc(14px + var(--tg-top));
+      padding-top: calc(14px + max(env(safe-area-inset-top, 0px), var(--tg-top)));
       border-bottom: 1px solid var(--line);
       background: var(--bg);
       flex-shrink: 0;
@@ -1248,11 +1236,9 @@
       width: 160px;
       margin-right: 12px;
     }
-    .na-track.is-paused,
-    .new-arrivals-strip:hover .na-track { animation-play-state: paused; }
-    @keyframes na-marquee {
-    }
-    @media (prefers-reduced-motion: reduce) {
+    /* Доріжка новинок. Набір карток дублюється в JS, тому зсув рівно
+       на -50% повертає доріжку в те саме місце — стик непомітний.
+       Тривалість задає JS через animation-duration. */
     .na-track {
       display: flex;
       width: max-content;
@@ -1260,8 +1246,17 @@
       animation-name: na-marquee;
       animation-timing-function: linear;
       animation-iteration-count: infinite;
-      animation: none;
     }
+    .na-track.is-paused,
+    .new-arrivals-strip:hover .na-track { animation-play-state: paused; }
+    @keyframes na-marquee {
+      from { transform: translate3d(0, 0, 0); }
+      to   { transform: translate3d(-50%, 0, 0); }
+    }
+    /* Якщо в системі вимкнено анімації — доріжка стоїть.
+       JS у цьому разі й так віддає звичайну смугу під палець. */
+    @media (prefers-reduced-motion: reduce) {
+      .na-track { animation: none; }
     }
     /* ---------- Герой (як у макеті) ----------
        Окремий самостійний блок. Стара анімація на два екрани прокрутки
@@ -1982,7 +1977,7 @@
       align-items: center;
       gap: 8px;
       padding: 14px 16px;
-      padding-top: calc(14px + var(--tg-top));
+      padding-top: calc(14px + max(env(safe-area-inset-top, 0px), var(--tg-top)));
       border-bottom: 1px solid var(--line);
       background: var(--bg);
       flex-shrink: 0;
@@ -2032,7 +2027,7 @@
     .sheet-footer {
       flex-shrink: 0;
       padding: 14px 20px;
-      padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+      padding-bottom: calc(14px + max(env(safe-area-inset-bottom, 0px), var(--tg-bottom)));
       background: var(--bg);
       border-top: 1px solid var(--line);
     }
