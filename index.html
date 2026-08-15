@@ -45,7 +45,9 @@
       --sale: #3f6480;
       --ok: #2f7a4a;
       --shadow: 0 1px 2px rgba(20, 22, 26, 0.05), 0 8px 24px rgba(20, 22, 26, 0.07);
-      --header-height: 56px;
+      --panel: #ffffff;
+  --panel-hi: #ffffff;
+  --header-height: 56px;
       /* Заповнюються з Телеграма, у браузері лишаються нулями. */
       --tg-top: 0px;
       --tg-bottom: 0px;
@@ -59,6 +61,8 @@
     }
 
     [data-theme='dark'] {
+  --panel: #1d2127;
+  --panel-hi: #262b33;
       --bg: #14171b;
       /* Плитка під фото НЕ темна: знімки постачальника зняті на білому,
          і на темному тлі вони різали б око прямокутником. Тепла плитка
@@ -732,7 +736,7 @@
       align-items: center;
       gap: 12px;
       padding: 14px 16px;
-      padding-top: calc(14px + env(safe-area-inset-top, 0px));
+      padding-top: calc(14px + var(--tg-top));
       border-bottom: 1px solid var(--line);
       background: var(--bg);
       flex-shrink: 0;
@@ -805,6 +809,22 @@
       stroke-linecap: round;
     }
 
+    /* Стрілка «назад» ліворуч — так само, як у шапці застосунку.
+       Текст «Скасувати» стояв праворуч і завжди ховався за «...» Телеграма. */
+    .search-back {
+      flex-shrink: 0;
+      width: 34px; height: 34px;
+      display: grid; place-items: center;
+      border: 0; background: transparent;
+      border-radius: 50%;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .search-back svg {
+      width: 21px; height: 21px;
+      fill: none; stroke: var(--fg); stroke-width: 1.8;
+      stroke-linecap: round; stroke-linejoin: round;
+    }
     .search-close {
       border: none;
       background: transparent;
@@ -863,7 +883,7 @@
       font-size: 13px;
       letter-spacing: 0.03em;
       color: var(--fg);
-      background: rgba(255, 255, 255, 0.85);
+      background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 999px;
       padding: 7px 16px;
@@ -883,7 +903,7 @@
       opacity: 0.55;
     }
     .search-suggestion:active { transform: scale(0.96); }
-    .search-suggestion:hover { background: rgba(255, 255, 255, 1); }
+    .search-suggestion:hover { background: var(--panel-hi); }
 
     .search-results-count {
       font-family: var(--font-ui);
@@ -910,7 +930,7 @@
       align-items: center;
       gap: 14px;
       padding: 12px;
-      background: rgba(255, 255, 255, 0.7);
+      background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 14px;
       text-decoration: none;
@@ -919,7 +939,7 @@
       -webkit-tap-highlight-color: transparent;
     }
     .search-result:active { transform: scale(0.98); }
-    .search-result:hover { background: rgba(255, 255, 255, 0.95); }
+    .search-result:hover { background: var(--panel-hi); }
 
     .search-result-image {
       width: 56px;
@@ -1962,7 +1982,7 @@
       align-items: center;
       gap: 8px;
       padding: 14px 16px;
-      padding-top: calc(14px + env(safe-area-inset-top, 0px));
+      padding-top: calc(14px + var(--tg-top));
       border-bottom: 1px solid var(--line);
       background: var(--bg);
       flex-shrink: 0;
@@ -2776,7 +2796,7 @@
       border-bottom: 0;
       background: none;
       padding: 10px 10px;
-      padding-top: calc(10px + env(safe-area-inset-top, 0px));
+      padding-top: calc(10px + var(--tg-top));
     }
     #productSheet .sheet-title { display: none; }
     #productSheet .sheet-back {
@@ -2832,7 +2852,7 @@
        через змінні вони у темній темі світлішають і білий текст зникає. */
     .pdp-badge {
       position: absolute;
-      top: calc(58px + env(safe-area-inset-top, 0px));
+      top: calc(58px + var(--tg-top));
       left: 12px;
       height: 22px;
       padding: 0 9px 0 calc(9px + 0.08em);
@@ -3412,7 +3432,7 @@
       align-items: center;
       gap: 14px;
       padding: 12px;
-      background: rgba(255, 255, 255, 0.7);
+      background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 14px;
     }
@@ -4110,6 +4130,9 @@
   <!-- Search overlay (opens when Пошук tapped in bottom nav) -->
   <div class="search-overlay" id="searchOverlay" aria-hidden="true" role="dialog" aria-label="Пошук">
     <div class="search-header">
+      <button class="search-back" id="searchClose" type="button" aria-label="Назад">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6 L9 12 L15 18"/></svg>
+      </button>
       <div class="search-input-wrap">
         <svg class="search-input-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <circle cx="11" cy="11" r="7" />
@@ -4123,7 +4146,7 @@
           </svg>
         </button>
       </div>
-      <button class="search-close" id="searchClose" type="button">Скасувати</button>
+      
     </div>
 
     <div class="search-body">
