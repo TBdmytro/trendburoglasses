@@ -411,6 +411,14 @@
     <div class="field"><label class="field-label">Текст</label><textarea class="input" id="conText" rows="3" placeholder="Напишіть артикул або надішліть фото..."></textarea></div>
     <div class="field"><label class="field-label">Напис на кнопці</label><input class="input" id="conCta" placeholder="Написати менеджеру" /></div>
 
+    <div class="settings-divider">Банер у каталозі</div>
+    <p class="screen-sub" style="margin-top:-4px">Стоїть між рядами карток, після четвертої. Один на екран.</p>
+    <div class="field"><label class="field-label">Мітка</label><input class="input" id="promoEyebrow" placeholder="Друга пара" /></div>
+    <div class="field"><label class="field-label">Заголовок</label><input class="input" id="promoTitle" placeholder="Дві оправи - знижка ще 10%" /></div>
+    <div class="field"><label class="field-label">Текст</label><textarea class="input" id="promoText" rows="2" placeholder="Рахується в кошику автоматично..."></textarea></div>
+    <div class="field"><label class="field-label">Напис на кнопці</label><input class="input" id="promoCta" placeholder="Написати менеджеру" /></div>
+    <label class="checkrow"><input type="checkbox" id="promoOff" /><span>Прибрати банер із каталогу</span></label>
+
     <div class="settings-divider">Рядок «Про OPTIX» унизу головної</div>
     <div class="field"><label class="field-label">Заголовок</label><input class="input" id="aboutLinkT" placeholder="Про OPTIX" /></div>
     <div class="field"><label class="field-label">Підпис</label><input class="input" id="aboutLinkS" placeholder="Хто ми, як працює викуп, строки" /></div>
@@ -947,7 +955,7 @@
   }
 
   function loadHome() {
-    sanityQuery('*[_type=="settings"][0]{_id,"heroAsset":heroImage.asset._ref,heroTitle,heroCta,saleTitle,saleSubtitle,aboutKicker,aboutTitle,aboutWhoTitle,aboutWhoText,aboutQuote,aboutStepsTitle,b1Kicker,b2Kicker,b2Cta,b3Cta,secBrands,secBrandsLink,secNew,secNewLink,lookKicker,lookTitle,trust1T,trust1S,trust2T,trust2S,trust3T,trust3S,conKicker,conTitle,conText,conCta,aboutLinkT,aboutLinkS,lookOff}')
+    sanityQuery('*[_type=="settings"][0]{_id,"heroAsset":heroImage.asset._ref,heroTitle,heroCta,saleTitle,saleSubtitle,aboutKicker,aboutTitle,aboutWhoTitle,aboutWhoText,aboutQuote,aboutStepsTitle,promoEyebrow,promoTitle,promoText,promoCta,promoOff,b1Kicker,b2Kicker,b2Cta,b3Cta,secBrands,secBrandsLink,secNew,secNewLink,lookKicker,lookTitle,trust1T,trust1S,trust2T,trust2S,trust3T,trust3S,conKicker,conTitle,conText,conCta,aboutLinkT,aboutLinkS,lookOff}')
       .then(function (s) {
         if (!s) { heroAssetId = null; renderHeroPreview(); return; }
         settingsId = s._id;
@@ -984,6 +992,12 @@
         setVal('conCta', s.conCta);
         setVal('aboutLinkT', s.aboutLinkT);
         setVal('aboutLinkS', s.aboutLinkS);
+        setVal('promoEyebrow', s.promoEyebrow);
+        setVal('promoTitle', s.promoTitle);
+        setVal('promoText', s.promoText);
+        setVal('promoCta', s.promoCta);
+        var po = document.getElementById('promoOff');
+        if (po) po.checked = s.promoOff === true;
         var lo = document.getElementById('lookOff');
         if (lo) lo.checked = s.lookOff === true;
         renderHeroPreview();
@@ -1047,6 +1061,11 @@
       conCta: getVal('conCta'),
       aboutLinkT: getVal('aboutLinkT'),
       aboutLinkS: getVal('aboutLinkS'),
+      promoEyebrow: getVal('promoEyebrow'),
+      promoTitle: getVal('promoTitle'),
+      promoText: getVal('promoText'),
+      promoCta: getVal('promoCta'),
+      promoOff: !!(document.getElementById('promoOff') && document.getElementById('promoOff').checked),
       lookOff: !!(document.getElementById('lookOff') && document.getElementById('lookOff').checked)
     };
     /* Порожнє поле треба саме стерти, а не лишити старе значення —
