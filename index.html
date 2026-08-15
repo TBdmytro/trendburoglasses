@@ -399,31 +399,34 @@
        змішує знімок із тлом батька, а не зі своїм власним: коли тут
        стояла темна лінія, білий знімок ставав темним і окуляри зникали.
        Розділювач тепер теж світлий — він лежить на світлих плитках. */
+    /* Волосяний розділювач між знімками. Він потрібен саме тому,
+       що підкладки різні: без нього чотири кадри зливаються в пляму. */
     .brand-tile-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 1px;
-      background: #ddd6c8;
+      background: var(--line);
     }
+    /* Кожен знімок заповнює свою клітинку цілком. Раніше він стояв
+       по центру квадрата, а згори й знизу лишалась смуга плитки —
+       і вона читалась як рамка, бо підкладка кадру в кожного бренду
+       трохи інша за тоном. */
     .brand-tile-grid img,
     .brand-tile-blank {
       display: block;
       width: 100%;
-      aspect-ratio: 1;
-      object-fit: contain;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      object-position: center;
       background: var(--surface);
-      /* Той самий прийом, що й на картках: білий фон знімка лягає
-         на колір плитки і зникає. */
-      mix-blend-mode: multiply;
     }
-    .brand-tile-blank { mix-blend-mode: normal; }
     /* Якщо знімка немає, OPTIX_productImage віддає svg-заглушку —
        їй потрібні ті самі розміри, що й фото. */
     .brand-tile-grid svg {
       display: block;
       width: 100%;
-      aspect-ratio: 1;
-      padding: 22%;
+      aspect-ratio: 16 / 9;
+      padding: 12% 22%;
       background: var(--surface);
       stroke: var(--fg);
       fill: none;
@@ -963,10 +966,9 @@
     .search-result-image img {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: cover;
       border-radius: 10px;
       display: block;
-      mix-blend-mode: multiply;
     }
 
     .search-result-info {
@@ -1149,7 +1151,9 @@
     .products-grid.is-list .product-card-image {
       width: 104px;
       flex: 0 0 104px;
-      aspect-ratio: 1.32;
+      /* Та сама пропорція, що й у сітці: інакше в режимі списку
+         знімок обрізало б на третину. */
+      aspect-ratio: 16 / 9;
       align-self: center;
       border-radius: 12px;
     }
@@ -1467,16 +1471,21 @@
       grid-template-columns: repeat(3, 1fr);
       grid-template-rows: repeat(3, 1fr);
       gap: 2px;
-      background: #ddd6c8;
+      background: var(--line);
     }
-    .hero-collage img,
+    .hero-collage img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      background: var(--surface);
+    }
     .hero-collage svg {
       width: 100%;
       height: 100%;
       object-fit: contain;
-      padding: 5px;
+      padding: 16%;
       background: var(--surface);
-      mix-blend-mode: multiply;
     }
     .hero-collage svg {
       stroke: var(--fg);
@@ -1607,7 +1616,8 @@
     /* Плитка під фото трохи нижча за квадрат: широкий знімок у ній
        стоїть щільніше, і в екран влазить більше карток. */
     .product-card-image {
-      aspect-ratio: 4 / 3;
+      /* 16/9 проти 1.87 у знімка — зрізається 5% ширини, дужки цілі. */
+      aspect-ratio: 16 / 9;
       position: relative;
       background: var(--surface);
       overflow: hidden;
@@ -1631,16 +1641,16 @@
        близько 1.9. Режим multiply кладе білий фон знімка на колір
        плитки — фон зникає, шва немає, рамки немає. Працює в обох
        темах, бо плитка світла і в темній. */
-    /* Тільки contain: знімки широкі, і cover зрізав би дужки.
-       Поля згори й знизу не видно — тло знімка після multiply
-       дорівнює тлу плитки, шва немає. */
+    /* Знімок заповнює плитку цілком. Ні полів, ні смуг: підкладка
+       кадру в кожного бренду своя, і будь-який зазор одразу видно
+       як рамку іншого тону. */
     .product-card-image img {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: cover;
+      object-position: center;
       display: block;
       padding: 0;
-      mix-blend-mode: multiply;
     }
 
     /* ---------- Product detail gallery (multiple images, swipeable) ---------- */
@@ -2425,6 +2435,456 @@
     .ab-btn--line { background: none; border: 1px solid var(--fg); color: var(--fg); }
     .ab-pad { height: 24px; }
 
+    /* ============================================================
+       ПОВНОЕКРАННИЙ ПЕРЕГЛЯД ФОТО
+       Знімки постачальника широкі й детальні — на них видно фактуру
+       ацетату й товщину дужки. У картці кадр обрізаний по краях,
+       тому тут показуємо його цілком і даємо збільшити.
+       ============================================================ */
+    .zoom {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: #0c0f13;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.22s ease, visibility 0.22s;
+      touch-action: none;          /* жести обробляємо самі */
+      overscroll-behavior: contain;
+    }
+    .zoom.is-open { opacity: 1; visibility: visible; }
+
+    .zoom-stage {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+    .zoom-img {
+      max-width: 100%;
+      max-height: 100%;
+      /* Тут contain, а не cover: у повний екран знімок має потрапити
+         цілком, без жодної обрізки. */
+      object-fit: contain;
+      transform-origin: 0 0;
+      will-change: transform;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .zoom-close {
+      position: absolute;
+      top: calc(12px + var(--tg-top));
+      right: 12px;
+      z-index: 3;
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .zoom-close svg {
+      width: 19px;
+      height: 19px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+    }
+
+    .zoom-hint {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: calc(26px + var(--tg-bottom));
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 11.5px;
+      letter-spacing: 0.04em;
+      color: rgba(255, 255, 255, 0.55);
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .zoom-hint.is-hidden { opacity: 0; }
+
+    /* Знімок у картці натискається — показуємо це курсором і підказкою */
+    .pdp-gal { cursor: zoom-in; }
+
+    /* ---------- Лічильники у фільтрах ---------- */
+    .filter-n {
+      font-style: normal;
+      font-size: 10px;
+      font-weight: 700;
+      opacity: 0.5;
+      margin-left: 4px;
+      letter-spacing: 0;
+    }
+    .catalog-filter--active .filter-n,
+    .gender-pill.is-active .filter-n { opacity: 0.75; }
+    /* Значення, під яким зараз нічого немає, не ховаємо — притлумлюємо.
+       Зникле значення читається як помилка, притлумлене — як факт. */
+    .catalog-filter.is-empty { opacity: 0.4; }
+
+    .filters-badge {
+      font-style: normal;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      margin-left: 8px;
+      border-radius: 999px;
+      background: var(--acc);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      display: inline-grid;
+      place-items: center;
+    }
+    .filters-badge[hidden] { display: none; }
+
+    /* ============================================================
+       КАТАЛОГ — верх
+       Стать липкою смугою, два фільтри, тихий рядок лічильника.
+       Решта керування — у панелі «Фільтри».
+       ============================================================ */
+    .cat-seg-wrap {
+      position: sticky;
+      top: calc(var(--header-height) + var(--tg-top));
+      z-index: 6;
+      background: var(--bg);
+      padding: 12px 18px 10px;
+      transition: background-color 0.3s ease;
+    }
+    .gender-pills {
+      display: flex;
+      gap: 2px;
+      padding: 3px;
+      border-radius: 999px;
+      background: var(--raise);
+      transition: background-color 0.3s ease;
+    }
+    .gender-pills[hidden] { display: none; }
+    .gender-pill {
+      flex: 1 1 0;
+      height: 34px;
+      border: 0;
+      border-radius: 999px;
+      background: none;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--fg-2);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    .gender-pill.is-active {
+      background: var(--fg);
+      color: var(--bg);
+      font-weight: 700;
+    }
+
+    .cat-chips {
+      display: flex;
+      gap: 8px;
+      padding: 0 18px 10px;
+      align-items: center;
+    }
+    .cat-chip--icon {
+      flex: 0 0 36px;
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--raise);
+      color: var(--fg);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      position: relative;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .cat-chip--icon svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+    /* Крапка замість цифри: скільки саме умов увімкнено — питання
+       для панелі, а на витрині досить факту «відбір є». */
+    .cat-chip--icon .filters-badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      min-width: 7px;
+      width: 7px;
+      height: 7px;
+      padding: 0;
+      margin: 0;
+      font-size: 0;
+      border-radius: 999px;
+      background: var(--acc);
+    }
+
+    .catalog-filters {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      flex: 1 1 auto;
+      padding-bottom: 1px;
+    }
+    .catalog-filters::-webkit-scrollbar { display: none; }
+    .catalog-filter {
+      flex: 0 0 auto;
+      height: 36px;
+      padding: 0 14px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--raise);
+      color: var(--fg);
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    .catalog-filter--active { background: var(--fg); color: var(--bg); }
+    .catalog-filter.is-empty { opacity: 0.4; }
+
+    .cat-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 2px 18px 16px;
+    }
+    .catalog-count {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      color: var(--fg-2);
+      margin: 0;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    .cat-sort {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 0;
+      background: none;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--fg-2);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .cat-sort svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .cat-adv-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 12px;
+    }
+
+    /* ============================================================
+       КАТАЛОГ — сітка й картка
+       Без рамок і тіней: фото зі скругленням, підпис під ним
+       на тлі сторінки, як у друкованому каталозі.
+       ============================================================ */
+    .products-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px 14px;
+      padding: 0 18px 32px;
+    }
+    .product-card {
+      background: none;
+      border: 0;
+      box-shadow: none;
+      border-radius: 0;
+      overflow: visible;
+      display: block;
+    }
+    .product-card:hover { box-shadow: none; }
+    .product-card-image {
+      aspect-ratio: 16 / 9;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .product-card-info { padding: 11px 0 0; }
+    .product-card-brand {
+      font-family: var(--font-ui);
+      font-size: 8.5px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--fg-2);
+      margin: 0 0 5px;
+      line-height: 1.2;
+    }
+    .product-card-code {
+      font-family: var(--font-logo);
+      font-size: 15px;
+      line-height: 1.15;
+      letter-spacing: 0;
+      text-transform: none;
+      color: var(--fg);
+      opacity: 1;
+      margin: 0 0 6px;
+    }
+    .product-card-pricing {
+      display: flex;
+      align-items: baseline;
+      gap: 7px;
+      flex-wrap: wrap;
+      margin: 0;
+    }
+    .product-card-price { font-size: 14px; font-weight: 700; }
+    .product-card-old-price { font-size: 11.5px; font-weight: 400; color: var(--fg-3); }
+
+    /* Серце без білого кружка — він був зайвою деталлю на кожній картці */
+    .product-card-heart {
+      top: 6px;
+      right: 6px;
+      width: 26px;
+      height: 26px;
+      background: none;
+      box-shadow: none;
+      border: 0;
+    }
+    .product-card-heart svg {
+      filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.95));
+    }
+
+    /* Знак по краю кадру замість плями в кутку */
+    .product-card-image::after {
+      content: 'OPTIX';
+      right: 4px;
+      bottom: auto;
+      top: 50%;
+      transform: translateY(-50%) rotate(180deg);
+      writing-mode: vertical-rl;
+      font-size: 8.5px;
+      letter-spacing: 0.3em;
+      padding-left: 0;
+      color: #5a5c60;
+      opacity: 0.55;
+    }
+
+    /* ---------- банер між рядами ---------- */
+    .cat-promo {
+      grid-column: 1 / -1;
+      background: var(--fg);
+      color: var(--bg);
+      border-radius: 16px;
+      padding: 20px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .cat-promo-eyebrow {
+      display: block;
+      font-size: 8.5px;
+      font-weight: 800;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: #c9b48a;
+      margin-bottom: 8px;
+    }
+    .cat-promo-title {
+      font-family: var(--font-logo);
+      font-size: 20px;
+      font-weight: 400;
+      line-height: 1.2;
+      margin: 0 0 7px;
+    }
+    .cat-promo-text {
+      font-size: 12px;
+      line-height: 1.45;
+      opacity: 0.72;
+      margin: 0 0 15px;
+    }
+    .cat-promo-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 36px;
+      padding: 0 16px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .cat-promo-btn svg {
+      width: 12px;
+      height: 12px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    /* ---------- кнопка нагору ---------- */
+    .to-top {
+      position: fixed;
+      right: 16px;
+      bottom: calc(var(--nav-h, 64px) + 16px + var(--tg-bottom));
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--surface);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      z-index: 40;
+      box-shadow: 0 2px 6px rgba(26, 26, 28, 0.14), 0 10px 24px rgba(26, 26, 28, 0.16);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(8px);
+      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+    }
+    .to-top.is-on { opacity: 1; visibility: visible; transform: translateY(0); }
+    .to-top svg {
+      width: 17px;
+      height: 17px;
+      stroke: #1a1a1c;
+      fill: none;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
     /* ---------- Product detail sheet ---------- */
 
     /* ============================================================
@@ -2480,10 +2940,10 @@
          і нічого не втрачає. У квадраті він займав половину висоти,
          а решта кадру була порожньою. */
       aspect-ratio: 16 / 9;
-      object-fit: contain;
+      object-fit: cover;
+      object-position: center;
       padding: 0;
       display: block;
-      mix-blend-mode: multiply;
     }
     .pdp-gal-track .product-placeholder {
       flex: 0 0 100%;
@@ -2675,11 +3135,11 @@
     }
     .pdp-col img {
       width: 100%;
-      aspect-ratio: 16 / 10;
-      object-fit: contain;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      object-position: center;
       display: block;
       padding: 0;
-      mix-blend-mode: multiply;
     }
     .pdp-col svg {
       width: 100%;
@@ -2786,10 +3246,10 @@
     .pdp-mini-ph { display: block; background: var(--surface); transition: background 0.3s ease; }
     .pdp-mini-ph img {
       width: 100%;
-      aspect-ratio: 1;
-      object-fit: contain;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      object-position: center;
       display: block;
-      mix-blend-mode: multiply;
     }
     .pdp-mini-ph svg {
       width: 100%;
@@ -3058,9 +3518,8 @@
     .list-row-image img {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: cover;
       border-radius: 10px;
-      mix-blend-mode: multiply;
     }
 
     .list-row-info {
@@ -3547,39 +4006,42 @@
 </main>
 
   <main class="view view--catalog" id="catalogView" hidden>
-    <div class="catalog-head">
-      <h1 class="catalog-title">Каталог</h1>
-      <p class="catalog-count" id="catalogCount"></p>
-    </div>
-
-    <div class="catalog-controls">
+    <!-- Стать липкою смугою: єдиний справжній верхній розріз в оптиці.
+         Не з'їжджає при гортанні — інакше по двадцятій моделі треба
+         вертатись нагору, щоб її змінити. -->
+    <div class="cat-seg-wrap">
       <div class="gender-pills" id="genderPills" hidden>
         <button type="button" class="gender-pill is-active" data-gender="all">Всі</button>
         <button type="button" class="gender-pill" data-gender="women">Жіночі</button>
         <button type="button" class="gender-pill" data-gender="men">Чоловічі</button>
         <button type="button" class="gender-pill" data-gender="unisex">Унісекс</button>
       </div>
+    </div>
 
-      <div class="filter-row">
-        <p class="filter-label" id="brandLabel">Бренд</p>
-        <div class="catalog-filters" id="catalogFilters">
-        <button type="button" class="catalog-filter catalog-filter--active" data-brand="all">Усі</button>
-        </div>
-      </div>
+    <!-- Два фільтри, а не три. «Знижки» прибрано: 88% каталогу зі
+         знижкою, і фільтр, який лишає 88%, нічого не фільтрує. -->
+    <div class="cat-chips">
+      <button type="button" class="cat-chip cat-chip--icon" id="catalogFiltersToggle" aria-label="Фільтри">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+      </button>
+      <div class="catalog-filters" id="catalogFilters"></div>
+    </div>
 
-      <div class="catalog-toggle-row">
-        <label class="catalog-toggle">
-          <input type="checkbox" class="catalog-toggle-input" id="catalogSaleToggle" />
-          <span class="catalog-toggle-knob"></span>
-          <span>Тільки знижки</span>
-        </label>
+    <div class="cat-meta">
+      <p class="catalog-count" id="catalogCount"></p>
+      <button type="button" class="cat-sort" id="catalogSortBtn">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16M7 20l-3-3M17 20V4M17 4l3 3"/></svg>
+        <span>За замовч.</span>
+      </button>
+    </div>
+
+    <div class="catalog-advanced" id="catalogAdvanced" hidden>
+      <div class="cat-adv-row">
         <label class="catalog-toggle">
           <input type="checkbox" class="catalog-toggle-input" id="catalogBestToggle" />
           <span class="catalog-toggle-knob"></span>
           <span>Тільки хіти</span>
         </label>
-        <button type="button" class="catalog-sort-btn" id="catalogSortBtn">Сортування: за замовч. ↓</button>
-
         <div class="catalog-view-switch">
           <button type="button" class="catalog-view-btn is-active" id="viewGridBtn" aria-label="Плиткою">
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
@@ -3589,23 +4051,16 @@
           </button>
         </div>
       </div>
-
-      <button type="button" class="catalog-filters-toggle" id="catalogFiltersToggle">
-        <span>Фільтри</span>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-      </button>
-      <div class="catalog-advanced" id="catalogAdvanced" hidden>
-        <div class="price-filter">
-          <div class="price-filter-head">
-            <span>Ціна</span>
-            <span class="price-filter-value" id="priceValue">€0 – €0</span>
-          </div>
-          <div class="price-slider" id="priceSlider">
-            <div class="price-slider-track"></div>
-            <div class="price-slider-range" id="priceRange"></div>
-            <input type="range" class="price-input price-input--min" id="priceMin" min="0" max="100" value="0" />
-            <input type="range" class="price-input price-input--max" id="priceMax" min="0" max="100" value="100" />
-          </div>
+      <div class="price-filter">
+        <div class="price-filter-head">
+          <span>Ціна</span>
+          <span class="price-filter-value" id="priceValue">€0 – €0</span>
+        </div>
+        <div class="price-slider" id="priceSlider">
+          <div class="price-slider-track"></div>
+          <div class="price-slider-range" id="priceRange"></div>
+          <input type="range" class="price-input price-input--min" id="priceMin" min="0" max="100" value="0" />
+          <input type="range" class="price-input price-input--max" id="priceMax" min="0" max="100" value="100" />
         </div>
       </div>
     </div>
@@ -3671,6 +4126,22 @@
     </div>
     <div class="sheet-body" id="productSheetBody"></div>
     <div class="sheet-footer" id="productSheetFooter"></div>
+  </div>
+
+  <button type="button" class="to-top" id="toTopBtn" aria-label="Нагору">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+  </button>
+
+  <!-- Повноекранний перегляд фото. Лежить поза шторками, бо мусить
+       бути поверх усього, включно з панеллю покупки. -->
+  <div class="zoom" id="zoomView" aria-hidden="true" role="dialog" aria-label="Фото товару">
+    <button type="button" class="zoom-close" id="zoomClose" aria-label="Закрити">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div class="zoom-stage" id="zoomStage">
+      <img class="zoom-img" id="zoomImg" alt="" />
+    </div>
+    <div class="zoom-hint" id="zoomHint">Подвійний дотик або щипок — збільшити</div>
   </div>
 
   <!-- About sheet -->
@@ -3808,7 +4279,7 @@
 
       var PROMO_QUERY = '*[_type == "promo" && active == true] { name, type, discount, brand, scope, startDate, endDate, code }';
 
-      var SETTINGS_QUERY = '*[_type == "settings"][0] { tgUsername, deliveryTime, pair2Discount, pair3Discount, giftBrandsNote, rateUAH, rateUSDT, "heroUrl": heroImage.asset->url, heroTitle, heroCta, saleTitle, saleSubtitle, aboutKicker, aboutTitle, aboutWhoTitle, aboutWhoText, aboutQuote, aboutStepsTitle, b1Kicker, b2Kicker, b2Cta, b3Cta, secBrands, secBrandsLink, secNew, secNewLink, lookKicker, lookTitle, lookOff, trust1T, trust1S, trust2T, trust2S, trust3T, trust3S, conKicker, conTitle, conText, conCta, aboutLinkT, aboutLinkS }';
+      var SETTINGS_QUERY = '*[_type == "settings"][0] { tgUsername, deliveryTime, pair2Discount, pair3Discount, giftBrandsNote, rateUAH, rateUSDT, "heroUrl": heroImage.asset->url, heroTitle, heroCta, saleTitle, saleSubtitle, aboutKicker, aboutTitle, aboutWhoTitle, aboutWhoText, aboutQuote, aboutStepsTitle, b1Kicker, b2Kicker, b2Cta, b3Cta, secBrands, secBrandsLink, secNew, secNewLink, lookKicker, lookTitle, lookOff, trust1T, trust1S, trust2T, trust2S, trust3T, trust3S, conKicker, conTitle, conText, conCta, aboutLinkT, aboutLinkS, promoEyebrow, promoTitle, promoText, promoCta, promoOff }';
 
       /* Products */
       /* Показові товари з коду потрібні у двох місцях: щоб сторінку
@@ -3965,6 +4436,11 @@
 
         /* Тексти «Про нас». Кожне поле необов'язкове: не заповнене —
            лишається те, що вшите в сайт. */
+        window.__OPTIX_PROMO = {
+          eyebrow: s.promoEyebrow, title: s.promoTitle,
+          text: s.promoText, cta: s.promoCta, off: s.promoOff === true
+        };
+
         window.__OPTIX_ABOUT = {
           heroKicker: s.aboutKicker,
           heroTitle:  s.aboutTitle,
@@ -4121,6 +4597,44 @@
       return '€' + Math.round(n).toLocaleString('en-US');
     };
     window.OPTIX_applyCurrency = function () {};
+
+    /* ============================================================
+       БАНЕР МІЖ РЯДАМИ КАТАЛОГУ
+       Стоїть усередині сітки, а не поверх неї: так він читається
+       як частина стрічки й заодно працює паузою для ока.
+       Один на екран, не частіше — інакше каталог стає рекламою.
+       ============================================================ */
+    window.OPTIX_catPromo = function (grid, afterN) {
+      if (!grid) return;
+      var old = grid.querySelector('.cat-promo');
+      if (old) old.remove();
+
+      var t = window.__OPTIX_PROMO || {};
+      if (t.off === true) return;
+      var cards = grid.querySelectorAll('.product-card');
+      /* Менше ніж на два ряди банер не ставимо: він з'їв би півекрана
+         там, де товару і так мало. */
+      if (cards.length < afterN + 2) return;
+
+      var el = document.createElement('div');
+      el.className = 'cat-promo';
+      el.innerHTML =
+        '<span class="cat-promo-eyebrow">' +
+          window.OPTIX_esc(t.eyebrow || 'Друга пара') + '</span>' +
+        '<div class="cat-promo-title">' +
+          window.OPTIX_esc(t.title || 'Дві оправи — знижка ще 10%') + '</div>' +
+        '<div class="cat-promo-text">' +
+          window.OPTIX_esc(t.text || 'Рахується в кошику автоматично. Моделі можна брати з різних брендів.') +
+        '</div>' +
+        '<button type="button" class="cat-promo-btn">' +
+          window.OPTIX_esc(t.cta || 'Написати менеджеру') +
+          '<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>' +
+        '</button>';
+      el.querySelector('.cat-promo-btn').addEventListener('click', function () {
+        window.OPTIX_openTgChat('Доброго дня! Цікавить знижка на дві оправи.');
+      });
+      grid.insertBefore(el, cards[afterN]);
+    };
 
     /* ---------------------------------------------------------
        Групування кольорів однієї моделі.
@@ -4768,6 +5282,31 @@
 
       /* Build brand filter buttons from the brands that actually exist in
          the catalog. Brands appear only when there is a product for them. */
+      /* Кількість біля кожного значення — головний засіб проти глухого
+         кута «нуль результатів»: видно, де вибір великий, а де його
+         майже немає, ще до натискання. */
+      function countsBy(field) {
+        var out = {}, total = 0;
+        PRODUCTS.forEach(function (p) {
+          if (p.inStock === false) return;
+          /* Рахуємо з урахуванням інших активних умов, крім самого
+             поля — інакше цифри брехали б при вже ввімкненому відборі. */
+          if (field !== 'brand' && state.brand !== 'all' && p.brand !== state.brand) return;
+          if (field !== 'gender' && state.gender !== 'all') {
+            var g = p.gender;
+            var okg = (state.gender === 'unisex') ? (g === 'unisex')
+                    : (g === state.gender || g === 'unisex');
+            if (!okg) return;
+          }
+          total++;
+          var v = field === 'brand' ? (p.brand || '').trim() : (p.gender || '');
+          if (!v) return;
+          out[v] = (out[v] || 0) + 1;
+        });
+        out.__total = total;
+        return out;
+      }
+
       function buildBrandFilters() {
         var seen = {};
         var order = [];
@@ -4776,15 +5315,62 @@
           if (b && !seen[b]) { seen[b] = true; order.push(b); }
         });
         order.sort(function (a, b) { return a.localeCompare(b); });
+        var cnt = countsBy('brand');
         var html = '<button type="button" class="catalog-filter' +
           (state.brand === 'all' ? ' catalog-filter--active' : '') +
-          '" data-brand="all">Усі</button>';
+          '" data-brand="all">Усі <i class="filter-n">' + (cnt.__total || 0) + '</i></button>';
         order.forEach(function (b) {
+          var n = cnt[b] || 0;
           html += '<button type="button" class="catalog-filter' +
             (state.brand === b ? ' catalog-filter--active' : '') +
-            '" data-brand="' + b.replace(/"/g, '&quot;') + '">' + b + '</button>';
+            (n === 0 ? ' is-empty' : '') +
+            '" data-brand="' + b.replace(/"/g, '&quot;') + '">' + b +
+            ' <i class="filter-n">' + n + '</i></button>';
         });
         brandStrip.innerHTML = html;
+        paintGenderCounts();
+      }
+
+      /* Кількість на перемикачі статі. Унісекс показується і в жіночому,
+         і в чоловічому — тому цифри не складаються в загальну. */
+      function paintGenderCounts() {
+        var pills = document.getElementById('genderPills');
+        if (!pills) return;
+        var cnt = countsBy('gender');
+        var uni = cnt['unisex'] || 0;
+        var map = {
+          all: cnt.__total || 0,
+          women: (cnt['women'] || 0) + uni,
+          men: (cnt['men'] || 0) + uni,
+          unisex: uni
+        };
+        pills.querySelectorAll('.gender-pill').forEach(function (b) {
+          var n = map[b.dataset.gender];
+          var i = b.querySelector('.filter-n');
+          if (!i) { i = document.createElement('i'); i.className = 'filter-n'; b.appendChild(i); }
+          i.textContent = n == null ? '' : n;
+        });
+      }
+
+      /* Цифра на кнопці «Фільтри». Без неї людина гортає короткий
+         список і думає, що товару просто немає. */
+      function paintActiveCount() {
+        var btn = document.getElementById('catalogFiltersToggle');
+        if (!btn) return;
+        var n = 0;
+        if (state.brand !== 'all') n++;
+        if (state.gender !== 'all') n++;
+        if (state.saleOnly) n++;
+        if (state.bestOnly) n++;
+        if (priceTouched) n++;
+        var b = btn.querySelector('.filters-badge');
+        if (!b) {
+          b = document.createElement('i');
+          b.className = 'filters-badge';
+          btn.insertBefore(b, btn.querySelector('svg'));
+        }
+        b.textContent = n ? n : '';
+        b.hidden = !n;
       }
 
       var SORT_LABELS = {
@@ -4889,6 +5475,7 @@
 
       function render() {
         buildBrandFilters();
+        paintActiveCount();
         syncPriceBounds();
         var products = applyFilters();
 
@@ -4931,6 +5518,9 @@
         var slice = catalogList.slice(catalogShown, catalogShown + CHUNK);
         catalogShown += slice.length;
         grid.insertAdjacentHTML('beforeend', cardsHTML(slice, wishlist));
+        /* Банер ставимо після четвертої картки — це кінець другого ряду,
+           перша природна пауза при гортанні. */
+        if (window.OPTIX_catPromo) window.OPTIX_catPromo(grid, 4);
       }
 
       function cardsHTML(products, wishlist) {
@@ -4943,7 +5533,7 @@
             var cur = parsePrice(p.price), old = parsePrice(p.oldPrice);
             if (cur && old && old > cur) {
               var pct = Math.round((1 - cur / old) * 100);
-              badge = '<span class="product-card-badge product-card-badge--sale">−' + pct + '%</span>';
+              badge = '';   /* відсоток однаковий майже у всіх — не показуємо */
             }
           } else if (p.isNew) {
             badge = '<span class="product-card-badge product-card-badge--new">New</span>';
@@ -5570,6 +6160,21 @@
         /* Код завжди в один рядок. Спершу прикидка за довжиною — вона
            працює навіть коли шрифт ще не завантажився і міряти нічим.
            Потім, якщо браузер уже вміє міряти, підганяємо точно. */
+        /* Знімок у картці натискається — відкриваємо повний екран
+           із тим кадром, який зараз показано в галереї. */
+        var galEl = bodyEl.querySelector('.pdp-gal');
+        if (galEl && window.OPTIX_zoomOpen) {
+          galEl.addEventListener('click', function (e) {
+            if (e.target.closest('.pdp-gal-dot')) return;   /* крапки — не зум */
+            var track = bodyEl.querySelector('.pdp-gal-track');
+            var pics = track ? track.querySelectorAll('img') : [];
+            if (!pics.length) return;
+            var i = track.clientWidth ? Math.round(track.scrollLeft / track.clientWidth) : 0;
+            var pic = pics[Math.min(i, pics.length - 1)];
+            window.OPTIX_zoomOpen(pic.getAttribute('src'), pic.getAttribute('alt'));
+          });
+        }
+
         var codeEl = bodyEl.querySelector('.product-code');
         if (codeEl) {
           var len = (p.code || '').length;
@@ -5865,6 +6470,213 @@
           window.OPTIX_openTgChat('Доброго дня! Можете допомогти з вибором окулярів?');
         }
       });
+    })();
+
+    /* ============================================================
+       ЗУМ ФОТО
+       Три жести: подвійний дотик, щипок двома пальцями, перетягування
+       коли збільшено. Свайп униз на звичайному масштабі закриває.
+
+       Рахуємо все самі, а не віддаємо браузеру: у Телеграмі власне
+       масштабування сторінки вимкнене (disableVerticalSwipes і
+       user-scalable), і щипок без свого обробника просто не працює.
+       ============================================================ */
+    (function () {
+      var view  = document.getElementById('zoomView');
+      var stage = document.getElementById('zoomStage');
+      var img   = document.getElementById('zoomImg');
+      var closeBtn = document.getElementById('zoomClose');
+      var hint  = document.getElementById('zoomHint');
+      if (!view || !img) return;
+
+      var MIN = 1, MAX = 4;
+      var scale = 1, tx = 0, ty = 0;
+      var start = null;          /* стан на початку жесту */
+      var pointers = {};         /* активні пальці */
+      var lastTap = 0;
+
+      function apply(animate) {
+        img.style.transition = animate ? 'transform 0.22s ease' : 'none';
+        img.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';
+      }
+
+      /* Не даємо відтягнути знімок за межі екрана: інакше він
+         «губиться» і людина не розуміє, куди він подівся. */
+      function clamp() {
+        var r = img.getBoundingClientRect();
+        var w = view.clientWidth, h = view.clientHeight;
+        var iw = img.offsetWidth * scale, ih = img.offsetHeight * scale;
+        var maxX = Math.max(0, (iw - w) / 2);
+        var maxY = Math.max(0, (ih - h) / 2);
+        var cx = (w - img.offsetWidth) / 2;
+        var cy = (h - img.offsetHeight) / 2;
+        tx = Math.min(cx + maxX, Math.max(cx - maxX, tx));
+        ty = Math.min(cy + maxY, Math.max(cy - maxY, ty));
+      }
+
+      function reset(animate) {
+        scale = 1;
+        tx = (view.clientWidth - img.offsetWidth) / 2;
+        ty = (view.clientHeight - img.offsetHeight) / 2;
+        apply(animate);
+      }
+
+      function open(src, alt) {
+        img.src = src;
+        img.alt = alt || '';
+        view.classList.add('is-open');
+        view.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        if (hint) hint.classList.remove('is-hidden');
+        var go = function () { reset(false); };
+        if (img.complete) go(); else img.onload = go;
+        /* Підказка потрібна один раз — далі вона тільки заважає. */
+        setTimeout(function () { if (hint) hint.classList.add('is-hidden'); }, 2600);
+      }
+      function close() {
+        view.classList.remove('is-open');
+        view.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        setTimeout(function () { img.removeAttribute('src'); }, 240);
+      }
+      window.OPTIX_zoomOpen = open;
+
+      closeBtn.addEventListener('click', close);
+      view.addEventListener('click', function (e) {
+        /* Клік повз знімок закриває — звична поведінка перегляду. */
+        if (e.target === view || e.target === stage) close();
+      });
+
+      function dist(a, b) {
+        return Math.hypot(a.x - b.x, a.y - b.y);
+      }
+      function mid(a, b) {
+        return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      }
+      function list() {
+        return Object.keys(pointers).map(function (k) { return pointers[k]; });
+      }
+
+      view.addEventListener('pointerdown', function (e) {
+        if (e.target === closeBtn || closeBtn.contains(e.target)) return;
+        view.setPointerCapture(e.pointerId);
+        pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+        var p = list();
+
+        if (p.length === 1) {
+          /* Подвійний дотик: перший раз наближає до 2.5, другий повертає. */
+          var now = Date.now();
+          if (now - lastTap < 300) {
+            if (scale > 1) {
+              reset(true);
+            } else {
+              var rect = img.getBoundingClientRect();
+              scale = 2.5;
+              tx -= (e.clientX - rect.left) * (scale - 1);
+              ty -= (e.clientY - rect.top) * (scale - 1);
+              clamp();
+              apply(true);
+            }
+            lastTap = 0;
+          } else {
+            lastTap = now;
+          }
+          start = { x: e.clientX, y: e.clientY, tx: tx, ty: ty, scale: scale, moved: 0 };
+        } else if (p.length === 2) {
+          start = {
+            d: dist(p[0], p[1]),
+            m: mid(p[0], p[1]),
+            tx: tx, ty: ty, scale: scale
+          };
+        }
+      });
+
+      view.addEventListener('pointermove', function (e) {
+        if (!pointers[e.pointerId]) return;
+        pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+        var p = list();
+        if (!start) return;
+
+        if (p.length >= 2 && start.d) {
+          /* Щипок. Точка між пальцями лишається на місці — саме це
+             робить масштабування «природним» на дотик. */
+          var d = dist(p[0], p[1]);
+          var k = d / start.d;
+          var ns = Math.min(MAX, Math.max(MIN, start.scale * k));
+          var m = mid(p[0], p[1]);
+          var f = ns / start.scale;
+          tx = m.x - (start.m.x - start.tx) * f;
+          ty = m.y - (start.m.y - start.ty) * f;
+          scale = ns;
+          clamp();
+          apply(false);
+          e.preventDefault();
+        } else if (p.length === 1 && start.tx != null) {
+          var dx = e.clientX - start.x, dy = e.clientY - start.y;
+          start.moved = Math.max(start.moved, Math.hypot(dx, dy));
+          if (scale > 1) {
+            tx = start.tx + dx;
+            ty = start.ty + dy;
+            clamp();
+            apply(false);
+            e.preventDefault();
+          } else if (dy > 0) {
+            /* На звичайному масштабі тягнемо вниз — це закриття. */
+            tx = start.tx;
+            ty = start.ty + dy;
+            img.style.transition = 'none';
+            img.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(1)';
+            view.style.opacity = Math.max(0.25, 1 - dy / 400);
+            e.preventDefault();
+          }
+        }
+      });
+
+      function up(e) {
+        delete pointers[e.pointerId];
+        var p = list();
+        if (p.length === 0) {
+          if (scale <= 1 && start && start.tx != null) {
+            var dy = ty - start.ty;
+            view.style.opacity = '';
+            if (dy > 110) { close(); reset(false); }
+            else reset(true);
+          }
+          start = null;
+        } else if (p.length === 1) {
+          /* Один палець прибрали під час щипка — продовжуємо як перетягування */
+          start = { x: p[0].x, y: p[0].y, tx: tx, ty: ty, scale: scale, moved: 99 };
+        }
+      }
+      view.addEventListener('pointerup', up);
+      view.addEventListener('pointercancel', up);
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && view.classList.contains('is-open')) close();
+      });
+
+      window.addEventListener('resize', function () {
+        if (view.classList.contains('is-open')) reset(false);
+      });
+    })();
+
+    /* ---------- кнопка «нагору» ---------- */
+    (function () {
+      var btn = document.getElementById('toTopBtn');
+      if (!btn) return;
+      var catalogView = document.getElementById('catalogView');
+      function sync() {
+        /* Показуємо тільки в каталозі й тільки коли є куди вертатись. */
+        var inCatalog = catalogView && !catalogView.hidden;
+        btn.classList.toggle('is-on', !!inCatalog && window.scrollY > 900);
+      }
+      window.addEventListener('scroll', sync, { passive: true });
+      btn.addEventListener('click', function () {
+        var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
+      });
+      window.OPTIX_toTopSync = sync;
+      sync();
     })();
 
     /* ===== Wishlist sheet ===== */
