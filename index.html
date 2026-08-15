@@ -1520,11 +1520,13 @@
        вони стояли в одному куті й налазили. Біла на фото, а не
        кольорова: знижка є майже скрізь, і кольорова пляма на кожній
        картці перетворилась би на шпалери. */
+    /* Знижка праворуч угорі. Серце переїхало ліворуч — два елементи
+       в одному куті налазили один на одного. */
     .product-card-badge {
       position: absolute;
       top: 8px;
-      left: 8px;
-      right: auto;
+      right: 8px;
+      left: auto;
       z-index: 2;
       font-family: var(--font-ui);
       font-size: 9.5px;
@@ -1536,6 +1538,7 @@
       line-height: 1.2;
       background: rgba(255, 255, 255, 0.94);
       color: #1a1a1c;
+      box-shadow: 0 1px 3px rgba(26, 26, 28, 0.12);
     }
 
 
@@ -1547,7 +1550,7 @@
     .product-card-badges {
       position: absolute;
       top: 8px;
-      left: 8px;
+      right: 8px;
       display: flex;
       flex-direction: column;
       align-items: flex-end;
@@ -2535,20 +2538,22 @@
     .products-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 28px 14px;
+      gap: 16px 12px;
       padding: 0 18px 32px;
     }
+    /* Картка знову має тло й тінь. Без них знімки на світлій підкладці
+       зливались зі сторінкою — межі товару не було видно взагалі.
+       Тихо, але з чіткою межею: тон трохи темніший за сторінку. */
     .product-card {
-      background: none;
+      background: var(--raise);
       border: 0;
-      box-shadow: none;
-      border-radius: 0;
-      overflow: visible;
+      box-shadow: var(--shadow);
+      border-radius: 14px;
+      overflow: hidden;
+      display: block;
       text-decoration: none;
       color: var(--fg);
-      display: block;
-      flex-direction: column;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      transition: transform 0.2s ease;
       -webkit-tap-highlight-color: transparent;
     }
     .product-card:hover {
@@ -2562,11 +2567,9 @@
       align-items: center;
       justify-content: center;
       aspect-ratio: 16 / 9;
-      border-radius: 12px;
+      border-radius: 0;
     }
-    .product-card-info {
-      padding: 11px 0 0;
-    }
+    .product-card-info { padding: 11px 12px 13px; }
     .product-card-brand {
       font-family: var(--font-ui);
       font-size: 8.5px;
@@ -2617,34 +2620,35 @@
     }
 
     /* Серце без білого кружка — він був зайвою деталлю на кожній картці */
+    /* Серце — додати в обране. Ліворуч угорі, у світлому кружку:
+       без підкладки контур губився на світлих знімках, а саме вони
+       у нас майже всі. */
     .product-card-heart {
       position: absolute;
-      top: 6px;
-      left: 8px;
-      width: 26px;
-      height: 26px;
+      top: 7px;
+      left: 7px;
+      right: auto;
+      z-index: 3;
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
       border: 0;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 1px 3px rgba(26, 26, 28, 0.12);
       cursor: pointer;
       padding: 0;
-      transition: background-color 0.2s ease, transform 0.15s ease;
       -webkit-tap-highlight-color: transparent;
-      z-index: 2;
-      right: 6px;
-      background: none;
-      box-shadow: none;
+      transition: transform 0.15s ease;
     }
     .product-card-heart svg {
-      width: 16px;
-      height: 16px;
-      stroke: var(--fg);
-      stroke-width: 1.6;
+      width: 15px;
+      height: 15px;
+      stroke: #1a1a1c;
       fill: none;
-      transition: fill 0.2s ease;
-      filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.95));
+      stroke-width: 1.7;
+      display: block;
     }
 
     /* Знака на картці немає: у сітці він повторювався двадцять разів
