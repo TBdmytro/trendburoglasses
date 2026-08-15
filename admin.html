@@ -28,6 +28,10 @@
     --shadow: 0 1px 2px rgba(20,22,26,.05), 0 8px 24px rgba(20,22,26,.07);
     --display: 'Prata', Georgia, serif;
     --ui: 'Manrope', system-ui, -apple-system, sans-serif;
+    /* Заповнює JS з Телеграма. Поза Телеграмом лишається 0, і тоді
+       працює env() — тому скрізь беремо max() з обох. */
+    --tg-top: 0px;
+    --tg-bottom: 0px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
@@ -41,20 +45,98 @@
   .app { display: flex; flex-direction: column; height: 100vh; max-width: 520px; margin: 0 auto; background: var(--bg); position: relative; }
 
   /* top bar */
+  /* Шапка. Відступ згори — сума двох інсетів Телеграма: пристрою
+     й самої панелі застосунку. Без цього «OPTIX» лягає точно під
+     кнопки «Закрити» та «...» і половина шапки недоступна. */
   .topbar {
-    padding: 16px 18px 12px;
-    display: flex; align-items: center; justify-content: space-between;
-    border-bottom: 1px solid var(--line); background: var(--bg); flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 52px;
+    padding: 8px 12px;
+    padding-top: calc(8px + max(env(safe-area-inset-top, 0px), var(--tg-top)));
+    background: var(--bg);
+    border-bottom: 1px solid transparent;
+    transition: border-color .2s ease, background .2s ease;
+    flex-shrink: 0;
   }
+  /* Смужка знизу з'являється тільки коли під шапкою вже щось проїхало —
+     на початку екрана вона зайва й ріже великий заголовок. */
+  .topbar.is-stuck { border-bottom-color: var(--line); }
+
+  .topbar-back {
+    flex: 0 0 auto;
+    width: 40px; height: 40px;
+    margin-left: -6px;
+    border: 0; background: transparent;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    cursor: pointer;
+    transition: background .15s ease, transform .1s ease;
+  }
+  .topbar-back[hidden] { display: none; }
+  .topbar-back:active { background: var(--raise); transform: scale(.92); }
+  .topbar-back svg {
+    width: 22px; height: 22px;
+    fill: none; stroke: var(--fg); stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  .topbar-mid { flex: 1; min-width: 0; }
+  .topbar-title {
+    font-family: var(--display);
+    font-size: 17px;
+    line-height: 1.2;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity .18s ease, transform .18s ease;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .topbar.is-stuck .topbar-title { opacity: 1; transform: none; }
+  .topbar.is-stuck .logo { opacity: 0; height: 0; overflow: hidden; }
+  .logo { transition: opacity .18s ease; }
+
   .topbar .logo { font-family: var(--display); font-size: 21px; font-weight:400; }
   .topbar .logo small { display:block; font-family:var(--ui); font-size:7px; letter-spacing:.3em; color:var(--fg-soft); margin-top:-2px; }
   .topbar .badge { font-size: 11px; color: var(--fg-soft); background: var(--surface); border:1px solid var(--line); padding: 5px 10px; border-radius: 999px; }
 
-  .screen { flex: 1; overflow-y: auto; padding: 16px 14px 88px; -webkit-overflow-scrolling: touch; }
+  /* Прокручується сам екран, а не сторінка: так шапка й нижнє меню
+     стоять на місці, як у застосунку. */
+  .screen {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding: 4px 14px calc(96px + max(env(safe-area-inset-bottom, 0px), var(--tg-bottom)));
+  }
+  /* Поява екрана: тонкий зсув, як перехід між вкладками. Довше 0.2 с
+     вже читається як затримка. */
+  .screen:not([hidden]) { animation: scrIn .2s ease; }
+  @keyframes scrIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+  }
+  /* Екрани, відкриті «вглиб» (новий товар, нова акція), заїжджають
+     збоку — це підказує, що звідси є куди повернутись. */
+  .screen.is-push:not([hidden]) { animation: scrPush .22s ease; }
+  @keyframes scrPush {
+    from { opacity: 0; transform: translateX(16px); }
+    to   { opacity: 1; transform: none; }
+  }
   .screen::-webkit-scrollbar { display: none; }
   .screen[hidden] { display: none; }
 
-  .screen-title { font-family: var(--display); font-size: 25px; font-weight:400; margin-bottom: 3px; }
+  .screen-title {
+    font-family: var(--display);
+    font-size: 30px;
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 6px 0 3px;
+  }
   .screen-sub { font-size: 12px; color: var(--fg-soft); margin-bottom: 16px; }
 
   .add-btn {
@@ -151,7 +233,17 @@
   .mini-toggle.off { background:var(--line); }
   .mini-toggle.off::after { right:auto; left:2px; }
 
-  .save-bar { position:absolute; bottom:64px; left:0; right:0; padding:12px 14px; background:var(--bg); border-top:1px solid var(--line); display:flex; gap:10px; max-width:520px; margin:0 auto; }
+  .save-bar {
+    position: absolute;
+    left: 0; right: 0;
+    bottom: calc(56px + max(env(safe-area-inset-bottom, 0px), var(--tg-bottom)));
+    z-index: 44;
+    padding: 12px 14px;
+    background: var(--bg);
+    border-top: 1px solid var(--line);
+    display: flex; gap: 10px;
+    max-width: 520px; margin: 0 auto;
+  }
   .save-bar .cancel { flex:0 0 auto; padding:14px 18px; border-radius:12px; border:1px solid var(--line); background:transparent; font-size:13px; font-weight:600; color:var(--fg); cursor:pointer; }
   .save-bar .save { flex:1; padding:14px; border-radius:12px; border:none; background:var(--green); color:#fff; font-size:13px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; cursor:pointer; }
   .save-bar .save:disabled { opacity:.5; }
@@ -164,8 +256,33 @@
   .mgmt-del { background:none; border:none; color:var(--red); font-size:12px; cursor:pointer; margin-top:8px; padding:0; }
 
   /* bottom nav */
-  .botnav { position:absolute; bottom:0; left:0; right:0; height:64px; background:var(--surface); border-top:1px solid var(--line); display:flex; align-items:center; max-width:520px; margin:0 auto; }
-  .botnav button { flex:1; background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:3px; font-size:9.5px; color:var(--fg-soft); padding:0; cursor:pointer; font-family:var(--ui); }
+  .botnav {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    z-index: 45;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--line);
+    display: flex;
+    align-items: stretch;
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), var(--tg-bottom));
+    max-width: 520px; margin: 0 auto;
+  }
+  /* 56 px на палець: менші кнопки в нижньому меню промахуються. */
+  .botnav button {
+    flex: 1;
+    min-height: 56px;
+    background: none; border: none;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px;
+    font-family: var(--ui);
+    font-size: 9.5px; font-weight: 600; letter-spacing: .01em;
+    color: var(--fg-mute);
+    cursor: pointer;
+    transition: color .15s ease, transform .1s ease;
+  }
+  .botnav button:active { transform: scale(.94); }
   .botnav button svg { width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
   .botnav button.active { color:var(--fg); font-weight:600; }
 
@@ -255,7 +372,7 @@
            display:flex; align-items:flex-end; justify-content:center; }
   .modal[hidden] { display:none; }
   .modal-card { background:var(--bg); width:100%; max-width:520px; border-radius:20px 20px 0 0;
-                padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px)); max-height:88vh; overflow-y:auto; }
+                padding:18px 18px calc(18px + max(env(safe-area-inset-bottom,0px), var(--tg-bottom))); max-height:88vh; overflow-y:auto; }
   .modal-title { font-family:var(--display); font-size:20px; font-weight:400; margin-bottom:3px; }
   .modal-sub { font-size:12px; color:var(--fg-soft); margin-bottom:14px; }
   .sumbox { background:var(--surface); border:1px solid var(--line); border-radius:11px;
@@ -327,7 +444,7 @@
   .fieldwarn { font-size:11px; color:var(--red); margin-top:4px; line-height:1.4; }
 
   /* незбережені зміни */
-  .dirty { position:fixed; left:12px; right:12px; bottom:calc(70px + env(safe-area-inset-bottom,0px));
+  .dirty { position:fixed; left:12px; right:12px; bottom:calc(64px + max(env(safe-area-inset-bottom,0px), var(--tg-bottom)));
            z-index:150; display:flex; align-items:center; gap:9px; background:var(--accent); color:var(--bg);
            border-radius:12px; padding:10px 12px; font-size:12px; box-shadow:var(--shadow); }
   .dirty[hidden] { display:none; }
@@ -336,8 +453,27 @@
                   font-family:var(--ui); font-size:11.5px; font-weight:700; padding:7px 14px;
                   border-radius:8px; cursor:pointer; }
 
+  /* Підказка «як це працює». Показуємо один раз на екран —
+     далі вона тільки заважає, тому ховається назавжди. */
+  .tip { display:flex; gap:10px; background:#f4f8fb; border:1px solid #dbe6ee;
+         border-radius:12px; padding:11px 12px; margin-bottom:12px; font-size:12px;
+         line-height:1.5; color:var(--fg-soft); }
+  .tip[hidden] { display:none; }
+  .tip b { color:var(--fg); }
+  .tip-x { margin-left:auto; align-self:flex-start; border:0; background:transparent;
+           color:var(--fg-mute); font-size:15px; line-height:1; cursor:pointer; padding:0 2px; }
+  .tip ol { margin:6px 0 0 16px; padding:0; }
+  .tip ol li { margin-bottom:3px; }
+
+  .qa:active, .al:active, .pcard-pick:active,
+  .prod-schip:active, .blkchip:active, .add-btn:active { transform: scale(.97); }
+  .qa, .al, .pcard-pick, .prod-schip, .blkchip, .add-btn { transition: transform .1s ease; }
+  /* Мінімум 44 px висоти для всього, у що треба влучити пальцем. */
+  .prod-schip, .blkchip { min-height: 34px; }
+  .add-btn { min-height: 52px; }
+
   /* toast */
-  .toast { position:fixed; left:50%; bottom:84px; transform:translateX(-50%) translateY(20px); background:var(--accent); color:var(--bg); font-size:13px; padding:11px 18px; border-radius:999px; opacity:0; transition:.25s; pointer-events:none; z-index:200; max-width:88%; text-align:center; }
+  .toast { position:fixed; left:50%; bottom:calc(76px + max(env(safe-area-inset-bottom,0px), var(--tg-bottom))); transform:translateX(-50%) translateY(20px); background:var(--accent); color:var(--bg); font-size:13px; padding:11px 18px; border-radius:999px; opacity:0; transition:.25s; pointer-events:none; z-index:200; max-width:88%; text-align:center; }
   .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
   .empty { text-align:center; color:var(--fg-soft); font-size:13px; padding:40px 20px; }
@@ -363,8 +499,14 @@
   </div>
 
   <!-- TOP BAR -->
-  <div class="topbar">
-    <div class="logo">OPTIX<small>BY TREND BÜRO · АДМІН</small></div>
+  <div class="topbar" id="topbar">
+    <button class="topbar-back" id="topBack" type="button" aria-label="Назад" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>
+    </button>
+    <div class="topbar-mid">
+      <div class="logo" id="topLogo">OPTIX<small>BY TREND BÜRO · АДМІН</small></div>
+      <div class="topbar-title" id="topTitle"></div>
+    </div>
     <span class="badge" id="countBadge">—</span>
   </div>
 
@@ -372,6 +514,13 @@
   <div class="screen" data-screen="dash">
     <h1 class="screen-title">Магазин</h1>
     <p class="screen-sub" id="dashWhen">Завантаження…</p>
+
+    <div class="tip" id="tipDash" hidden><div><b>З чого почати.</b>
+        <ol>
+          <li>Червоні рядки вище — те, що зараз ламає вигляд сайту. Тисни на рядок, він сам відкриє потрібне.</li>
+          <li><b>Товари</b> — додати нову модель або змінити знижку одразу багатьом.</li>
+          <li><b>Сайт</b> — тексти й фото головної. Тисни блок у прев'ю — знизу з'являться його поля.</li>
+        </ol></div><button type="button" class="tip-x" data-tipx="tipDash">×</button></div>
 
     <div class="kpis" id="dashKpis"></div>
 
@@ -390,6 +539,10 @@
   <div class="screen" data-screen="products">
     <h1 class="screen-title">Товари</h1>
     <p class="screen-sub">Керуй каталогом — додавай, ховай, редагуй</p>
+
+    <div class="tip" id="tipProd" hidden><div><b>Як змінити багато товарів одразу.</b> Спершу звузь список — бренд угорі
+        або фільтр «Без фото», «Без знижки». Потім тисни квадратик у кутку картки
+        або «Позначити всі за фільтром». Внизу з'явиться синя смужка з діями.</div><button type="button" class="tip-x" data-tipx="tipProd">×</button></div>
     <button class="add-btn" data-go="add"><span class="plus">+</span> Додати товар</button>
     <input class="input prod-search" id="prodSearch" placeholder="Пошук за брендом або кодом…" autocomplete="off" />
     <div class="prod-brandbar" id="prodBrandbar"></div>
@@ -402,6 +555,7 @@
       <button type="button" class="prod-schip" data-fstate="nodisc">Без знижки</button>
       <button type="button" class="prod-schip" data-fstate="hidden">Приховані</button>
       <button type="button" class="prod-schip" data-fstate="oos">Немає в наявності</button>
+      <button type="button" class="prod-schip" data-fstate="dup">Дублі коду</button>
     </div>
 
     <div class="selbar" id="selBar" hidden>
@@ -474,7 +628,7 @@
     </div>
 
     <div class="save-bar">
-      <button class="cancel" data-go="products">Назад</button>
+      <button class="cancel" data-back="1">Назад</button>
       <button class="save" id="saveProduct">Зберегти товар</button>
     </div>
   </div>
@@ -504,7 +658,7 @@
     <div class="field"><label class="field-label">Діє до <span class="opt">·</span></label><input class="input" id="pEnd" type="date" /></div>
     <p class="screen-sub" style="margin-top:4px">Знижка додається поверх існуючої: товар −10% + код 5% = −15% для клієнта.</p>
     <div class="save-bar">
-      <button class="cancel" data-go="promos">Назад</button>
+      <button class="cancel" data-back="1">Назад</button>
       <button class="save" id="savePromo">Зберегти акцію</button>
     </div>
   </div>
@@ -513,6 +667,11 @@
   <div class="screen" data-screen="site" hidden>
     <h1 class="screen-title">Сайт</h1>
     <p class="screen-sub">Натисни блок у прев'ю — знизу відкриються його поля</p>
+
+    <div class="tip" id="tipSite" hidden><div><b>Як це працює.</b> Угорі — зменшена копія головної. Натисни будь-який блок:
+        він підсвітиться, а знизу відкриються тільки його поля. Кнопка ☾ показує,
+        як блок виглядає в темній темі. Цифри біля назви поля — скільки символів
+        уміщується в рядок.</div><button type="button" class="tip-x" data-tipx="tipSite">×</button></div>
 
     <!-- Зменшена копія головної. Не картинка: та сама розмітка й ті
          самі змінні кольору, тому темна тема показує правду. -->
@@ -789,7 +948,35 @@
   var TOKEN_KEY = 'tb_admin_token';
 
   /* Telegram init */
-  try { var twa = window.Telegram && window.Telegram.WebApp; if (twa) { twa.ready(); twa.expand(); } } catch(e){}
+  var twa = null;
+  try { twa = window.Telegram && window.Telegram.WebApp; } catch (e) {}
+
+  /* Телеграм віддає два окремі відступи: безпечну зону пристрою
+     (чубчик) і висоту власної панелі з «Закрити» та «...». Вони НЕ
+     вкладені один в одного — їх треба додати. Саме через це шапка
+     лежала під кнопками Телеграма. */
+  function applyInsets() {
+    if (!twa) return;
+    var dev = twa.safeAreaInset || {};
+    var ui  = twa.contentSafeAreaInset || {};
+    var r = document.documentElement;
+    r.style.setProperty('--tg-top', ((dev.top || 0) + (ui.top || 0)) + 'px');
+    r.style.setProperty('--tg-bottom', ((dev.bottom || 0) + (ui.bottom || 0)) + 'px');
+  }
+
+  try {
+    if (twa) {
+      twa.ready();
+      twa.expand();
+      if (twa.disableVerticalSwipes) twa.disableVerticalSwipes();
+      applyInsets();
+      ['safeAreaChanged', 'contentSafeAreaChanged', 'viewportChanged'].forEach(function (ev) {
+        try { twa.onEvent(ev, applyInsets); } catch (e) {}
+      });
+      if (twa.setHeaderColor) { try { twa.setHeaderColor('#fbfaf8'); } catch (e) {} }
+    }
+  } catch (e) {}
+  window.addEventListener('resize', applyInsets);
 
   function token() { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch(e){ return ''; } }
   function setToken(t) { try { localStorage.setItem(TOKEN_KEY, t); } catch(e){} }
@@ -828,19 +1015,68 @@
   }
 
   /* ---------- navigation ---------- */
-  function show(s) {
-    document.querySelectorAll('.screen').forEach(function(el){ el.hidden = el.dataset.screen !== s; });
+  /* Назви екранів для шапки. Ключ той самий, що data-screen. */
+  var TITLES = {
+    dash: 'Магазин', products: 'Товари', add: 'Новий товар',
+    promos: 'Акції', addpromo: 'Нова акція', site: 'Сайт', settings: 'Ще'
+  };
+  /* Кореневі — ті, що в нижньому меню. Решта відкривається «вглиб». */
+  var ROOTS = ['dash', 'products', 'site', 'promos', 'settings'];
+  var navStack = [];
+  var current = 'dash';
+
+  function syncTop() {
+    var back = document.getElementById('topBack');
+    var title = document.getElementById('topTitle');
+    var logo = document.getElementById('topLogo');
+    /* Кнопка потрібна скрізь, крім самого початку: з вкладки вона
+       повертає на «Магазин», з екрана «вглиб» — туди, звідки прийшли. */
+    var need = current !== 'dash';
+    back.hidden = !need;
+    title.textContent = TITLES[current] || '';
+    logo.hidden = current !== 'dash';
+    /* Системна кнопка Телеграма робить те саме — щоб свайп і залізна
+       кнопка не розходились із тим, що на екрані. */
+    try {
+      if (twa && twa.BackButton) { need ? twa.BackButton.show() : twa.BackButton.hide(); }
+    } catch (e) {}
+  }
+
+  function goBack() {
+    if (navStack.length) { show(navStack.pop(), true); return; }
+    if (current !== 'dash') { show('dash', true); return; }
+  }
+
+  function show(s, isBack) {
+    if (!isBack && current && current !== s) {
+      /* У стек кладемо тільки перехід «вглиб»: між вкладками назад
+         веде на «Магазин», а не по історії кліків — інакше кнопка
+         починає водити колами. */
+      if (ROOTS.indexOf(s) === -1) navStack.push(current);
+      else navStack.length = 0;
+    }
+    current = s;
+    document.querySelectorAll('.screen').forEach(function(el){
+      el.hidden = el.dataset.screen !== s;
+      el.classList.toggle('is-push', ROOTS.indexOf(s) === -1);
+    });
     document.querySelectorAll('.botnav button').forEach(function(b){ b.classList.toggle('active', b.dataset.nav === s); });
-    var host = document.querySelector('.app') || document.body;
-    if (host.scrollTo) host.scrollTo(0, 0);
+    var scr = document.querySelector('.screen[data-screen="' + s + '"]');
+    if (scr) scr.scrollTop = 0;
+    document.getElementById('topbar').classList.remove('is-stuck');
+    syncTop();
     if (s === 'dash') loadDash();
     if (s === 'products') loadProducts();
     if (s === 'promos') loadPromos();
     if (s === 'add') resetProductForm();
     if (s === 'settings') loadSettings();
-    if (s === 'site') { loadHome(); syncPreview(); }
+    /* Не перезавантажуємо поля, якщо в них є незбережене: інакше
+       вийшов у товари, повернувся — і набраний текст зник без сліду. */
+    if (s === 'site') { if (dirtyCount() === 0) loadHome(); syncPreview(); }
+    syncDirty();
   }
   document.addEventListener('click', function(e){
+    if (e.target.closest('[data-back]')) { goBack(); return; }
     var go = e.target.closest('[data-go]');
     if (go) { show(go.dataset.go); }
   });
@@ -1359,7 +1595,17 @@
   function loadHome() {
     sanityQuery('*[_type=="settings"][0]{_id,"heroAsset":heroImage.asset._ref,heroTitle,heroCta,saleTitle,saleSubtitle,aboutKicker,aboutTitle,aboutWhoTitle,aboutWhoText,aboutQuote,aboutStepsTitle,promoEyebrow,promoTitle,promoText,promoCta,promoOff,b1Kicker,b2Kicker,b2Cta,b3Cta,secBrands,secBrandsLink,secNew,secNewLink,lookKicker,lookTitle,trust1T,trust1S,trust2T,trust2S,trust3T,trust3S,conKicker,conTitle,conText,conCta,aboutLinkT,aboutLinkS,lookOff}')
       .then(function (s) {
-        if (!s) { heroAssetId = null; renderHeroPreview(); return; }
+        /* Документа налаштувань ще немає — це нормально для першого
+           запуску. Порожні поля теж треба порахувати й зняти знімок,
+           інакше лічильники й смужка «незбережено» не працюють. */
+        if (!s) {
+          heroAssetId = null;
+          renderHeroPreview();
+          Object.keys(LIMITS).forEach(syncCounter);
+          syncPreview();
+          takeSnapshot();
+          return;
+        }
         settingsId = s._id;
         heroAssetId = s.heroAsset || null;
         document.getElementById('hTitle').value = s.heroTitle || '';
@@ -1956,6 +2202,36 @@
   document.addEventListener('change', function (e) {
     if (e.target && (e.target.id === 'lookOff' || e.target.id === 'promoOff')) { syncPreview(); syncDirty(); }
   });
+
+  /* Великий заголовок їде вгору — його назва підхоплюється шапкою.
+     24 px — момент, коли заголовок уже наполовину сховався. */
+  document.querySelectorAll('.screen').forEach(function (scr) {
+    scr.addEventListener('scroll', function () {
+      document.getElementById('topbar').classList.toggle('is-stuck', scr.scrollTop > 24);
+    }, { passive: true });
+  });
+
+  document.getElementById('topBack').addEventListener('click', goBack);
+  try { if (twa && twa.BackButton) twa.BackButton.onClick(goBack); } catch (e) {}
+
+  /* ---------- підказки ---------- */
+  var TIP_KEY = 'tb_tips_seen';
+  function tipsSeen() { try { return JSON.parse(localStorage.getItem(TIP_KEY) || '{}'); } catch (e) { return {}; } }
+  function tipHide(id) {
+    var s = tipsSeen(); s[id] = 1;
+    try { localStorage.setItem(TIP_KEY, JSON.stringify(s)); } catch (e) {}
+    var el = document.getElementById(id); if (el) el.hidden = true;
+  }
+  function tipSync() {
+    var s = tipsSeen();
+    ['tipDash', 'tipProd', 'tipSite'].forEach(function (id) {
+      var el = document.getElementById(id); if (el) el.hidden = !!s[id];
+    });
+  }
+  document.addEventListener('click', function (e) {
+    var x = e.target.closest('[data-tipx]'); if (x) tipHide(x.dataset.tipx);
+  });
+  tipSync();
 
   /* ---------- boot ---------- */
   if (token()) {
