@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Trend Büro — Адмінка</title>
+<title>OPTIX — Адмінка</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -186,8 +186,7 @@
 
   /* Кнопка збереження липне до низу: форма довга, і шукати її
      прокруткою щоразу — зайва робота. */
-  .screen[data-screen="home"] #saveHome,
-  .screen[data-screen="about"] #saveAbout {
+  .screen[data-screen="site"] #saveHome {
     position:sticky; bottom:12px; z-index:5; box-shadow:var(--shadow);
   }
 
@@ -200,6 +199,142 @@
   .gate .input { margin-bottom:12px; }
   .gate .save { width:100%; padding:15px; border-radius:12px; border:none; background:var(--accent); color:var(--bg); font-size:13px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; }
   .gate .err { color:var(--red); font-size:12px; margin-top:10px; min-height:16px; }
+
+  /* ============ СТАРТОВИЙ ЕКРАН ============ */
+  .kpis { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
+  .kpi { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:11px 12px; }
+  .kpi .n { font-family:var(--display); font-size:23px; line-height:1.1; }
+  .kpi .l { font-size:11px; color:var(--fg-soft); margin-top:2px; }
+  .kpi.warn { background:#fdf4f2; border-color:#f0d4ce; }
+  .kpi.warn .n { color:var(--red); }
+
+  .alerts { display:flex; flex-direction:column; gap:7px; }
+  .al { display:flex; align-items:center; gap:9px; background:var(--surface); border:1px solid var(--line);
+        border-radius:11px; padding:11px 12px; font-size:12.5px; text-align:left; width:100%;
+        font-family:var(--ui); color:var(--fg); cursor:pointer; }
+  .al i { width:7px; height:7px; border-radius:50%; flex:0 0 auto; }
+  .al .go { margin-left:auto; font-size:11px; font-weight:700; color:var(--acc); white-space:nowrap; }
+  .al--red i { background:var(--red); } .al--amb i { background:#c99a4a; } .al--ok i { background:var(--green); }
+
+  .quick { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .qa { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:13px 10px;
+        font-family:var(--ui); font-size:12px; font-weight:600; color:var(--fg); cursor:pointer; line-height:1.35; }
+  .qa .ic { display:block; font-size:18px; margin-bottom:5px; font-weight:400; }
+
+  /* ============ ТОВАРИ: ФІЛЬТРИ Й ВИБІР ============ */
+  .prod-statebar { display:flex; gap:6px; overflow-x:auto; margin-bottom:10px; scrollbar-width:none; }
+  .prod-statebar::-webkit-scrollbar { display:none; }
+  .prod-schip { flex:0 0 auto; font-family:var(--ui); font-size:11.5px; font-weight:600; padding:7px 12px;
+                border-radius:999px; border:1px solid var(--line); background:var(--surface);
+                color:var(--fg-soft); cursor:pointer; white-space:nowrap; }
+  .prod-schip.on { background:var(--accent); border-color:var(--accent); color:var(--bg); }
+
+  .selbar { display:flex; align-items:center; gap:9px; background:var(--acc); color:#fff;
+            border-radius:11px; padding:8px 10px; margin-bottom:9px; font-size:12px; font-weight:600; }
+  .selbar[hidden] { display:none; }
+  .selbar-x { border:0; background:rgba(255,255,255,.2); color:#fff; width:22px; height:22px;
+              border-radius:50%; font-size:12px; cursor:pointer; flex:0 0 auto; }
+  .selbar-acts { margin-left:auto; display:flex; gap:5px; }
+  .selbar-acts button { border:0; background:rgba(255,255,255,.18); color:#fff; font-family:var(--ui);
+                        font-size:11px; font-weight:700; padding:6px 9px; border-radius:7px; cursor:pointer; }
+  .selall { width:100%; border:1px dashed var(--line); background:transparent; color:var(--acc);
+            font-family:var(--ui); font-size:11.5px; font-weight:700; padding:8px; border-radius:10px;
+            margin-bottom:10px; cursor:pointer; }
+  .selall[hidden] { display:none; }
+
+  .pcard { position:relative; }
+  .pcard-pick { position:absolute; top:7px; left:7px; z-index:3; width:22px; height:22px; border-radius:6px;
+                border:1.5px solid rgba(26,26,28,.25); background:rgba(255,255,255,.94); cursor:pointer; }
+  .pcard-pick.on { background:var(--acc); border-color:var(--acc); }
+  .pcard-pick.on::after { content:'✓'; color:#fff; font-size:13px; position:absolute; inset:0;
+                          display:grid; place-items:center; }
+  .pcard.is-picked { outline:2px solid var(--acc); outline-offset:-2px; }
+
+  /* ============ МОДАЛКА МАСОВОЇ ДІЇ ============ */
+  .modal { position:fixed; inset:0; z-index:220; background:rgba(20,22,26,.5);
+           display:flex; align-items:flex-end; justify-content:center; }
+  .modal[hidden] { display:none; }
+  .modal-card { background:var(--bg); width:100%; max-width:520px; border-radius:20px 20px 0 0;
+                padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px)); max-height:88vh; overflow-y:auto; }
+  .modal-title { font-family:var(--display); font-size:20px; font-weight:400; margin-bottom:3px; }
+  .modal-sub { font-size:12px; color:var(--fg-soft); margin-bottom:14px; }
+  .sumbox { background:var(--surface); border:1px solid var(--line); border-radius:11px;
+            padding:11px 12px; font-size:12.5px; margin-top:14px; }
+  .sumrow { display:flex; justify-content:space-between; padding:5px 0; }
+  .sumrow + .sumrow { border-top:1px solid var(--line); }
+  .sumrow b { font-weight:700; }
+  .sumnote { background:#fdf4f2; border:1px solid #f0d4ce; color:#8f2f26; border-radius:9px;
+             padding:9px 11px; font-size:11.5px; margin-top:10px; line-height:1.45; }
+
+  /* ============ ЕКРАН «САЙТ»: ПРЕВ'Ю ============ */
+  .pv-wrap { position:relative; margin-bottom:12px; }
+  .pv-theme { position:absolute; top:8px; right:8px; z-index:4; width:28px; height:28px; border-radius:50%;
+              border:1px solid var(--line); background:rgba(255,255,255,.9); font-size:13px; cursor:pointer; }
+  .pv { background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden;
+        font-size:11px; color:#1a1a1c; }
+  .pv[data-dark] { background:#14171b; color:#f1eee8; border-color:#272c33; }
+  .pv[data-dark] .pv-row i, .pv[data-dark] .pv-banner i { background:#1d2127; }
+  .pv[data-dark] .pv-sl, .pv[data-dark] .pv-albk span { color:#a0a5ad; }
+  .pv[data-dark] .pv-trust { border-color:#272c33; }
+  .pv[data-dark] .pv-block + .pv-block { border-color:#272c33; }
+  .pv-block { position:relative; cursor:pointer; }
+  .pv-block + .pv-block { border-top:1px solid var(--line); }
+  .pv-block.on { outline:2px solid var(--acc); outline-offset:-2px; }
+  .pv-block.on::before { content:attr(data-blk); position:absolute; top:5px; left:5px; z-index:3;
+      background:var(--acc); color:#fff; font-size:8.5px; font-weight:700; letter-spacing:.08em;
+      text-transform:uppercase; padding:2px 6px; border-radius:5px; }
+  .pv-hero { height:96px; background:linear-gradient(150deg,#cbc1b1,#8d8474); display:flex;
+             align-items:flex-end; padding:10px; }
+  .pv-t { font-family:var(--display); color:#fff; font-size:13px; line-height:1.25;
+          text-shadow:0 1px 4px rgba(0,0,0,.35); }
+  .pv-banner { display:flex; align-items:center; gap:5px; padding:9px 10px; }
+  .pv-banner span { font-size:9px; letter-spacing:.14em; text-transform:uppercase; font-weight:700;
+                    color:var(--fg-mute); margin-right:auto; }
+  .pv-banner i { width:14px; height:4px; border-radius:999px; background:var(--raise); }
+  .pv-sec { display:flex; align-items:baseline; padding:9px 10px 5px; }
+  .pv-st { font-family:var(--display); font-size:13px; margin-right:auto; }
+  .pv-sl { font-size:9.5px; color:var(--fg-mute); }
+  .pv-row { display:flex; gap:5px; padding:0 10px 9px; }
+  .pv-row i { flex:1; height:30px; border-radius:5px; background:var(--raise); }
+  .pv-look { height:60px; background:linear-gradient(120deg,#b9b0a2,#7f7768); display:flex;
+             align-items:flex-end; padding:8px 10px; }
+  .pv-look span { font-family:var(--display); color:#fff; font-size:11px; }
+  .pv-trust { display:flex; gap:6px; padding:10px; }
+  .pv-trust span { flex:1; font-size:8.5px; font-weight:700; line-height:1.3; }
+  .pv-con { padding:10px; }
+  .pv-con b { display:block; font-family:var(--display); font-size:12px; font-weight:400; }
+  .pv-con span { display:inline-block; margin-top:5px; font-size:8.5px; font-weight:700;
+                 letter-spacing:.1em; text-transform:uppercase; border-bottom:1px solid currentColor; }
+  .pv-cat { margin:8px 10px; padding:9px 10px; border-radius:9px; background:var(--accent); }
+  .pv-cat b { color:#fff; font-family:var(--display); font-size:11.5px; font-weight:400; }
+  .pv-albk { display:flex; flex-direction:column; padding:9px 10px; }
+  .pv-albk b { font-size:11px; }
+  .pv-albk span { font-size:9.5px; color:var(--fg-mute); }
+
+  .blkbar { display:flex; gap:6px; overflow-x:auto; margin-bottom:12px; scrollbar-width:none; }
+  .blkbar::-webkit-scrollbar { display:none; }
+  .blkchip { flex:0 0 auto; font-family:var(--ui); font-size:11.5px; font-weight:600; padding:7px 12px;
+             border-radius:999px; border:1px solid var(--line); background:var(--surface);
+             color:var(--fg-soft); cursor:pointer; white-space:nowrap; }
+  .blkchip.on { background:var(--acc); border-color:var(--acc); color:#fff; }
+  .blk[hidden] { display:none; }
+  .blk-note { margin-bottom:10px; }
+  .blk .settings-divider:first-of-type { margin-top:0; }
+
+  /* лічильник символів у полі */
+  .cnt { float:right; font-size:10px; font-weight:700; color:var(--fg-mute); }
+  .cnt.bad { color:var(--red); }
+  .fieldwarn { font-size:11px; color:var(--red); margin-top:4px; line-height:1.4; }
+
+  /* незбережені зміни */
+  .dirty { position:fixed; left:12px; right:12px; bottom:calc(70px + env(safe-area-inset-bottom,0px));
+           z-index:150; display:flex; align-items:center; gap:9px; background:var(--accent); color:var(--bg);
+           border-radius:12px; padding:10px 12px; font-size:12px; box-shadow:var(--shadow); }
+  .dirty[hidden] { display:none; }
+  .dirty .dot { width:7px; height:7px; border-radius:50%; background:#c99a4a; flex:0 0 auto; }
+  .dirty button { margin-left:auto; border:0; background:var(--bg); color:var(--accent);
+                  font-family:var(--ui); font-size:11.5px; font-weight:700; padding:7px 14px;
+                  border-radius:8px; cursor:pointer; }
 
   /* toast */
   .toast { position:fixed; left:50%; bottom:84px; transform:translateX(-50%) translateY(20px); background:var(--accent); color:var(--bg); font-size:13px; padding:11px 18px; border-radius:999px; opacity:0; transition:.25s; pointer-events:none; z-index:200; max-width:88%; text-align:center; }
@@ -214,10 +349,10 @@
 
   <!-- TOKEN GATE -->
   <div class="gate" id="gate">
-    <h2>Вхід в адмінку</h2>
+    <h2>OPTIX · вхід в адмінку</h2>
     <p>Щоб керувати каталогом, потрібен ключ доступу до бази (Sanity API token). Він зберігається тільки на цьому пристрої й нікуди більше не передається.</p>
     <ol>
-      <li>Відкрий <b>manage.sanity.io</b> → проект TrendBuro</li>
+      <li>Відкрий <b>manage.sanity.io</b> → проект OPTIX</li>
       <li>Вкладка <b>API</b> → <b>Tokens</b> → <b>Add API token</b></li>
       <li>Назва: <b>admin</b>, права: <b>Editor</b> → Create</li>
       <li>Скопіюй ключ і встав сюди ↓</li>
@@ -229,8 +364,26 @@
 
   <!-- TOP BAR -->
   <div class="topbar">
-    <div class="logo">Trend Büro<small>EYEWEAR · АДМІН</small></div>
+    <div class="logo">OPTIX<small>BY TREND BÜRO · АДМІН</small></div>
     <span class="badge" id="countBadge">—</span>
+  </div>
+
+  <!-- МАГАЗИН · стартовий екран -->
+  <div class="screen" data-screen="dash">
+    <h1 class="screen-title">Магазин</h1>
+    <p class="screen-sub" id="dashWhen">Завантаження…</p>
+
+    <div class="kpis" id="dashKpis"></div>
+
+    <div class="alerts" id="dashAlerts"></div>
+
+    <div class="settings-divider">Швидкі дії</div>
+    <div class="quick">
+      <button class="qa" data-go="add"><span class="ic">+</span>Додати товар</button>
+      <button class="qa" data-quick="bulkdisc"><span class="ic">%</span>Знижка на бренд</button>
+      <button class="qa" data-quick="rate"><span class="ic">₴</span>Оновити курс</button>
+      <button class="qa" data-go="site"><span class="ic">▦</span>Головна сторінка</button>
+    </div>
   </div>
 
   <!-- PRODUCTS -->
@@ -240,6 +393,28 @@
     <button class="add-btn" data-go="add"><span class="plus">+</span> Додати товар</button>
     <input class="input prod-search" id="prodSearch" placeholder="Пошук за брендом або кодом…" autocomplete="off" />
     <div class="prod-brandbar" id="prodBrandbar"></div>
+
+    <!-- Фільтри стану. Саме вони роблять масові дії осмисленими:
+         спершу звужуєш до потрібного, потім познач усе одразу. -->
+    <div class="prod-statebar" id="prodStatebar">
+      <button type="button" class="prod-schip on" data-fstate="all">Усі</button>
+      <button type="button" class="prod-schip" data-fstate="nophoto">Без фото</button>
+      <button type="button" class="prod-schip" data-fstate="nodisc">Без знижки</button>
+      <button type="button" class="prod-schip" data-fstate="hidden">Приховані</button>
+      <button type="button" class="prod-schip" data-fstate="oos">Немає в наявності</button>
+    </div>
+
+    <div class="selbar" id="selBar" hidden>
+      <button type="button" class="selbar-x" id="selClear" aria-label="Зняти вибір">✕</button>
+      <span id="selCount">Вибрано 0</span>
+      <div class="selbar-acts">
+        <button type="button" data-bulk="disc">Знижка</button>
+        <button type="button" data-bulk="price">Ціна</button>
+        <button type="button" data-bulk="hide">Сховати</button>
+      </div>
+    </div>
+    <button type="button" class="selall" id="selAll" hidden>Позначити всі за фільтром</button>
+
     <div id="productList"><div class="loading">Завантаження…</div></div>
   </div>
 
@@ -323,13 +498,7 @@
     </div>
     <div class="field">
       <label class="field-label">Бренд <span class="opt">· порожньо = всі</span></label>
-      <select class="input" id="pBrand">
-        <option value="">Всі бренди</option>
-        <option>Cartier</option><option>Gucci</option><option>Prada</option><option>Miu Miu</option>
-        <option>Tom Ford</option><option>Chrome Hearts</option><option>Ray-Ban</option><option>Dior</option>
-        <option>Saint Laurent</option><option>Versace</option><option>Chanel</option><option>Bottega Veneta</option>
-        <option>Loewe</option><option>Celine</option><option>Balenciaga</option><option>Fendi</option>
-      </select>
+      <select class="input" id="pBrand"><option value="">Всі бренди</option></select>
     </div>
     <div class="field"><label class="field-label">Текст плашки на головній <span class="opt">·</span></label><input class="input" id="pScope" placeholder="Додатково −5% на Gucci за кодом" /></div>
     <div class="field"><label class="field-label">Діє до <span class="opt">·</span></label><input class="input" id="pEnd" type="date" /></div>
@@ -341,11 +510,53 @@
   </div>
 
   <!-- SETTINGS -->
-  <div class="screen" data-screen="home" hidden>
-    <h1 class="screen-title">Головна сторінка</h1>
-    <p class="screen-sub">Фото, текст і банер акції</p>
+  <div class="screen" data-screen="site" hidden>
+    <h1 class="screen-title">Сайт</h1>
+    <p class="screen-sub">Натисни блок у прев'ю — знизу відкриються його поля</p>
 
-    <div class="settings-divider">Головне фото</div>
+    <!-- Зменшена копія головної. Не картинка: та сама розмітка й ті
+         самі змінні кольору, тому темна тема показує правду. -->
+    <div class="pv-wrap">
+      <button type="button" class="pv-theme" id="pvTheme" aria-label="Тема прев'ю">☾</button>
+      <div class="pv" id="sitePreview">
+        <div class="pv-block" data-blk="hero">
+          <div class="pv-hero" id="pvHero"><span class="pv-t" id="pvHeroT">Великий вибір.<br>Великі знижки.</span></div>
+        </div>
+        <div class="pv-block" data-blk="banner">
+          <div class="pv-banner"><span id="pvBanK">Нова колекція</span><i></i><i></i><i></i></div>
+        </div>
+        <div class="pv-block" data-blk="sects">
+          <div class="pv-sec"><span class="pv-st" id="pvSecBrands">Бренди</span><span class="pv-sl" id="pvSecBrandsL">Усі</span></div>
+          <div class="pv-row"><i></i><i></i><i></i><i></i></div>
+          <div class="pv-sec"><span class="pv-st" id="pvSecNew">Новинки</span><span class="pv-sl" id="pvSecNewL">Дивитись усі</span></div>
+          <div class="pv-row"><i></i><i></i><i></i></div>
+        </div>
+        <div class="pv-block" data-blk="look">
+          <div class="pv-look"><span id="pvLookT">Овальна оправа з золотом</span></div>
+        </div>
+        <div class="pv-block" data-blk="trust">
+          <div class="pv-trust"><span id="pvTr1">100% оригінал</span><span id="pvTr2">Відправка щосуботи</span><span id="pvTr3">Викуп під замовлення</span></div>
+        </div>
+        <div class="pv-block" data-blk="con">
+          <div class="pv-con"><b id="pvConT">Не знайшли свою модель?</b><span id="pvConC">Написати менеджеру</span></div>
+        </div>
+        <div class="pv-block" data-blk="cat">
+          <div class="pv-cat"><b id="pvCatT">Дві оправи — знижка ще 10%</b></div>
+        </div>
+        <div class="pv-block" data-blk="about">
+          <div class="pv-albk" style="background:var(--raise)"><b>Екран «Про нас»</b><span id="pvAboutT">Про нас</span></div>
+        </div>
+        <div class="pv-block" data-blk="albk">
+          <div class="pv-albk"><b id="pvAlbkT">Про OPTIX</b><span id="pvAlbkS">Хто ми, як працює викуп</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="blkbar" id="blkBar"><button type="button" class="blkchip on" data-blk="hero">Головне фото</button><button type="button" class="blkchip" data-blk="banner">Банер-карусель</button><button type="button" class="blkchip" data-blk="sects">Заголовки секцій</button><button type="button" class="blkchip" data-blk="look">Блок «Образ»</button><button type="button" class="blkchip" data-blk="trust">Довіра</button><button type="button" class="blkchip" data-blk="con">Консьєрж</button><button type="button" class="blkchip" data-blk="cat">Банер у каталозі</button><button type="button" class="blkchip" data-blk="albk">Рядок «Про OPTIX»</button><button type="button" class="blkchip" data-blk="about">Екран «Про нас»</button></div>
+
+    <div class="blk" data-blkbody="hero">
+      <p class="screen-sub blk-note">Фото на весь екран і заголовок поверх нього</p>
+<div class="settings-divider">Головне фото</div>
     <p class="screen-sub" style="margin-top:-4px">Горизонтальне, від 1200 px по ширині. Порожньо — лишиться те, що вшите в сайт.</p>
     <div id="heroPreviewWrap" style="margin-bottom:10px"></div>
     <label class="add-btn" style="background:transparent;color:var(--fg);border:1px solid var(--line);display:block;text-align:center;cursor:pointer">
@@ -353,29 +564,31 @@
       <input type="file" id="heroFile" accept="image/*" hidden />
     </label>
     <button class="add-btn" id="heroClear" style="background:transparent;color:var(--red);border:1px solid var(--line)">Прибрати фото</button>
-
-    <div class="settings-divider">Текст на фото</div>
+<div class="settings-divider">Текст на фото</div>
     <div class="field"><label class="field-label">Заголовок (Enter — новий рядок)</label><textarea class="input" id="hTitle" rows="2" placeholder="Великий вибір.&#10;Великі знижки."></textarea></div>
     <div class="field"><label class="field-label">Напис на кнопці</label><input class="input" id="hCta" placeholder="Переходь та обирай" /></div>
+    </div>
 
-    <div class="settings-divider">Банер акції</div>
+    <div class="blk" data-blkbody="banner" hidden>
+      <p class="screen-sub blk-note">Три слайди під головним фото</p>
+<div class="settings-divider">Банер акції</div>
     <p class="screen-sub" style="margin-top:-4px">Порожньо — сайт напише сам: «Sale · до −25%» і порахує моделі.</p>
     <div class="field"><label class="field-label">Заголовок банера</label><input class="input" id="hSaleTitle" placeholder="Sale · до −25%" /></div>
     <div class="field"><label class="field-label">Підпис під ним</label><input class="input" id="hSaleSub" placeholder="5 моделей зі знижкою просто зараз" /></div>
-
-    <div class="settings-divider">Банер · слайд 1 (живе фото)</div>
+<div class="settings-divider">Банер · слайд 1 (живе фото)</div>
     <div class="field"><label class="field-label">Мітка над заголовком</label><input class="input" id="b1Kicker" placeholder="Нова колекція" /></div>
-
-    <div class="settings-divider">Банер · слайд 2 (колаж)</div>
+<div class="settings-divider">Банер · слайд 2 (колаж)</div>
     <p class="screen-sub" style="margin-top:-4px">Заголовок рахується сам: скільки моделей у наявності.</p>
     <div class="field"><label class="field-label">Мітка</label><input class="input" id="b2Kicker" placeholder="Чотири бренди" /></div>
     <div class="field"><label class="field-label">Напис на кнопці</label><input class="input" id="b2Cta" placeholder="Дивитись усі" /></div>
-
-    <div class="settings-divider">Банер · слайд 3 (акція)</div>
+<div class="settings-divider">Банер · слайд 3 (акція)</div>
     <p class="screen-sub" style="margin-top:-4px">Порожньо — сайт сам знайде найбільшу знижку й напише модель і відсоток.</p>
     <div class="field"><label class="field-label">Напис на кнопці</label><input class="input" id="b3Cta" placeholder="До акції" /></div>
+    </div>
 
-    <div class="settings-divider">Заголовки секцій</div>
+    <div class="blk" data-blkbody="sects" hidden>
+      <p class="screen-sub blk-note">Підписи над «Брендами» й «Новинками»</p>
+<div class="settings-divider">Заголовки секцій</div>
     <div class="field2">
       <div class="field"><label class="field-label">Бренди</label><input class="input" id="secBrands" placeholder="Бренди" /></div>
       <div class="field"><label class="field-label">Посилання</label><input class="input" id="secBrandsLink" placeholder="Усі" /></div>
@@ -384,14 +597,20 @@
       <div class="field"><label class="field-label">Новинки</label><input class="input" id="secNew" placeholder="Новинки" /></div>
       <div class="field"><label class="field-label">Посилання</label><input class="input" id="secNewLink" placeholder="Дивитись усі" /></div>
     </div>
+    </div>
 
-    <div class="settings-divider">Блок «Образ»</div>
+    <div class="blk" data-blkbody="look" hidden>
+      <p class="screen-sub blk-note">Живе фото з міткою моделі</p>
+<div class="settings-divider">Блок «Образ»</div>
     <p class="screen-sub" style="margin-top:-4px">Живе фото з міткою моделі. Знімок береться той самий, що на банері.</p>
     <div class="field"><label class="field-label">Мітка</label><input class="input" id="lookKicker" placeholder="Образ" /></div>
     <div class="field"><label class="field-label">Заголовок</label><input class="input" id="lookTitle" placeholder="Овальна оправа з золотом" /></div>
     <label class="checkrow"><input type="checkbox" id="lookOff" /><span>Приховати блок «Образ» на сайті</span></label>
+    </div>
 
-    <div class="settings-divider">Довіра · три факти</div>
+    <div class="blk" data-blkbody="trust" hidden>
+      <p class="screen-sub blk-note">Три факти під каталогом</p>
+<div class="settings-divider">Довіра · три факти</div>
     <div class="field2">
       <div class="field"><label class="field-label">Заголовок 1</label><input class="input" id="trust1T" placeholder="100% оригінал" /></div>
       <div class="field"><label class="field-label">Підпис 1</label><input class="input" id="trust1S" placeholder="Артикул на кожній моделі" /></div>
@@ -404,32 +623,38 @@
       <div class="field"><label class="field-label">Заголовок 3</label><input class="input" id="trust3T" placeholder="Викуп під замовлення" /></div>
       <div class="field"><label class="field-label">Підпис 3</label><input class="input" id="trust3S" placeholder="Привеземо те, чого немає" /></div>
     </div>
+    </div>
 
-    <div class="settings-divider">Консьєрж</div>
+    <div class="blk" data-blkbody="con" hidden>
+      <p class="screen-sub blk-note">Блок «Не знайшли свою модель?»</p>
+<div class="settings-divider">Консьєрж</div>
     <div class="field"><label class="field-label">Мітка</label><input class="input" id="conKicker" placeholder="Менеджер" /></div>
     <div class="field"><label class="field-label">Заголовок</label><input class="input" id="conTitle" placeholder="Не знайшли свою модель?" /></div>
     <div class="field"><label class="field-label">Текст</label><textarea class="input" id="conText" rows="3" placeholder="Напишіть артикул або надішліть фото..."></textarea></div>
     <div class="field"><label class="field-label">Напис на кнопці</label><input class="input" id="conCta" placeholder="Написати менеджеру" /></div>
+    </div>
 
-    <div class="settings-divider">Банер у каталозі</div>
+    <div class="blk" data-blkbody="cat" hidden>
+      <p class="screen-sub blk-note">Плашка між рядами карток</p>
+<div class="settings-divider">Банер у каталозі</div>
     <p class="screen-sub" style="margin-top:-4px">Стоїть між рядами карток, після четвертої. Один на екран.</p>
     <div class="field"><label class="field-label">Мітка</label><input class="input" id="promoEyebrow" placeholder="Друга пара" /></div>
     <div class="field"><label class="field-label">Заголовок</label><input class="input" id="promoTitle" placeholder="Дві оправи - знижка ще 10%" /></div>
     <div class="field"><label class="field-label">Текст</label><textarea class="input" id="promoText" rows="2" placeholder="Рахується в кошику автоматично..."></textarea></div>
     <div class="field"><label class="field-label">Напис на кнопці</label><input class="input" id="promoCta" placeholder="Написати менеджеру" /></div>
     <label class="checkrow"><input type="checkbox" id="promoOff" /><span>Прибрати банер із каталогу</span></label>
+    </div>
 
-    <div class="settings-divider">Рядок «Про OPTIX» унизу головної</div>
+    <div class="blk" data-blkbody="albk" hidden>
+      <p class="screen-sub blk-note">Посилання внизу головної</p>
+<div class="settings-divider">Рядок «Про OPTIX» унизу головної</div>
     <div class="field"><label class="field-label">Заголовок</label><input class="input" id="aboutLinkT" placeholder="Про OPTIX" /></div>
     <div class="field"><label class="field-label">Підпис</label><input class="input" id="aboutLinkS" placeholder="Хто ми, як працює викуп, строки" /></div>
+    </div>
 
-    <button class="add-btn" id="saveHome" style="background:var(--green)">Зберегти</button>
-  </div>
+    <div class="blk" data-blkbody="about" hidden>
+      <p class="screen-sub blk-note">Окремий екран, відкривається з рядка «Про OPTIX»</p>
 
-
-  <div class="screen" data-screen="about" hidden>
-    <h1 class="screen-title">Про нас</h1>
-    <p class="screen-sub">Окремий екран у застосунку. Відкривається рядком унизу головної.</p>
     <p class="screen-sub" style="margin-top:8px">Цифри — бренди, моделі, кольори, ціна від — рахуються з каталогу самі. Вписувати не треба.</p>
 
     <div class="settings-divider">Екран «Про нас»</div>
@@ -440,9 +665,11 @@
     <div class="field"><label class="field-label">Текст «Хто ми» (Enter — новий абзац)</label><textarea class="input" id="aWhoText" rows="5" placeholder="Ми не тримаємо товар на полиці…"></textarea></div>
     <div class="field"><label class="field-label">Цитата — ваша фраза (порожньо — блок не показується)</label><textarea class="input" id="aQuote" rows="2" placeholder="Одна фраза про ваш підхід"></textarea></div>
     <div class="field"><label class="field-label">Заголовок «Як це працює» (Enter — новий рядок)</label><textarea class="input" id="aStepsTitle" rows="2" placeholder="Шлях від вибору&#10;до відділення"></textarea></div>
+    </div>
 
-    <button class="add-btn" id="saveAbout" style="background:var(--green)">Зберегти</button>
+    <button class="add-btn" id="saveHome" style="background:var(--green)">Зберегти</button>
   </div>
+
 
   <div class="screen" data-screen="settings" hidden>
     <h1 class="screen-title">Налаштування</h1>
@@ -471,17 +698,17 @@
 
   <!-- BOTTOM NAV -->
   <div class="botnav">
-    <button data-nav="home" data-go="home">
-      <svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>
-      Головна
+    <button class="active" data-nav="dash" data-go="dash">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="9" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="3" y="14" width="8" height="7" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/></svg>
+      Магазин
     </button>
-    <button data-nav="about" data-go="about">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
-      Про нас
-    </button>
-    <button class="active" data-nav="products" data-go="products">
-      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+    <button data-nav="products" data-go="products">
+      <svg viewBox="0 0 24 24"><circle cx="7.5" cy="13" r="4"/><circle cx="16.5" cy="13" r="4"/><path d="M11.5 13h1M3 11c-.5-.6-.5-1.6 0-2M21 11c.5-.6.5-1.6 0-2"/></svg>
       Товари
+    </button>
+    <button data-nav="site" data-go="site">
+      <svg viewBox="0 0 24 24"><rect x="4" y="2.5" width="16" height="19" rx="2.5"/><path d="M4 8h16M9 21.5v-6h6v6"/></svg>
+      Сайт
     </button>
     <button data-nav="promos" data-go="promos">
       <svg viewBox="0 0 24 24"><path d="M9 5H5a2 2 0 0 0-2 2v4M15 5h4a2 2 0 0 1 2 2v4M3 13v4a2 2 0 0 0 2 2h4M21 13v4a2 2 0 0 1-2 2h-4M8 12l3 3 5-6"/></svg>
@@ -491,6 +718,67 @@
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>
       Ще
     </button>
+  </div>
+
+  <!-- Масова дія. Показуємо наслідки до натискання: скільки товарів
+       зачепить і що станеться з тими, у кого знижка вже стоїть. -->
+  <div class="modal" id="bulkModal" hidden>
+    <div class="modal-card">
+      <h3 class="modal-title" id="bulkTitle">Знижка</h3>
+      <p class="modal-sub" id="bulkSub"></p>
+
+      <div id="bulkDiscBody" hidden>
+        <div class="disc-row" id="bulkDiscRow">
+          <div class="disc" data-d="0">Прибрати</div>
+          <div class="disc" data-d="10">−10%</div>
+          <div class="disc" data-d="15">−15%</div>
+          <div class="disc on" data-d="20">−20%</div>
+          <div class="disc" data-d="25">−25%</div>
+        </div>
+        <div class="disc-custom-row">
+          <span class="disc-custom-label">Або своя:</span>
+          <input class="input disc-custom-input" id="bulkDiscCustom" inputmode="numeric" placeholder="12" />
+          <span class="disc-custom-pct">%</span>
+        </div>
+        <div class="field" style="margin-top:12px">
+          <label class="field-label">Ті, у кого знижка вже стоїть</label>
+          <div class="prod-statebar">
+            <button type="button" class="prod-schip on" data-bskip="1">Не чіпати</button>
+            <button type="button" class="prod-schip" data-bskip="0">Перезаписати</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="bulkPriceBody" hidden>
+        <div class="prod-statebar">
+          <button type="button" class="prod-schip on" data-bpmode="pct">На відсоток</button>
+          <button type="button" class="prod-schip" data-bpmode="abs">На суму, €</button>
+        </div>
+        <div class="field" style="margin-top:10px">
+          <label class="field-label" id="bulkPriceLabel">Змінити на, % (мінус — знизити)</label>
+          <input class="input" id="bulkPriceVal" inputmode="numeric" placeholder="5" />
+        </div>
+      </div>
+
+      <div id="bulkHideBody" hidden>
+        <div class="prod-statebar">
+          <button type="button" class="prod-schip on" data-bvis="0">Сховати з сайту</button>
+          <button type="button" class="prod-schip" data-bvis="1">Показати на сайті</button>
+        </div>
+      </div>
+
+      <div class="sumbox" id="bulkSum"></div>
+
+      <div class="save-bar" style="position:static;padding:14px 0 0;border:0;background:none">
+        <button class="cancel" id="bulkCancel">Скасувати</button>
+        <button class="save" id="bulkApply">Застосувати</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dirty" id="dirtyBar" hidden>
+    <span class="dot"></span><span id="dirtyText">Є незбережені зміни</span>
+    <button type="button" id="dirtySave">Зберегти</button>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -543,11 +831,14 @@
   function show(s) {
     document.querySelectorAll('.screen').forEach(function(el){ el.hidden = el.dataset.screen !== s; });
     document.querySelectorAll('.botnav button').forEach(function(b){ b.classList.toggle('active', b.dataset.nav === s); });
+    var host = document.querySelector('.app') || document.body;
+    if (host.scrollTo) host.scrollTo(0, 0);
+    if (s === 'dash') loadDash();
     if (s === 'products') loadProducts();
     if (s === 'promos') loadPromos();
     if (s === 'add') resetProductForm();
     if (s === 'settings') loadSettings();
-    if (s === 'home') loadHome();
+    if (s === 'site') { loadHome(); syncPreview(); }
   }
   document.addEventListener('click', function(e){
     var go = e.target.closest('[data-go]');
@@ -563,7 +854,7 @@
     setToken(t);
     err.textContent = 'Перевірка…';
     sanityQuery('count(*[_type=="product"])').then(function(){
-      err.textContent = ''; showGate(false); show('products');
+      err.textContent = ''; showGate(false); show('dash');
     }).catch(function(){
       err.textContent = 'Ключ невірний або немає доступу. Перевір що це Editor token.';
       clearToken();
@@ -573,7 +864,9 @@
   /* ---------- products ---------- */
   var ALL_PRODUCTS = [];      /* full fetched list */
   var prodFilterBrand = 'all';
+  var prodFilterState = 'all';
   var prodSearchQuery = '';
+  var picked = {};                 /* _id -> true, вибрані для масової дії */
 
   function loadProducts() {
     var list = document.getElementById('productList');
@@ -585,6 +878,9 @@
       PRODUCTS_CACHE = {};
       ALL_PRODUCTS.forEach(function(p){ PRODUCTS_CACHE[p._id] = p; });
       buildProdBrandbar();
+      document.querySelectorAll('#prodStatebar .prod-schip').forEach(function (x) {
+        x.classList.toggle('on', x.dataset.fstate === prodFilterState);
+      });
       renderProductGrid();
     }).catch(function(e){
       list.className = '';
@@ -610,14 +906,31 @@
   function renderProductGrid() {
     var list = document.getElementById('productList');
     var q = prodSearchQuery.trim().toLowerCase();
+    /* Коди-дублі рахуємо один раз на весь список, а не в фільтрі:
+       інакше це O(n²) на 1300 товарах і список помітно гальмує. */
+    var dupCodes = {};
+    if (prodFilterState === 'dup') {
+      var cnt = {};
+      ALL_PRODUCTS.forEach(function(p){
+        var c = (p.code||'').trim().toLowerCase(); if (!c) return;
+        cnt[c] = (cnt[c]||0) + 1;
+      });
+      Object.keys(cnt).forEach(function(c){ if (cnt[c] > 1) dupCodes[c] = 1; });
+    }
     var rows = ALL_PRODUCTS.filter(function(p){
       if (prodFilterBrand !== 'all' && (p.brand||'').trim() !== prodFilterBrand) return false;
+      if (prodFilterState === 'nophoto' && p.img) return false;
+      if (prodFilterState === 'nodisc' && (parseInt(p.discount,10)||0) > 0) return false;
+      if (prodFilterState === 'hidden' && p.visible !== false) return false;
+      if (prodFilterState === 'oos' && p.inStock !== false) return false;
+      if (prodFilterState === 'dup' && !dupCodes[(p.code||'').trim().toLowerCase()]) return false;
       if (q) {
         var hay = ((p.brand||'') + ' ' + (p.code||'') + ' ' + (p.model||'')).toLowerCase();
         if (hay.indexOf(q) === -1) return false;
       }
       return true;
     });
+    lastRows = rows;
     if (!rows.length) {
       list.className = '';
       list.innerHTML = '<div class="empty">' + (ALL_PRODUCTS.length ? 'Нічого не знайдено за фільтром.' : 'Поки немає товарів.<br>Натисни «+ Додати товар».') + '</div>';
@@ -634,7 +947,8 @@
       if (p.inStock === false) tags += '<span class="ptag oos">Уточнити</span>';
       if (p.bestseller) tags += '<span class="ptag best">Топ</span>';
       var img = p.img ? '<img src="' + p.img + '?w=300&h=300&fit=fill&bg=ffffff">' : '<svg viewBox="0 0 24 24"><circle cx="7.5" cy="13.5" r="4"/><circle cx="16.5" cy="13.5" r="4"/><path d="M11.5 13.5h1"/></svg>';
-      return '<div class="pcard' + (p.visible === false ? ' is-hidden' : '') + (p.inStock === false ? ' is-oos' : '') + '" data-id="' + p._id + '">' +
+      return '<div class="pcard' + (p.visible === false ? ' is-hidden' : '') + (p.inStock === false ? ' is-oos' : '') + (picked[p._id] ? ' is-picked' : '') + '" data-id="' + p._id + '">' +
+        '<button type="button" class="pcard-pick' + (picked[p._id] ? ' on' : '') + '" data-pick="' + p._id + '" aria-label="Позначити"></button>' +
         '<div class="pcard-img">' + img +
           (tags ? '<div class="pcard-tags">' + tags + '</div>' : '') +
           (p.visible === false ? '<div class="pcard-hidden-badge">Сховано</div>' : '') +
@@ -651,7 +965,9 @@
         '</div>' +
       '</div>';
     }).join('');
+    syncSelBar();
   }
+  var lastRows = [];
 
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 
@@ -678,6 +994,51 @@
     if (ed) {
       openEditProduct(ed.dataset.edit);
     }
+  });
+
+  /* ---------- вибір і масові дії ----------
+     Прапорець на картці не відкриває товар: обробник вибору стоїть
+     першим і зупиняє подію, інакше кожне позначення відкривало б
+     форму редагування. */
+  document.getElementById('productList').addEventListener('click', function (e) {
+    var pk = e.target.closest('[data-pick]');
+    if (!pk) return;
+    e.preventDefault(); e.stopPropagation();
+    var id = pk.dataset.pick;
+    if (picked[id]) delete picked[id]; else picked[id] = true;
+    pk.classList.toggle('on', !!picked[id]);
+    var card = pk.closest('.pcard'); if (card) card.classList.toggle('is-picked', !!picked[id]);
+    syncSelBar();
+  }, true);
+
+  function pickedIds() { return Object.keys(picked); }
+
+  function syncSelBar() {
+    var n = pickedIds().length;
+    var bar = document.getElementById('selBar');
+    var all = document.getElementById('selAll');
+    if (!bar) return;
+    bar.hidden = n === 0;
+    document.getElementById('selCount').textContent = 'Вибрано ' + n;
+    /* «Позначити всі» має сенс лише коли фільтр щось звузив */
+    var narrowed = prodFilterBrand !== 'all' || prodFilterState !== 'all' || prodSearchQuery.trim() !== '';
+    all.hidden = !narrowed || !lastRows.length || n >= lastRows.length;
+    all.textContent = 'Позначити всі за фільтром (' + lastRows.length + ')';
+  }
+
+  document.getElementById('selAll').addEventListener('click', function () {
+    lastRows.forEach(function (p) { picked[p._id] = true; });
+    renderProductGrid();
+  });
+  document.getElementById('selClear').addEventListener('click', function () {
+    picked = {}; renderProductGrid();
+  });
+
+  document.getElementById('prodStatebar').addEventListener('click', function (e) {
+    var c = e.target.closest('[data-fstate]'); if (!c) return;
+    prodFilterState = c.dataset.fstate;
+    document.querySelectorAll('#prodStatebar .prod-schip').forEach(function (x) { x.classList.toggle('on', x === c); });
+    renderProductGrid();
   });
 
   /* brand filter chips */
@@ -833,8 +1194,23 @@
   document.getElementById('saveProduct').addEventListener('click', function(){
     var brand = document.getElementById('fBrand').value.trim();
     var code = document.getElementById('fCode').value.trim();
-    var price = parseFloat(document.getElementById('fPrice').value);
-    if (!brand || !code || !price) { toast('Заповни бренд, код і ціну'); return; }
+    var priceRaw = document.getElementById('fPrice').value.trim();
+    var price = parseFloat(priceRaw);
+    if (!brand) { toast('Вкажи бренд'); return; }
+    if (!code)  { toast('Вкажи код моделі'); return; }
+    /* Ціна: «400 евро» або «abc» раніше мовчки ставали NaN і товар
+       ішов на сайт без ціни. Тепер зупиняємось тут. */
+    if (!priceRaw || isNaN(price) || price <= 0) { toast('Ціна має бути числом більше нуля'); return; }
+    if (price > 100000) { toast('Ціна виглядає помилковою — перевір'); return; }
+    /* Дубль коду. Той самий код у двох картках означає, що клієнт і
+       менеджер говорять про різні окуляри, думаючи що про одні. */
+    var dupe = ALL_PRODUCTS.filter(function (x) {
+      return x._id !== editingId && (x.code || '').trim().toLowerCase() === code.toLowerCase();
+    });
+    if (dupe.length && !confirm('Код «' + code + '» уже є у ' + dupe.length +
+        ' товару. Все одно зберегти?')) return;
+    if (!photos.length && !editingId &&
+        !confirm('Без фото товар на сайті виглядає порожнім. Зберегти без фото?')) return;
     if (photos.some(function(p){ return !p.assetId; })) { toast('Зачекай, фото ще вантажаться'); return; }
     rememberBrand(brand);
 
@@ -869,6 +1245,7 @@
       toast(editingId ? 'Збережено ✓' : 'Товар додано ✓');
       btn.disabled=false; btn.textContent='Зберегти товар';
       editingId = null;
+      picked = {};
       show('products');
     }).catch(function(err){
       btn.disabled=false; btn.textContent='Зберегти товар';
@@ -877,7 +1254,28 @@
   });
 
   /* ---------- promos ---------- */
+  /* Список брендів більше не вшитий у розмітку: додав новий бренд у
+     товарах — він одразу є і тут. Раніше вони розходились. */
+  function fillPromoBrands() {
+    var sel = document.getElementById('pBrand'); if (!sel) return;
+    var cur = sel.value, seen = {}, out = [];
+    (ALL_PRODUCTS || []).forEach(function (p) {
+      var b = (p.brand || '').trim();
+      if (b && !seen[b]) { seen[b] = 1; out.push(b); }
+    });
+    out.sort(function (a, b) { return a.localeCompare(b); });
+    sel.innerHTML = '<option value="">Всі бренди</option>' +
+      out.map(function (b) { return '<option>' + esc(b) + '</option>'; }).join('');
+    sel.value = cur;
+  }
+
   function loadPromos() {
+    if (!ALL_PRODUCTS.length) {
+      sanityQuery('*[_type=="product"]{brand}').then(function (r) {
+        ALL_PRODUCTS = r || []; fillPromoBrands();
+      }).catch(function () {});
+    } else fillPromoBrands();
+
     var list = document.getElementById('promoList');
     list.innerHTML = '<div class="loading">Завантаження…</div>';
     sanityQuery('*[_type=="promo"]|order(_createdAt desc){_id,name,scope,code,discount,brand,endDate,active}').then(function(rows){
@@ -915,6 +1313,10 @@
     if (!name) { toast('Введи назву'); return; }
     if (!code) { toast('Введи промокод'); return; }
     if (!discount || discount <= 0) { toast('Введи додаткову знижку %'); return; }
+    if (discount > 90) { toast('Знижка більше 90% — схоже на помилку'); return; }
+    if (end && new Date(end) < new Date(new Date().toDateString())) {
+      toast('Дата закінчення вже минула'); return;
+    }
     var doc = { _type:'promo', name:name, code:code, discount:discount, scope:scope, active:true, type:'percentage' };
     if (brand) doc.brand = brand;
     if (end) doc.endDate = end;
@@ -1001,6 +1403,9 @@
         var lo = document.getElementById('lookOff');
         if (lo) lo.checked = s.lookOff === true;
         renderHeroPreview();
+        Object.keys(LIMITS).forEach(syncCounter);
+        syncPreview();
+        takeSnapshot();
       }).catch(function () {});
   }
 
@@ -1020,12 +1425,8 @@
     toast('Прибрано — натисни «Зберегти»');
   });
 
-  /* Обидві кнопки пишуть у той самий документ налаштувань, тому
-     обробник один: інакше збереження на одному екрані стирало б поля
-     іншого. */
-  document.getElementById('saveAbout').addEventListener('click', function () {
-    document.getElementById('saveHome').click();
-  });
+  /* Екран «Про нас» тепер блок усередині «Сайту», тож окрема кнопка
+     не потрібна: усе пише та сама saveHome в один документ settings. */
 
   document.getElementById('saveHome').addEventListener('click', function () {
     var data = {
@@ -1124,9 +1525,441 @@
     clearToken(); showGate(true);
   });
 
+  /* ============================================================
+     СТАРТОВИЙ ЕКРАН
+     Показує не «скільки всього», а «що зараз не так». Кожна
+     проблема — рядок із дією, щоб не треба було шукати, де це
+     виправляють.
+     ============================================================ */
+  function loadDash() {
+    var when = document.getElementById('dashWhen');
+    var kpis = document.getElementById('dashKpis');
+    var alerts = document.getElementById('dashAlerts');
+    kpis.innerHTML = ''; alerts.innerHTML = '';
+    when.textContent = 'Завантаження…';
+
+    Promise.all([
+      sanityQuery('*[_type=="product"]{_id,brand,code,price,discount,visible,inStock,"img":images[0].asset->url}'),
+      sanityQuery('*[_type=="settings"][0]{rateUAH,_updatedAt}'),
+      sanityQuery('*[_type=="promo" && active==true]{name,code,endDate}')
+    ]).then(function (res) {
+      var prods = res[0] || [], st = res[1] || {}, promos = res[2] || [];
+      ALL_PRODUCTS = prods;
+      PRODUCTS_CACHE = {};
+      prods.forEach(function (p) { PRODUCTS_CACHE[p._id] = p; });
+      document.getElementById('countBadge').textContent = prods.length + ' товарів';
+
+      var live    = prods.filter(function (p) { return p.visible !== false; });
+      var noPhoto = prods.filter(function (p) { return !p.img; });
+      var disc    = prods.filter(function (p) { return (parseInt(p.discount, 10) || 0) > 0; });
+      var oos     = prods.filter(function (p) { return p.inStock === false; });
+
+      /* дублі коду — те, чого не видно, поки клієнт не спитає */
+      var seen = {}, dup = 0;
+      prods.forEach(function (p) {
+        var c = (p.code || '').trim().toLowerCase();
+        if (!c) return;
+        if (seen[c]) dup++; else seen[c] = 1;
+      });
+
+      when.textContent = 'Оновлено щойно · на сайті видно ' + live.length + ' моделей';
+
+      function kpi(n, l, warn) {
+        return '<div class="kpi' + (warn ? ' warn' : '') + '"><div class="n">' + n +
+               '</div><div class="l">' + l + '</div></div>';
+      }
+      kpis.innerHTML =
+        kpi(live.length, 'видно на сайті') +
+        kpi(disc.length, 'зі знижкою') +
+        kpi(noPhoto.length, 'без фото', noPhoto.length > 0) +
+        kpi(dup, 'дублів коду', dup > 0);
+
+      var rows = [];
+      if (noPhoto.length) rows.push(['red', noPhoto.length + ' товарів без фото — виглядають порожніми', 'Показати', 'nophoto']);
+      if (dup) rows.push(['red', dup + ' товарів із однаковим кодом', 'Показати', 'dup']);
+      if (oos.length) rows.push(['amb', oos.length + ' позначено «немає в наявності»', 'Показати', 'oos']);
+
+      /* курс: цін у ₴ немає, але клієнт платить у ₴ — стале значення
+         тихо псує кожну угоду, тому нагадуємо окремо */
+      var rate = st.rateUAH;
+      if (!rate) {
+        rows.push(['red', 'Курс гривні не заданий', 'Задати', 'rate']);
+      } else if (st._updatedAt) {
+        var days = Math.floor((Date.now() - new Date(st._updatedAt)) / 86400000);
+        if (days >= 7) rows.push(['amb', 'Курс не оновлювався ' + days + ' днів (1 € = ' + rate + ' ₴)', 'Оновити', 'rate']);
+      }
+
+      promos.forEach(function (pr) {
+        if (!pr.endDate) return;
+        var left = Math.ceil((new Date(pr.endDate) - Date.now()) / 86400000);
+        if (left < 0) rows.push(['red', 'Акція «' + pr.name + '» закінчилась ' + (-left) + ' дн. тому', 'Акції', 'promos']);
+        else if (left <= 7) rows.push(['amb', 'Акція «' + pr.name + '» діє ще ' + left + ' дн.', 'Акції', 'promos']);
+      });
+
+      if (!rows.length) rows.push(['ok', 'Усе гаразд — нічого не потребує уваги', '', '']);
+
+      alerts.innerHTML = rows.map(function (r) {
+        return '<button type="button" class="al al--' + r[0] + '" data-alert="' + r[3] + '"><i></i>' +
+               esc(r[1]) + (r[2] ? '<span class="go">' + r[2] + '</span>' : '') + '</button>';
+      }).join('');
+    }).catch(function () {
+      when.textContent = 'Не вдалося завантажити. Перевір ключ у «Ще».';
+    });
+  }
+
+  document.getElementById('dashAlerts').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-alert]'); if (!b) return;
+    var a = b.dataset.alert;
+    if (a === 'promos') return show('promos');
+    if (a === 'rate') { show('settings'); setTimeout(function () {
+      var el = document.getElementById('sRateUAH'); if (el) { el.focus(); el.select && el.select(); }
+    }, 120); return; }
+    if (a === 'nophoto' || a === 'oos' || a === 'dup') {
+      prodFilterState = a; prodFilterBrand = 'all'; prodSearchQuery = '';
+      show('products');
+    }
+  });
+
+  document.querySelector('.quick').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-quick]'); if (!b) return;
+    if (b.dataset.quick === 'rate') {
+      show('settings');
+      setTimeout(function () { var el = document.getElementById('sRateUAH'); if (el) el.focus(); }, 120);
+    }
+    if (b.dataset.quick === 'bulkdisc') {
+      show('products');
+      toast('Обери бренд, познач товари — і тисни «Знижка»');
+    }
+  });
+
+  /* ============================================================
+     МАСОВІ ДІЇ
+     Головне тут — рахунок наслідків до натискання. Масова знижка
+     легко ПОНИЖУЄ вже виставлену більшу, і помітити це постфактум
+     на тисячі позицій неможливо.
+     ============================================================ */
+  var bulkKind = null, bulkDisc = '20', bulkSkip = true, bulkPMode = 'pct', bulkVis = 0;
+
+  function bulkTargets() {
+    return pickedIds().map(function (id) { return PRODUCTS_CACHE[id]; }).filter(Boolean);
+  }
+  function priceOf(p) { return parseFloat(p.price) || 0; }
+  function discOf(p) { return parseInt(p.discount, 10) || 0; }
+
+  function bulkRender() {
+    var t = bulkTargets(), sum = document.getElementById('bulkSum');
+    var rows = [], note = '';
+
+    if (bulkKind === 'disc') {
+      var d = parseInt(bulkDisc, 10) || 0;
+      var already = t.filter(function (p) { return discOf(p) > 0; });
+      var affected = bulkSkip ? t.filter(function (p) { return discOf(p) === 0; }) : t;
+      var lowered = bulkSkip ? [] : already.filter(function (p) { return discOf(p) > d; });
+      rows.push(['Позначено', t.length]);
+      rows.push(['Уже зі знижкою', already.length]);
+      rows.push([d ? ('Отримають −' + d + '%') : 'Знижку приберуть', affected.length]);
+      if (affected.length) {
+        var was = affected.reduce(function (s, p) { return s + priceOf(p); }, 0) / affected.length;
+        rows.push(['Середня ціна стане', '€' + Math.round(was * (1 - d / 100)) + ' замість €' + Math.round(was)]);
+      }
+      if (lowered.length) {
+        note = 'У ' + lowered.length + ' моделей знижка <b>зменшиться</b> — там зараз більша за ' + d + '%.';
+      } else if (bulkSkip && already.length) {
+        note = already.length + ' моделей із наявною знижкою не чіпаю. Щоб перезаписати — перемкни вище.';
+      }
+    }
+
+    if (bulkKind === 'price') {
+      var v = parseFloat(document.getElementById('bulkPriceVal').value);
+      rows.push(['Позначено', t.length]);
+      if (!isNaN(v) && t.length) {
+        var bad = 0, was2 = 0, now2 = 0;
+        t.forEach(function (p) {
+          var o = priceOf(p);
+          var n = bulkPMode === 'pct' ? o * (1 + v / 100) : o + v;
+          if (n <= 0) bad++;
+          was2 += o; now2 += Math.max(1, Math.round(n));
+        });
+        rows.push(['Середня ціна', '€' + Math.round(was2 / t.length) + ' → €' + Math.round(now2 / t.length)]);
+        if (bad) note = bad + ' моделей вийшли б у нуль або мінус — їм поставлю €1. Перевір значення.';
+      } else {
+        rows.push(['Введи значення', '—']);
+      }
+    }
+
+    if (bulkKind === 'hide') {
+      var willShow = bulkVis === 1;
+      var change = t.filter(function (p) { return (p.visible !== false) === willShow ? false : true; });
+      rows.push(['Позначено', t.length]);
+      rows.push([willShow ? 'Стануть видимі' : 'Зникнуть із сайту', change.length]);
+      if (!willShow) {
+        var np = change.filter(function (p) { return !p.img; }).length;
+        if (np) note = 'Серед них ' + np + ' і так без фото — на сайті їх не було видно.';
+      }
+    }
+
+    sum.innerHTML = rows.map(function (r) {
+      return '<div class="sumrow"><span>' + r[0] + '</span><b>' + r[1] + '</b></div>';
+    }).join('') + (note ? '<div class="sumnote">' + note + '</div>' : '');
+  }
+
+  function bulkOpen(kind) {
+    if (!pickedIds().length) { toast('Спершу познач товари'); return; }
+    bulkKind = kind;
+    document.getElementById('bulkDiscBody').hidden = kind !== 'disc';
+    document.getElementById('bulkPriceBody').hidden = kind !== 'price';
+    document.getElementById('bulkHideBody').hidden = kind !== 'hide';
+    document.getElementById('bulkTitle').textContent =
+      kind === 'disc' ? 'Знижка' : kind === 'price' ? 'Ціна' : 'Показ на сайті';
+    document.getElementById('bulkSub').textContent = 'Для ' + pickedIds().length + ' позначених моделей';
+    document.getElementById('bulkModal').hidden = false;
+    bulkRender();
+  }
+
+  document.querySelector('.selbar-acts').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-bulk]'); if (!b) return;
+    bulkOpen(b.dataset.bulk);
+  });
+  document.getElementById('bulkCancel').addEventListener('click', function () {
+    document.getElementById('bulkModal').hidden = true;
+  });
+  document.getElementById('bulkModal').addEventListener('click', function (e) {
+    if (e.target === this) this.hidden = true;
+  });
+  document.getElementById('bulkDiscRow').addEventListener('click', function (e) {
+    var d = e.target.closest('.disc'); if (!d) return;
+    bulkDisc = d.dataset.d;
+    document.querySelectorAll('#bulkDiscRow .disc').forEach(function (x) { x.classList.toggle('on', x === d); });
+    document.getElementById('bulkDiscCustom').value = '';
+    bulkRender();
+  });
+  document.getElementById('bulkDiscCustom').addEventListener('input', function () {
+    var v = parseInt(this.value, 10);
+    if (isNaN(v)) return;
+    if (v < 0) v = 0; if (v > 95) v = 95;
+    bulkDisc = String(v);
+    document.querySelectorAll('#bulkDiscRow .disc').forEach(function (x) { x.classList.remove('on'); });
+    bulkRender();
+  });
+  document.getElementById('bulkPriceVal').addEventListener('input', bulkRender);
+  document.getElementById('bulkModal').addEventListener('click', function (e) {
+    var s = e.target.closest('[data-bskip]');
+    if (s) {
+      bulkSkip = s.dataset.bskip === '1';
+      s.parentNode.querySelectorAll('.prod-schip').forEach(function (x) { x.classList.toggle('on', x === s); });
+      bulkRender();
+    }
+    var m = e.target.closest('[data-bpmode]');
+    if (m) {
+      bulkPMode = m.dataset.bpmode;
+      m.parentNode.querySelectorAll('.prod-schip').forEach(function (x) { x.classList.toggle('on', x === m); });
+      document.getElementById('bulkPriceLabel').textContent =
+        bulkPMode === 'pct' ? 'Змінити на, % (мінус — знизити)' : 'Змінити на, € (мінус — знизити)';
+      bulkRender();
+    }
+    var v = e.target.closest('[data-bvis]');
+    if (v) {
+      bulkVis = parseInt(v.dataset.bvis, 10);
+      v.parentNode.querySelectorAll('.prod-schip').forEach(function (x) { x.classList.toggle('on', x === v); });
+      bulkRender();
+    }
+  });
+
+  document.getElementById('bulkApply').addEventListener('click', function () {
+    var t = bulkTargets(); if (!t.length) return;
+    var muts = [];
+
+    if (bulkKind === 'disc') {
+      var d = parseInt(bulkDisc, 10) || 0;
+      t.forEach(function (p) {
+        if (bulkSkip && discOf(p) > 0) return;
+        muts.push({ patch: { id: p._id, set: { discount: String(d) } } });
+        p.discount = String(d);
+      });
+    }
+    if (bulkKind === 'price') {
+      var v = parseFloat(document.getElementById('bulkPriceVal').value);
+      if (isNaN(v)) { toast('Введи значення'); return; }
+      t.forEach(function (p) {
+        var o = priceOf(p);
+        var n = Math.max(1, Math.round(bulkPMode === 'pct' ? o * (1 + v / 100) : o + v));
+        muts.push({ patch: { id: p._id, set: { price: n } } });
+        p.price = n;
+      });
+    }
+    if (bulkKind === 'hide') {
+      var willShow = bulkVis === 1;
+      t.forEach(function (p) {
+        if ((p.visible !== false) === willShow) return;
+        muts.push({ patch: { id: p._id, set: { visible: willShow } } });
+        p.visible = willShow;
+      });
+    }
+
+    if (!muts.length) { toast('Нічого не змінилось'); document.getElementById('bulkModal').hidden = true; return; }
+
+    var btn = this; btn.disabled = true; btn.textContent = 'Застосовую…';
+    /* Sanity не любить величезні пакети — ріжемо по 100 і йдемо
+       послідовно, щоб не впертись у ліміт запитів. */
+    var chunks = [];
+    for (var i = 0; i < muts.length; i += 100) chunks.push(muts.slice(i, i + 100));
+    var run = chunks.reduce(function (chain, c) {
+      return chain.then(function () { return sanityMutate(c); });
+    }, Promise.resolve());
+
+    run.then(function () {
+      toast('Змінено ' + muts.length + ' ' + (muts.length === 1 ? 'товар' : 'позицій') + ' ✓');
+      btn.disabled = false; btn.textContent = 'Застосувати';
+      document.getElementById('bulkModal').hidden = true;
+      picked = {};
+      renderProductGrid();
+    }).catch(function () {
+      btn.disabled = false; btn.textContent = 'Застосувати';
+      toast('Помилка. Частина змін могла не зберегтись — онови список.');
+    });
+  });
+
+  /* ============================================================
+     ЕКРАН «САЙТ»: ПРЕВ'Ю, БЛОКИ, ЛІЧИЛЬНИКИ, НЕЗБЕРЕЖЕНЕ
+     ============================================================ */
+
+  /* Скільки символів реально вміщує рядок на телефоні. Значення
+     зняті з живої верстки: заголовок героя — 40 на два рядки,
+     заголовок секції — 22, напис на кнопці — 24. */
+  var LIMITS = {
+    hTitle: 44, hCta: 24, hSaleTitle: 28, hSaleSub: 44,
+    b1Kicker: 22, b2Kicker: 22, b2Cta: 20, b3Cta: 20,
+    secBrands: 22, secBrandsLink: 18, secNew: 22, secNewLink: 18,
+    lookKicker: 16, lookTitle: 34,
+    trust1T: 22, trust1S: 30, trust2T: 22, trust2S: 30, trust3T: 22, trust3S: 30,
+    conKicker: 16, conTitle: 34, conCta: 24,
+    promoEyebrow: 16, promoTitle: 38, promoCta: 24,
+    aboutLinkT: 22, aboutLinkS: 40
+  };
+
+  function attachCounter(id) {
+    var el = document.getElementById(id); if (!el) return;
+    var lab = el.parentNode.querySelector('.field-label'); if (!lab) return;
+    var span = document.createElement('span');
+    span.className = 'cnt'; span.id = 'cnt_' + id;
+    lab.appendChild(span);
+    var warn = document.createElement('div');
+    warn.className = 'fieldwarn'; warn.id = 'warn_' + id; warn.hidden = true;
+    el.parentNode.appendChild(warn);
+  }
+
+  function syncCounter(id) {
+    var el = document.getElementById(id), c = document.getElementById('cnt_' + id);
+    if (!el || !c) return;
+    /* Заголовки з переносом рахуємо за найдовшим рядком: обмежує
+       саме він, а не сума. */
+    var lines = String(el.value || '').split('\n');
+    var longest = lines.reduce(function (m, l) { return Math.max(m, l.length); }, 0);
+    var lim = LIMITS[id];
+    c.textContent = longest + ' / ' + lim;
+    c.classList.toggle('bad', longest > lim);
+    var w = document.getElementById('warn_' + id);
+    if (w) {
+      w.hidden = longest <= lim;
+      w.textContent = 'Довгий рядок — на вузькому екрані піде на зайвий рядок і посуне сусідні блоки.';
+    }
+  }
+
+  Object.keys(LIMITS).forEach(attachCounter);
+
+  /* ---------- прев'ю ---------- */
+  var PV = {
+    hTitle: 'pvHeroT', b1Kicker: 'pvBanK',
+    secBrands: 'pvSecBrands', secBrandsLink: 'pvSecBrandsL',
+    secNew: 'pvSecNew', secNewLink: 'pvSecNewL',
+    lookTitle: 'pvLookT', trust1T: 'pvTr1', trust2T: 'pvTr2', trust3T: 'pvTr3',
+    conTitle: 'pvConT', conCta: 'pvConC', promoTitle: 'pvCatT',
+    aboutLinkT: 'pvAlbkT', aboutLinkS: 'pvAlbkS'
+  };
+  function syncPreview() {
+    Object.keys(PV).forEach(function (id) {
+      var el = document.getElementById(id), out = document.getElementById(PV[id]);
+      if (!el || !out) return;
+      var v = (el.value || el.placeholder || '').trim();
+      out.innerHTML = esc(v).replace(/\n/g, '<br>');
+    });
+    var lookOff = document.getElementById('lookOff');
+    var lookBlk = document.querySelector('.pv-block[data-blk="look"]');
+    if (lookOff && lookBlk) lookBlk.style.opacity = lookOff.checked ? '.35' : '';
+    var promoOff = document.getElementById('promoOff');
+    var catBlk = document.querySelector('.pv-block[data-blk="cat"]');
+    if (promoOff && catBlk) catBlk.style.opacity = promoOff.checked ? '.35' : '';
+  }
+
+  /* ---------- вибір блока ---------- */
+  function selectBlock(k) {
+    document.querySelectorAll('.blkchip').forEach(function (c) { c.classList.toggle('on', c.dataset.blk === k); });
+    document.querySelectorAll('.blk').forEach(function (b) { b.hidden = b.dataset.blkbody !== k; });
+    document.querySelectorAll('.pv-block').forEach(function (b) { b.classList.toggle('on', b.dataset.blk === k); });
+    var chip = document.querySelector('.blkchip[data-blk="' + k + '"]');
+    if (chip && chip.scrollIntoView) chip.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }
+  document.getElementById('blkBar').addEventListener('click', function (e) {
+    var c = e.target.closest('[data-blk]'); if (c) selectBlock(c.dataset.blk);
+  });
+  document.getElementById('sitePreview').addEventListener('click', function (e) {
+    var b = e.target.closest('.pv-block'); if (b) selectBlock(b.dataset.blk);
+  });
+  document.getElementById('pvTheme').addEventListener('click', function () {
+    var pv = document.getElementById('sitePreview');
+    var dark = pv.hasAttribute('data-dark');
+    if (dark) pv.removeAttribute('data-dark'); else pv.setAttribute('data-dark', '');
+    this.textContent = dark ? '☾' : '☀';
+  });
+
+  /* ---------- незбережені зміни ----------
+     Знімок значень робимо після завантаження. Далі будь-яке
+     введення порівнюємо зі знімком: смужка з'являється тільки
+     коли щось дійсно відрізняється, а не на кожен дотик поля. */
+  var SITE_IDS = Object.keys(LIMITS).concat(['aTitle', 'aKicker', 'aWhoTitle', 'aWhoText', 'aQuote', 'aStepsTitle',
+                                             'conText', 'promoText']);
+  var snapshot = null;
+
+  function currentState() {
+    var o = {};
+    SITE_IDS.forEach(function (id) { var el = document.getElementById(id); if (el) o[id] = el.value; });
+    ['lookOff', 'promoOff'].forEach(function (id) {
+      var el = document.getElementById(id); if (el) o[id] = el.checked ? '1' : '';
+    });
+    return o;
+  }
+  function takeSnapshot() { snapshot = currentState(); syncDirty(); }
+  function dirtyCount() {
+    if (!snapshot) return 0;
+    var now = currentState(), n = 0;
+    Object.keys(now).forEach(function (k) { if (now[k] !== snapshot[k]) n++; });
+    return n;
+  }
+  function syncDirty() {
+    var n = dirtyCount();
+    var bar = document.getElementById('dirtyBar');
+    var onSite = !document.querySelector('.screen[data-screen="site"]').hidden;
+    bar.hidden = !(n > 0 && onSite);
+    document.getElementById('dirtyText').textContent =
+      n === 1 ? '1 незбережена зміна' : n + ' незбережених змін';
+  }
+  document.getElementById('dirtySave').addEventListener('click', function () {
+    document.getElementById('saveHome').click();
+  });
+
+  document.addEventListener('input', function (e) {
+    var id = e.target && e.target.id; if (!id) return;
+    if (LIMITS[id]) syncCounter(id);
+    if (PV[id]) syncPreview();
+    if (SITE_IDS.indexOf(id) > -1) syncDirty();
+  });
+  document.addEventListener('change', function (e) {
+    if (e.target && (e.target.id === 'lookOff' || e.target.id === 'promoOff')) { syncPreview(); syncDirty(); }
+  });
+
   /* ---------- boot ---------- */
   if (token()) {
-    sanityQuery('count(*[_type=="product"])').then(function(){ showGate(false); show('products'); })
+    sanityQuery('count(*[_type=="product"])').then(function(){ showGate(false); show('dash'); })
       .catch(function(){ showGate(true); });
   } else {
     showGate(true);
