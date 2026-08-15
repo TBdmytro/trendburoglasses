@@ -85,6 +85,7 @@
     }
 
     html,
+
     body {
       background: var(--bg);
       color: var(--fg);
@@ -92,11 +93,8 @@
       -moz-osx-font-smoothing: grayscale;
       transition: background-color 0.35s ease, color 0.35s ease;
       min-height: 100vh;
-    }
-
-    body {
       font-family: var(--font-ui);
-      padding-bottom: 76px; /* clearance for the fixed bottom nav */
+      padding-bottom: 76px;
     }
 
     /* ---------- Header ---------- */
@@ -203,24 +201,6 @@
     }
 
     /* Круглі кнопки, як у макеті: коло світлого тону, іконка всередині. */
-    .icon-btn {
-      background: color-mix(in srgb, var(--fg) 6%, transparent);
-      border: none;
-      color: var(--fg);
-      cursor: pointer;
-      width: 34px;
-      height: 34px;
-      padding: 0;
-      border-radius: 50%;
-      flex: 0 0 34px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: opacity 0.2s ease, transform 0.2s ease;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .icon-btn svg { width: 17px; height: 17px; }
-    .icon-btn:active { transform: scale(0.92); }
 
     .icon-btn:hover {
       opacity: 0.65;
@@ -666,7 +646,6 @@
       letter-spacing: 0.01em;
     }
 
-    .bottomnav-item { position: relative; }
     /* Ховаємо стилем, а не атрибутом: код показує лічильники класом
        is-visible, і два різних механізми конфліктували б. */
     .bottomnav-badge {
@@ -690,6 +669,7 @@
     .bottomnav-badge.is-visible { display: flex; }
 
     .bottomnav-item {
+      position: relative;
       flex: 1 1 0;
       display: flex;
       flex-direction: column;
@@ -877,6 +857,7 @@
       justify-content: center;
     }
 
+
     .search-suggestion {
       font-family: var(--font-ui);
       font-size: 13px;
@@ -889,9 +870,6 @@
       cursor: pointer;
       transition: background-color 0.2s ease, transform 0.15s ease;
       -webkit-tap-highlight-color: transparent;
-    }
-
-    .search-suggestion {
       display: inline-flex;
       align-items: center;
       gap: 7px;
@@ -1075,67 +1053,12 @@
       line-height: 1;
     }
 
-    .catalog-count {
-      font-family: var(--font-ui);
-      font-size: 11.5px;
-      letter-spacing: 0.22em;
-      padding-left: 0.22em;
-      text-transform: uppercase;
-      color: var(--fg);
-      opacity: 0.62;
-      margin: 8px 0 0;
-    }
 
-    .catalog-filters {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      padding: 0;
-      margin: 0;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-      position: sticky;
-      top: calc(var(--header-height) + var(--tg-top));
-      z-index: 20;
-      background: linear-gradient(to bottom,
-        var(--bg) 0%,
-        var(--bg) 70%,
-        var(--line) 100%);
-      /* Без розмиття: цей блок липкий, тобто перемальовується
-         під час кожної прокрутки каталогу. */
-    }
-    .catalog-filters::-webkit-scrollbar { display: none; }
 
-    .catalog-filter {
-      flex-shrink: 0;
-      font-family: var(--font-ui);
-      font-size: 13px;
-      letter-spacing: 0.05em;
-      color: var(--fg);
-      background: rgba(255, 255, 255, 0.7);
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      padding: 8px 16px;
-      cursor: pointer;
-      transition: background-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
-      -webkit-tap-highlight-color: transparent;
-      white-space: nowrap;
-    }
     .catalog-filter:active { transform: scale(0.96); }
 
-    .catalog-filter--active {
-      background: var(--fg);
-      color: var(--bg);
-      border-color: var(--fg);
-    }
 
     /* ---------- Products grid ---------- */
-    .products-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      padding: 6px 20px 28px;
-    }
 
     /* Режим списку. Розмітка картки та сама — міняється лише розкладка,
        тому перемикання не потребує перемальовування каталогу. */
@@ -1157,14 +1080,13 @@
       align-self: center;
       border-radius: 12px;
     }
-    .products-grid.is-list .product-card-info { padding: 10px 12px; }
     .products-grid.is-list .product-card-info {
+      padding: 10px 12px;
       flex: 1;
       min-width: 0;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding: 10px 12px;
     }
     .products-grid.is-list .product-card-code { margin-bottom: 5px; }
     /* У вузькій картці знак «ox» і бейдж тісняться — прибираємо. */
@@ -1181,40 +1103,6 @@
        (обидва починались зі слова «Всі») читались як одне й те саме.
        Тепер це різні типи елементів: суцільна доріжка проти окремих
        фішок брендів — око розрізняє їх ще до читання. */
-    .gender-pills {
-      display: flex;
-      gap: 2px;
-      padding: 3px;
-      margin: 0 0 6px;
-      border-radius: 999px;
-      background: color-mix(in srgb, var(--fg) 6%, transparent);
-    }
-    .gender-pill {
-      /* Розписано довгою формою: «flex: 1 1 0» без одиниці окремі
-         браузери тлумачать по-своєму, і сегменти виходять різними. */
-      flex-grow: 1;
-      flex-shrink: 1;
-      flex-basis: 0%;
-      min-width: 0;
-      font-family: var(--font-ui);
-      font-size: 12.5px;
-      font-weight: 500;
-      padding: 8px 4px;
-      border: none;
-      border-radius: 999px;
-      background: transparent;
-      color: var(--fg);
-      cursor: pointer;
-      white-space: nowrap;
-      -webkit-tap-highlight-color: transparent;
-      transition: background-color 0.18s ease, color 0.18s ease;
-    }
-    .gender-pill.is-active {
-      background: var(--bg);
-      color: var(--fg);
-      font-weight: 600;
-      box-shadow: 0 1px 3px color-mix(in srgb, var(--fg) 10%, transparent);
-    }
 
     /* Підпис над рядом брендів. Одне слово, але воно знімає питання
        «а це фільтр по чому?» — саме через нього два ряди плутались. */
@@ -1335,14 +1223,6 @@
 
 
     /* auto-scrolling marquee track */
-    .na-track {
-      display: flex;
-      width: max-content;
-      will-change: transform;
-      animation-name: na-marquee;
-      animation-timing-function: linear;
-      animation-iteration-count: infinite;
-    }
     .na-track .product-card {
       flex: 0 0 160px;
       width: 160px;
@@ -1351,11 +1231,17 @@
     .na-track.is-paused,
     .new-arrivals-strip:hover .na-track { animation-play-state: paused; }
     @keyframes na-marquee {
-      from { transform: translateX(0); }
-      to   { transform: translateX(-50%); }
     }
     @media (prefers-reduced-motion: reduce) {
-      .na-track { animation: none; }
+    .na-track {
+      display: flex;
+      width: max-content;
+      will-change: transform;
+      animation-name: na-marquee;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+      animation: none;
+    }
     }
     /* ---------- Герой (як у макеті) ----------
        Окремий самостійний блок. Стара анімація на два екрани прокрутки
@@ -1486,13 +1372,10 @@
       object-fit: contain;
       padding: 16%;
       background: var(--surface);
-    }
-    .hero-collage svg {
       stroke: var(--fg);
       fill: none;
       stroke-width: 1.1;
       opacity: 0.28;
-      padding: 16%;
     }
 
     /* Слайд-вітрина: одна модель крупно на акцентному тлі.
@@ -1595,37 +1478,10 @@
       opacity: 0.55;
     }
 
-    .product-card {
-      background: var(--raise);
-      border: 0;
-      box-shadow: var(--shadow);
-      border-radius: 14px;
-      overflow: hidden;
-      text-decoration: none;
-      color: var(--fg);
-      display: flex;
-      flex-direction: column;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      -webkit-tap-highlight-color: transparent;
-    }
     .product-card:active { transform: scale(0.98); }
-    .product-card:hover {
-      box-shadow: 0 6px 18px color-mix(in srgb, var(--fg) 8%, transparent);
-    }
 
     /* Плитка під фото трохи нижча за квадрат: широкий знімок у ній
        стоїть щільніше, і в екран влазить більше карток. */
-    .product-card-image {
-      /* 16/9 проти 1.87 у знімка — зрізається 5% ширини, дужки цілі. */
-      aspect-ratio: 16 / 9;
-      position: relative;
-      background: var(--surface);
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
 
     .product-card-image svg {
       width: 58%;
@@ -1660,28 +1516,29 @@
 
 
 
+    /* Маленька плашка знижки. Ліворуч, бо праворуч серце — раніше
+       вони стояли в одному куті й налазили. Біла на фото, а не
+       кольорова: знижка є майже скрізь, і кольорова пляма на кожній
+       картці перетворилась би на шпалери. */
     .product-card-badge {
       position: absolute;
       top: 8px;
-      right: 8px;
+      left: 8px;
+      right: auto;
       z-index: 2;
       font-family: var(--font-ui);
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.16em;
-      padding: 4px 8px 4px calc(8px + 0.16em);
-      text-transform: uppercase;
-      border-radius: 6px;
+      font-size: 9.5px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      padding: 3px 7px;
+      text-transform: none;
+      border-radius: 5px;
       line-height: 1.2;
-      color: #fff;
+      background: rgba(255, 255, 255, 0.94);
+      color: #1a1a1c;
     }
 
-    /* Бейджі лежать на світлій фотоплитці в обох темах, тому кольори
-       фіксовані: змінні у темній темі світлішають і білий текст на них
-       перестає читатись. */
-    .product-card-badge--sale { background: #3f6480; }
-    .product-card-badge--new  { background: #b23b30; }
-    .product-card-badge--best { background: #2f7a4a; }
+
 
     /* Тёмная смуга внизу фото — головна дія картки. */
 
@@ -1690,7 +1547,7 @@
     .product-card-badges {
       position: absolute;
       top: 8px;
-      right: 8px;
+      left: 8px;
       display: flex;
       flex-direction: column;
       align-items: flex-end;
@@ -1704,58 +1561,11 @@
       right: auto;
     }
 
-    .product-card-info {
-      padding: 11px 12px 14px;
-    }
 
-    .product-card-brand {
-      font-family: var(--font-display);
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      line-height: 1.1;
-      margin: 0 0 2px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
 
-    .product-card-code {
-      font-family: var(--font-ui);
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.16em;
-      padding-left: 0.16em;
-      text-transform: uppercase;
-      color: var(--fg);
-      opacity: 0.55;
-      margin: 0 0 8px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
 
-    .product-card-pricing {
-      display: flex;
-      align-items: baseline;
-      gap: 6px;
-      margin: 0;
-    }
 
-    .product-card-price {
-      font-family: var(--font-ui);
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--fg);
-    }
 
-    .product-card-old-price {
-      font-family: var(--font-ui);
-      font-size: 13px;
-      color: var(--fg);
-      opacity: 0.5;
-      text-decoration: line-through;
-    }
 
     /* Скільки людина економить. Бронзовим — це єдине місце в картці,
        де використовується акцентний колір, тому око чіпляється саме за нього. */
@@ -1770,20 +1580,6 @@
     /* Монограма OX — скорочення від OPTIX. Тією ж антиквою, що логотип,
        прописними й з широкою розрядкою: так марки клеймують дужки оправ.
        Вшита у стиль, тому не робить зайвого запиту і не блимає. */
-    .product-card-image::after {
-      content: 'OX';
-      position: absolute;
-      bottom: 8px;
-      right: 10px;
-      font-family: var(--font-logo);
-      font-size: 10px;
-      letter-spacing: 0.16em;
-      padding-left: 0.16em;
-      color: #1a1a1c;
-      opacity: 0.3;
-      pointer-events: none;
-      z-index: 1;
-    }
     /* Плашка «Уточнити наявність» займає той самий кут — щоб вони
        не наклались, на таких картках знак не показуємо. */
     .product-card--unavailable .product-card-image::after {
@@ -1791,36 +1587,7 @@
     }
 
     /* ---------- Wishlist heart overlay on product cards ---------- */
-    .product-card-heart {
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      width: 32px;
-      height: 32px;
-      border: none;
-      /* Було backdrop-filter: blur(8px). На 1130 картках це 1130 розмиттів,
-         які телефон перераховує щокадру при прокрутці — головна причина
-         гальмування. У макеті тут суцільна заливка, вона ж і швидка. */
-      background: rgba(255, 253, 249, 0.92);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      padding: 0;
-      transition: background-color 0.2s ease, transform 0.15s ease;
-      -webkit-tap-highlight-color: transparent;
-      z-index: 2;
-    }
     .product-card-heart:active { transform: scale(0.9); }
-    .product-card-heart svg {
-      width: 16px;
-      height: 16px;
-      stroke: var(--fg);
-      stroke-width: 1.6;
-      fill: none;
-      transition: fill 0.2s ease;
-    }
     .product-card-heart.is-active svg {
       fill: var(--new);
       stroke: var(--new);
@@ -1847,7 +1614,23 @@
     }
 
     /* ---------- Header icon count badges ---------- */
-    .icon-btn { position: relative; }
+    .icon-btn {
+      background: color-mix(in srgb, var(--fg) 6%, transparent);
+      border: none;
+      color: var(--fg);
+      cursor: pointer;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border-radius: 50%;
+      flex: 0 0 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+    }
     .icon-badge {
       position: absolute;
       top: -3px;
@@ -2005,8 +1788,14 @@
     }
     .catalog-advanced[hidden] { display: none; }
     @keyframes filterDrop {
-      from { opacity: 0; transform: translateY(-6px); }
-      to { opacity: 1; transform: translateY(0); }
+    from {
+      transform: translateY(-6px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
     }
 
     .price-filter-head {
@@ -2516,7 +2305,6 @@
     .zoom-hint.is-hidden { opacity: 0; }
 
     /* Знімок у картці натискається — показуємо це курсором і підказкою */
-    .pdp-gal { cursor: zoom-in; }
 
     /* ---------- Лічильники у фільтрах ---------- */
     .filter-n {
@@ -2531,7 +2319,6 @@
     .gender-pill.is-active .filter-n { opacity: 0.75; }
     /* Значення, під яким зараз нічого немає, не ховаємо — притлумлюємо.
        Зникле значення читається як помилка, притлумлене — як факт. */
-    .catalog-filter.is-empty { opacity: 0.4; }
 
     .filters-badge {
       font-style: normal;
@@ -2566,29 +2353,36 @@
       display: flex;
       gap: 2px;
       padding: 3px;
+      margin: 0 0 6px;
       border-radius: 999px;
       background: var(--raise);
       transition: background-color 0.3s ease;
     }
     .gender-pills[hidden] { display: none; }
     .gender-pill {
-      flex: 1 1 0;
-      height: 34px;
-      border: 0;
-      border-radius: 999px;
-      background: none;
+      flex-shrink: 1;
+      flex-basis: 0%;
+      min-width: 0;
       font-family: var(--font-ui);
       font-size: 12px;
       font-weight: 600;
+      padding: 8px 4px;
+      border: 0;
+      border-radius: 999px;
+      background: none;
       color: var(--fg-2);
       cursor: pointer;
+      white-space: nowrap;
       -webkit-tap-highlight-color: transparent;
       transition: background-color 0.2s ease, color 0.2s ease;
+      flex: 1 1 0;
+      height: 34px;
     }
     .gender-pill.is-active {
       background: var(--fg);
       color: var(--bg);
       font-weight: 700;
+      box-shadow: 0 1px 3px color-mix(in srgb, var(--fg) 10%, transparent);
     }
 
     .cat-chips {
@@ -2639,32 +2433,52 @@
       display: flex;
       gap: 8px;
       overflow-x: auto;
+      padding: 0;
+      margin: 0;
+      -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
+      position: sticky;
+      top: calc(var(--header-height) + var(--tg-top));
+      z-index: 20;
+      background: linear-gradient(to bottom,
+        var(--bg) 0%,
+        var(--bg) 70%,
+        var(--line) 100%);
       flex: 1 1 auto;
       padding-bottom: 1px;
     }
-    .catalog-filters::-webkit-scrollbar { display: none; }
+    .catalog-filters::-webkit-scrollbar {
+      display: none;
+    }
     .catalog-filter {
-      flex: 0 0 auto;
-      height: 36px;
-      padding: 0 14px;
-      border: 0;
-      border-radius: 999px;
-      background: var(--raise);
-      color: var(--fg);
+      flex-shrink: 0;
       font-family: var(--font-ui);
       font-size: 12px;
+      letter-spacing: 0.05em;
+      color: var(--fg);
+      background: var(--raise);
+      border: 0;
+      border-radius: 999px;
+      padding: 0 14px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, color 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
+      white-space: nowrap;
+      flex: 0 0 auto;
+      height: 36px;
       font-weight: 600;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      cursor: pointer;
-      white-space: nowrap;
-      -webkit-tap-highlight-color: transparent;
-      transition: background-color 0.2s ease, color 0.2s ease;
     }
-    .catalog-filter--active { background: var(--fg); color: var(--bg); }
-    .catalog-filter.is-empty { opacity: 0.4; }
+    .catalog-filter--active {
+      background: var(--fg);
+      color: var(--bg);
+      border-color: var(--fg);
+    }
+    .catalog-filter.is-empty {
+      opacity: 0.4;
+    }
 
     .cat-meta {
       display: flex;
@@ -2675,10 +2489,12 @@
     .catalog-count {
       font-family: var(--font-ui);
       font-size: 12px;
-      color: var(--fg-2);
-      margin: 0;
       letter-spacing: 0;
+      padding-left: 0.22em;
       text-transform: none;
+      color: var(--fg-2);
+      opacity: 0.62;
+      margin: 0;
     }
     .cat-sort {
       display: inline-flex;
@@ -2728,72 +2544,125 @@
       box-shadow: none;
       border-radius: 0;
       overflow: visible;
+      text-decoration: none;
+      color: var(--fg);
       display: block;
+      flex-direction: column;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
     }
-    .product-card:hover { box-shadow: none; }
+    .product-card:hover {
+      box-shadow: none;
+    }
     .product-card-image {
+      position: relative;
+      background: var(--surface);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       aspect-ratio: 16 / 9;
       border-radius: 12px;
-      overflow: hidden;
     }
-    .product-card-info { padding: 11px 0 0; }
+    .product-card-info {
+      padding: 11px 0 0;
+    }
     .product-card-brand {
       font-family: var(--font-ui);
       font-size: 8.5px;
       font-weight: 800;
       letter-spacing: 0.18em;
+      line-height: 1.2;
+      margin: 0 0 5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
       text-transform: uppercase;
       color: var(--fg-2);
-      margin: 0 0 5px;
-      line-height: 1.2;
     }
     .product-card-code {
-      font-family: var(--font-logo);
-      font-size: 15px;
-      line-height: 1.15;
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 700;
       letter-spacing: 0;
       text-transform: none;
       color: var(--fg);
       opacity: 1;
       margin: 0 0 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      line-height: 1.2;
     }
     .product-card-pricing {
       display: flex;
       align-items: baseline;
       gap: 7px;
-      flex-wrap: wrap;
       margin: 0;
+      flex-wrap: wrap;
     }
-    .product-card-price { font-size: 14px; font-weight: 700; }
-    .product-card-old-price { font-size: 11.5px; font-weight: 400; color: var(--fg-3); }
+    .product-card-price {
+      font-family: var(--font-ui);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--fg);
+    }
+    .product-card-old-price {
+      font-family: var(--font-ui);
+      font-size: 11.5px;
+      color: var(--fg-3);
+      opacity: 0.5;
+      text-decoration: line-through;
+      font-weight: 400;
+    }
 
     /* Серце без білого кружка — він був зайвою деталлю на кожній картці */
     .product-card-heart {
+      position: absolute;
       top: 6px;
-      right: 6px;
+      left: 8px;
       width: 26px;
       height: 26px;
+      border: 0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      transition: background-color 0.2s ease, transform 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+      z-index: 2;
+      right: 6px;
       background: none;
       box-shadow: none;
-      border: 0;
     }
     .product-card-heart svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--fg);
+      stroke-width: 1.6;
+      fill: none;
+      transition: fill 0.2s ease;
       filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.95));
     }
 
-    /* Знак по краю кадру замість плями в кутку */
+    /* Знака на картці немає: у сітці він повторювався двадцять разів
+       підряд і перетворювався на шум. Лишився тільки на сторінці
+       товару, де він один. */
     .product-card-image::after {
-      content: 'OPTIX';
-      right: 4px;
-      bottom: auto;
-      top: 50%;
-      transform: translateY(-50%) rotate(180deg);
-      writing-mode: vertical-rl;
-      font-size: 8.5px;
-      letter-spacing: 0.3em;
-      padding-left: 0;
-      color: #5a5c60;
-      opacity: 0.55;
+      content: none;
+      position: absolute;
+      bottom: 8px;
+      right: 10px;
+      font-family: var(--font-logo);
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      padding-left: 0.16em;
+      color: #1a1a1c;
+      opacity: 0.3;
+      pointer-events: none;
+      z-index: 1;
     }
 
     /* ---------- банер між рядами ---------- */
@@ -2916,6 +2785,7 @@
     #productSheet .sheet-back svg { stroke: #1a1a1c; }
 
     .pdp-gal {
+      cursor: zoom-in;
       position: relative;
       background: var(--surface);
       transition: background 0.3s ease;
@@ -2975,6 +2845,29 @@
     }
     .pdp-badge--sale { background: #3f6480; }
     .pdp-badge--new  { background: #b23b30; }
+
+    /* Знак Ox на сторінці товару. Той самий кружок, що в нижньому
+       меню веде в каталог: людина бачить, що це один і той самий знак.
+       У каталозі його немає навмисно — там він повторювався б
+       двадцять разів підряд. */
+    .pdp-ox {
+      position: absolute;
+      left: 12px;
+      bottom: 12px;
+      z-index: 4;
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      background: #1a1a1c;
+      color: #ffffff;
+      display: grid;
+      place-items: center;
+      font-family: var(--font-logo);
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      padding-left: 0.04em;
+      pointer-events: none;
+    }
 
     .pdp-gal-dots {
       position: absolute;
@@ -3048,6 +2941,31 @@
       padding: 3px 7px;
       border-radius: 6px;
     }
+
+    /* Вигода в грошах. Відсоток — абстракція: −20% від невідомої суми
+       нічого не каже. Сума в євро каже одразу. */
+    .pdp-save {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 7px 12px 7px 10px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--ok) 12%, transparent);
+      font-size: 12.5px;
+      color: var(--fg);
+    }
+    .pdp-save svg {
+      width: 15px;
+      height: 15px;
+      flex: 0 0 15px;
+      stroke: var(--ok);
+      fill: none;
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .pdp-save b { font-weight: 800; }
 
     .pdp-ship {
       display: flex;
@@ -5318,7 +5236,7 @@
         var cnt = countsBy('brand');
         var html = '<button type="button" class="catalog-filter' +
           (state.brand === 'all' ? ' catalog-filter--active' : '') +
-          '" data-brand="all">Усі <i class="filter-n">' + (cnt.__total || 0) + '</i></button>';
+          '" data-brand="all">Всі бренди <i class="filter-n">' + (cnt.__total || 0) + '</i></button>';
         order.forEach(function (b) {
           var n = cnt[b] || 0;
           html += '<button type="button" class="catalog-filter' +
@@ -5331,26 +5249,11 @@
         paintGenderCounts();
       }
 
-      /* Кількість на перемикачі статі. Унісекс показується і в жіночому,
-         і в чоловічому — тому цифри не складаються в загальну. */
-      function paintGenderCounts() {
-        var pills = document.getElementById('genderPills');
-        if (!pills) return;
-        var cnt = countsBy('gender');
-        var uni = cnt['unisex'] || 0;
-        var map = {
-          all: cnt.__total || 0,
-          women: (cnt['women'] || 0) + uni,
-          men: (cnt['men'] || 0) + uni,
-          unisex: uni
-        };
-        pills.querySelectorAll('.gender-pill').forEach(function (b) {
-          var n = map[b.dataset.gender];
-          var i = b.querySelector('.filter-n');
-          if (!i) { i = document.createElement('i'); i.className = 'filter-n'; b.appendChild(i); }
-          i.textContent = n == null ? '' : n;
-        });
-      }
+      /* Цифр на перемикачі статі немає навмисно: чотири сегменти
+         ділять ширину екрана порівну, і «Чоловічі 1103» туди просто
+         не влазить. Кількість лишилась там, де є місце — у фішках
+         брендів. */
+      function paintGenderCounts() {}
 
       /* Цифра на кнопці «Фільтри». Без неї людина гортає короткий
          список і думає, що товару просто немає. */
@@ -5528,17 +5431,16 @@
           var slug = p.code.replace(/\s+/g, '-').toLowerCase();
           var inWish = wishlist.indexOf(p.code) !== -1;
 
+          /* На картці лишилась тільки знижка. «New» стояв би майже
+             на кожній: sync ставить isNew усім підряд, і бейдж
+             перестав би щось означати. */
           var badge = '';
           if (p.oldPrice) {
             var cur = parsePrice(p.price), old = parsePrice(p.oldPrice);
             if (cur && old && old > cur) {
               var pct = Math.round((1 - cur / old) * 100);
-              badge = '';   /* відсоток однаковий майже у всіх — не показуємо */
+              badge = '<span class="product-card-badge">−' + pct + '%</span>';
             }
-          } else if (p.isNew) {
-            badge = '<span class="product-card-badge product-card-badge--new">New</span>';
-          } else if (p.bestseller) {
-            badge = '<span class="product-card-badge product-card-badge--best">Хіт</span>';
           }
 
           var outOfStock = (p.inStock === false);
@@ -6009,11 +5911,29 @@
             '</div>'
           : '';
 
-        /* --- ціна --- */
+        /* --- ціна й вигода ---
+           Відсоток сам по собі нічого не каже: −20% від невідомої суми
+           це абстракція. Сума в євро каже одразу, тому вона окремим
+           рядком під ціною. */
         var pricing = '<b>' + window.OPTIX_money(p.price) + '</b>';
+        var savingLine = '';
         if (p.oldPrice && pct > 0) {
           pricing += '<s>' + window.OPTIX_money(p.oldPrice) + '</s>' +
                      '<span class="pdp-pct">−' + pct + '%</span>';
+          var curP = parsePrice(p.price), oldP = parsePrice(p.oldPrice);
+          if (curP && oldP && oldP > curP) {
+            savingLine =
+              '<div class="pdp-save">' +
+                '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+                  '<path d="M20 12v7a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-7"/>' +
+                  '<rect x="2" y="7" width="20" height="5" rx="1"/>' +
+                  '<path d="M12 20V7"/>' +
+                  '<path d="M12 7S10.5 3 8.5 3.5 7 7 12 7z"/>' +
+                  '<path d="M12 7s1.5-4 3.5-3.5S17 7 12 7z"/>' +
+                '</svg>' +
+                '<span>Ваша вигода <b>' + window.OPTIX_money(oldP - curP) + '</b></span>' +
+              '</div>';
+          }
         }
 
         /* --- рядок відправки. Без конкретних дат: точна дата це
@@ -6141,13 +6061,15 @@
         }
 
         bodyEl.innerHTML =
-          '<div class="pdp-gal product-hero-wrap">' + gallery + badge + dots + '</div>' +
+          '<div class="pdp-gal">' + gallery + badge +
+            '<span class="pdp-ox">Ox</span>' + dots + '</div>' +
           '<div class="pdp-sheet">' +
             '<div class="pdp-grab"></div>' +
             '<div class="pdp-hd">' +
               '<div class="pdp-brand">' + esc(p.brand) + '</div>' +
               '<h2 class="product-code">' + esc(p.code) + '</h2>' +
               '<div class="pdp-price">' + pricing + '</div>' +
+              savingLine +
               ship +
             '</div>' +
             colors +
@@ -7339,7 +7261,7 @@
         if (p.oldPrice) {
           var cur = parsePrice(p.price), old = parsePrice(p.oldPrice);
           if (cur && old && old > cur) {
-            badge = '<span class="product-card-badge product-card-badge--sale">−' +
+            badge = '<span class="product-card-badge">−' +
                     Math.round((1 - cur / old) * 100) + '%</span>';
           }
         }
@@ -7431,12 +7353,14 @@
         var inWish = wishlist.indexOf(p.code) !== -1;
         var heartClass = 'product-card-heart' + (inWish ? ' is-active' : '');
 
-        var badges = '<span class="product-card-badge product-card-badge--new">New</span>';
+        /* Тільки знижка: бейдж має означати одне й те саме на всіх
+           екранах, інакше він перестає читатись. */
+        var badges = '';
         if (p.oldPrice) {
           var cur = parsePrice(p.price), old = parsePrice(p.oldPrice);
           if (cur && old && old > cur) {
             var pct = Math.round((1 - cur / old) * 100);
-            badges += '<span class="product-card-badge product-card-badge--sale">−' + pct + '%</span>';
+            badges = '<span class="product-card-badge">−' + pct + '%</span>';
           }
         }
         return '' +
