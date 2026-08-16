@@ -3064,7 +3064,10 @@
       gap: 8px;
       overflow-x: auto;
       scrollbar-width: none;
-      padding-bottom: 3px;
+      /* Поля потрібні для кільця вибраної плитки: без них воно
+         впиралось у край смуги прокрутки й обрізалось. */
+      padding: 3px 3px 8px;
+      margin: 0 -3px;
     }
     .pdp-cols::-webkit-scrollbar { display: none; }
     .pdp-col {
@@ -3095,7 +3098,29 @@
       stroke-width: 1.1;
       opacity: 0.3;
     }
-    .pdp-col.is-current { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--fg); }
+    /* Вибраний колір: суцільне кільце впритул до знімка плюс галочка.
+       Раніше кільце висіло на відстані 2 px і читалось як випадкова
+       рамка поруч, а не як «оце вибрано». */
+    .pdp-col.is-current {
+      box-shadow: 0 0 0 2px var(--fg);
+    }
+    .pdp-col.is-current::after {
+      content: '';
+      position: absolute;
+      right: 5px;
+      bottom: 5px;
+      width: 17px;
+      height: 17px;
+      border-radius: 999px;
+      background: var(--fg);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5 10 17.5 19 7'/%3E%3C/svg%3E");
+      background-size: 11px 11px;
+      background-position: center;
+      background-repeat: no-repeat;
+      box-shadow: 0 1px 3px rgba(26, 26, 28, 0.25);
+    }
+    .pdp-col:active { transform: scale(0.96); }
+    .pdp-col { transition: transform 0.12s ease, background 0.3s ease; }
     /* Розпроданий колір не прибираємо, а притлумлюємо: людина бачить,
        що варіант існує, і може про нього спитати — це заявка, не втрата. */
     .pdp-col.is-oos img { opacity: 0.4; }
