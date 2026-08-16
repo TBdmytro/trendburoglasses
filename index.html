@@ -2240,7 +2240,7 @@
       /* Тут contain, а не cover: у повний екран знімок має потрапити
          цілком, без жодної обрізки. */
       object-fit: contain;
-      transform-origin: 0 0;
+      transform-origin: center center;
       will-change: transform;
       user-select: none;
       -webkit-user-drag: none;
@@ -2799,13 +2799,19 @@
       border-radius: 999px;
       width: 38px;
       height: 38px;
+      box-shadow: 0 1px 6px rgba(26, 26, 28, 0.16);
     }
     #productSheet .sheet-back svg { stroke: #1a1a1c; }
 
+    /* Смуга Телеграма («Закрити», «...») малюється поверх сторінки.
+       Знімок починався від самого верху й опинявся під нею — саме
+       тому вгорі оправа була зрізана системними кнопками.
+       Відсуваємо кадр рівно на висоту цієї смуги. */
     .pdp-gal {
-      cursor: zoom-in;
       position: relative;
       background: var(--surface);
+      padding-top: var(--tg-top);
+      cursor: zoom-in;
       transition: background 0.3s ease;
     }
     /* Кадр знімка. Пропорцію ставить JS за реальним файлом
@@ -2874,48 +2880,44 @@
        меню веде в каталог: людина бачить, що це один і той самий знак.
        У каталозі його немає навмисно — там він повторювався б
        двадцять разів підряд. */
-    .pdp-ox {
-      position: absolute;
-      left: 12px;
-      bottom: 12px;
-      z-index: 4;
-      width: 30px;
-      height: 30px;
-      border-radius: 999px;
-      background: #1a1a1c;
-      color: #ffffff;
-      display: grid;
-      place-items: center;
-      font-family: var(--font-logo);
-      font-size: 11px;
-      letter-spacing: 0.04em;
-      padding-left: 0.04em;
-      pointer-events: none;
-    }
+    .pdp-ox { position: absolute; left: 12px; bottom: 32px; z-index: 4; width: 30px; height: 30px; border-radius: 999px; background: #1a1a1c; color: #ffffff; display: grid; place-items: center; font-family: var(--font-logo); font-size: 11px; letter-spacing: 0.04em; padding-left: 0.04em; pointer-events: none; }
 
+    /* Крапки під знімком, а не поверх нього: на світлій оправі вони
+       просто зникали. Заразом дужка для пальця — 22 px, хоч сама
+       крапка й 5 px. */
     .pdp-gal-dots {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 34px;
       display: flex;
-      gap: 5px;
+      gap: 4px;
       justify-content: center;
-      z-index: 4;
+      align-items: center;
+      height: 26px;
+      background: var(--surface);
+      transition: background 0.3s ease;
     }
     .pdp-gal-dot {
-      width: 5px;
-      height: 5px;
+      width: 22px;
+      height: 22px;
       padding: 0;
       border: 0;
+      background: none;
+      cursor: pointer;
+      position: relative;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .pdp-gal-dot::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 5px;
+      height: 5px;
       border-radius: 999px;
       background: #1a1a1c;
       opacity: 0.22;
-      cursor: pointer;
       transition: width 0.2s ease, opacity 0.2s ease;
-      -webkit-tap-highlight-color: transparent;
     }
-    .pdp-gal-dot.is-active { opacity: 0.85; width: 16px; }
+    .pdp-gal-dot.is-active::after { opacity: 0.85; width: 16px; }
 
     /* Шторка наїжджає на фото — так роблять дорогі застосунки, і так
        знімок читається як тло, а не як окремий блок. */
@@ -6531,22 +6533,22 @@
 
       /* Не даємо відтягнути знімок за межі екрана: інакше він
          «губиться» і людина не розуміє, куди він подівся. */
+      /* Нуль — це центр екрана, бо .zoom-stage вже центрує знімок
+         сіткою. Тому обмеження симетричні: далі, ніж на власний
+         край, знімок відтягнути не можна. */
       function clamp() {
-        var r = img.getBoundingClientRect();
         var w = view.clientWidth, h = view.clientHeight;
         var iw = img.offsetWidth * scale, ih = img.offsetHeight * scale;
         var maxX = Math.max(0, (iw - w) / 2);
         var maxY = Math.max(0, (ih - h) / 2);
-        var cx = (w - img.offsetWidth) / 2;
-        var cy = (h - img.offsetHeight) / 2;
-        tx = Math.min(cx + maxX, Math.max(cx - maxX, tx));
-        ty = Math.min(cy + maxY, Math.max(cy - maxY, ty));
+        tx = Math.min(maxX, Math.max(-maxX, tx));
+        ty = Math.min(maxY, Math.max(-maxY, ty));
       }
 
       function reset(animate) {
         scale = 1;
-        tx = (view.clientWidth - img.offsetWidth) / 2;
-        ty = (view.clientHeight - img.offsetHeight) / 2;
+        tx = 0;
+        ty = 0;
         apply(animate);
       }
 
@@ -6561,6 +6563,7 @@
         var it = list[idx];
         img.src = it.src;
         img.alt = it.alt || '';
+        reset(false);                       /* одразу, ще до завантаження */
         var go = function () { reset(animate); };
         if (img.complete) go(); else img.onload = go;
         if (countEl) countEl.textContent = (idx + 1) + ' / ' + list.length;
@@ -6583,6 +6586,7 @@
         view.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
         if (hint) hint.classList.remove('is-hidden');
+        view.style.opacity = '';            /* могло лишитись від свайпу вниз */
         show(idx, false);
         /* Підказка потрібна один раз — далі вона тільки заважає. */
         setTimeout(function () { if (hint) hint.classList.add('is-hidden'); }, 2600);
@@ -6636,10 +6640,12 @@
             if (scale > 1) {
               reset(true);
             } else {
-              var rect = img.getBoundingClientRect();
-              scale = 2.5;
-              tx -= (e.clientX - rect.left) * (scale - 1);
-              ty -= (e.clientY - rect.top) * (scale - 1);
+              /* Наближаємо до точки дотику: зміщення рахуємо від
+                 центру екрана, бо нуль тепер саме там. */
+              var k = 2.5;
+              tx = (view.clientWidth / 2 - e.clientX) * (k - 1);
+              ty = (view.clientHeight / 2 - e.clientY) * (k - 1);
+              scale = k;
               clamp();
               apply(true);
             }
@@ -6671,8 +6677,11 @@
           var ns = Math.min(MAX, Math.max(MIN, start.scale * k));
           var m = mid(p[0], p[1]);
           var f = ns / start.scale;
-          tx = m.x - (start.m.x - start.tx) * f;
-          ty = m.y - (start.m.y - start.ty) * f;
+          var cxv = view.clientWidth / 2, cyv = view.clientHeight / 2;
+          /* Точка між пальцями лишається на місці. У центрових
+             координатах це зсув від центру, помножений на приріст. */
+          tx = m.x - cxv - (start.m.x - cxv - start.tx) * f;
+          ty = m.y - cyv - (start.m.y - cyv - start.ty) * f;
           scale = ns;
           clamp();
           apply(false);
