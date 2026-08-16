@@ -613,7 +613,7 @@
 
     /* Знак посередині меню — трохи піднятий кружок, як у застосунках
        маркетплейсів. Він тримає марку на очах на кожному екрані. */
-    .bottomnav-mark { flex: 0 0 54px; align-self: center; width: 54px; height: 54px; margin-top: -18px; border-radius: 50%; background: var(--fg); color: var(--bg); display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 3px 12px color-mix(in srgb, var(--fg) 28%, transparent); transition: transform 0.15s ease; -webkit-tap-highlight-color: transparent; transition: transform 0.25s cubic-bezier(0.32,0.72,0,1), background-color 0.3s ease; }
+    .bottomnav-mark { position: relative; flex: 0 0 54px; align-self: center; width: 54px; height: 54px; margin-top: -18px; border-radius: 50%; background: var(--fg); color: var(--bg); display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 3px 12px color-mix(in srgb, var(--fg) 28%, transparent); -webkit-tap-highlight-color: transparent; transition: transform 0.25s cubic-bezier(0.32,0.72,0,1), background-color 0.3s ease; }
     /* Знак у центрі змінює роль за станом екрана: зазвичай веде в
        каталог, а коли сторінку прогорнули — стає кнопкою «нагору».
        Одна кнопка замість двох: окрема плавуча стрілка перекривала
@@ -2900,7 +2900,8 @@
        меню веде в каталог: людина бачить, що це один і той самий знак.
        У каталозі його немає навмисно — там він повторювався б
        двадцять разів підряд. */
-    .pdp-ox { position: absolute; left: 12px; bottom: 32px; z-index: 4; width: 30px; height: 30px; border-radius: 999px; background: #1a1a1c; color: #ffffff; display: grid; place-items: center; font-family: var(--font-logo); font-size: 11px; letter-spacing: 0.04em; padding-left: 0.04em; pointer-events: none; }
+    .pdp-ox { position: absolute; left: 12px; bottom: 32px; z-index: 4; width: 30px; height: 30px; border-radius: 999px; background: #1a1a1c; color: #ffffff; display: grid; place-items: center; font-family: var(--font-logo); font-size: 11px; letter-spacing: 0.04em; padding-left: 0.04em; pointer-events: none; border: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform 0.12s ease; }
+    .pdp-ox:active { transform: scale(0.9); }
 
     /* Крапки під знімком, а не поверх нього: на світлій оправі вони
        просто зникали. Заразом дужка для пальця — 22 px, хоч сама
@@ -4243,6 +4244,14 @@
   </div>
 
   <script>
+    /* Одна перевірка на всю сторінку. matchMedia є не скрізь (старі
+       вебв'ю, вбудовані браузери), а незахищений виклик мовчки вбиває
+       обробник, у якому стоїть. */
+    window.OPTIX_reducedMotion = function () {
+      try {
+        return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      } catch (e) { return false; }
+    };
     /* ===========================================================
        SANITY CONFIG — заповни після створення проекту в sanity.io
        Project ID знайдеш на manage.sanity.io → твій проект.
@@ -4868,13 +4877,13 @@
 
       /* Системна тема слухається лише поки людина не вибрала сама. */
       try {
-        var mq = window.matchMedia('(prefers-color-scheme: dark)');
+        var mq = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
         var onChange = function (e) {
           if (localStorage.getItem('optix-theme')) return;
           window.OPTIX_setTheme(e.matches ? 'dark' : 'light');
         };
-        if (mq.addEventListener) mq.addEventListener('change', onChange);
-        else if (mq.addListener) mq.addListener(onChange);
+        if (mq && mq.addEventListener) mq.addEventListener('change', onChange);
+        else if (mq && mq.addListener) mq.addListener(onChange);
       } catch (e) {}
     })();
 
@@ -5043,7 +5052,7 @@
         homeNavBtn.addEventListener('click', function (e) {
           e.preventDefault();
           if (catalogView && catalogView.hidden) {
-            var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            var prefersReduced = window.OPTIX_reducedMotion();
             window.scrollTo({ top: 0, behavior: prefersReduced ? 'auto' : 'smooth' });
           } else {
             showView('home');
@@ -5184,6 +5193,7 @@
       /* Поле пошуку на фото героя відкриває той самий екран. */
       var heroSearch = document.getElementById('heroSearchBtn');
       if (heroSearch) heroSearch.addEventListener('click', openSearch);
+      window.OPTIX_searchClose = closeSearch;
       closeBtn.addEventListener('click', closeSearch);
 
       clearBtn.addEventListener('click', function () {
@@ -6197,7 +6207,7 @@
 
         bodyEl.innerHTML =
           '<div class="pdp-gal">' + gallery + badge +
-            '<span class="pdp-ox">Ox</span>' + dots + '</div>' +
+            '<button type="button" class="pdp-ox" id="pdpOxBtn" aria-label="У каталог">Ox</button>' + dots + '</div>' +
           '<div class="pdp-sheet">' +
             '<div class="pdp-grab"></div>' +
             '<div class="pdp-hd">' +
@@ -6219,6 +6229,21 @@
            Потім, якщо браузер уже вміє міряти, підганяємо точно. */
         /* Знімок у картці натискається — відкриваємо повний екран
            із тим кадром, який зараз показано в галереї. */
+        /* Знак Ox на знімку веде в каталог — так само, як знак у
+           нижній панелі. Раніше це був звичайний span: він виглядав
+           як кнопка, але не робив нічого. */
+        var oxBtn = bodyEl.querySelector('.pdp-ox');
+        if (oxBtn) {
+          oxBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            window.OPTIX_sheetClose(sheet);
+            setTimeout(function () {
+              if (window.OPTIX_showView) window.OPTIX_showView('catalog');
+            }, 200);
+          });
+        }
+
         var galEl = bodyEl.querySelector('.pdp-gal');
         if (galEl && window.OPTIX_zoomOpen) {
           galEl.addEventListener('click', function (e) {
@@ -6803,19 +6828,57 @@
         cart:     document.getElementById('cartNavBtn')
       };
 
-      /* Який розділ зараз відкритий. Порядок важливий: те, що лежить
-         зверху, і є поточним місцем людини. */
+      /* Який розділ зараз відкритий. Порядок — за z-index: шторки
+         лежать вище пошуку, тож перевіряємо їх першими. */
       function currentKey() {
-        var ov = document.getElementById('searchOverlay');
-        if (ov && ov.classList.contains('is-open')) return 'search';
         var w = document.getElementById('wishlistSheet');
         if (w && w.classList.contains('is-open')) return 'wishlist';
         var c = document.getElementById('cartSheet');
         if (c && c.classList.contains('is-open')) return 'cart';
+        var ov = document.getElementById('searchOverlay');
+        if (ov && ov.classList.contains('is-open')) return 'search';
         var cat = document.getElementById('catalogView');
         if (cat && !cat.hidden) return 'catalog';
         return 'home';
       }
+
+      /* Розділи меню — взаємовиключні, як вкладки в застосунку.
+         Раніше кожна кнопка просто відкривала своє поверх чужого:
+         з пошуку тиснеш «Кошик» — кошик лягав зверху, а пошук лишався
+         під ним, і щоб вийти, доводилось закривати обидва по черзі. */
+      function closeOthers(keep) {
+        var ov = document.getElementById('searchOverlay');
+        if (keep !== 'search' && ov && ov.classList.contains('is-open') && window.OPTIX_searchClose) {
+          window.OPTIX_searchClose();
+        }
+        ['wishlistSheet', 'cartSheet', 'productSheet', 'aboutSheet'].forEach(function (id) {
+          if (keep === 'wishlist' && id === 'wishlistSheet') return;
+          if (keep === 'cart' && id === 'cartSheet') return;
+          var el = document.getElementById(id);
+          if (el && el.classList.contains('is-open') && window.OPTIX_sheetClose) {
+            window.OPTIX_sheetClose(el);
+          }
+        });
+      }
+
+      var KEY_BY_ID = {
+        homeBtn: 'home', searchBtn: 'search', catalogNavBtn: 'catalog',
+        wishlistNavBtn: 'wishlist', cartNavBtn: 'cart'
+      };
+      /* Перехоплюємо на етапі занурення — до власних обробників кнопок,
+         щоб зайве вже було закрите, коли відкриється потрібне. */
+      nav.addEventListener('click', function (e) {
+        var el = e.target.closest('.bottomnav-item, .bottomnav-mark');
+        if (!el) return;
+        var key = KEY_BY_ID[el.id];
+        if (!key) return;
+        if (key === 'catalog' && el.classList.contains('is-up')) return;  /* це «нагору» */
+        closeOthers(key);
+        if (key === 'home' || key === 'catalog') {
+          if (window.OPTIX_showView) window.OPTIX_showView(key);
+        }
+        setTimeout(syncNav, 0);
+      }, true);
 
       /* Панель ховаємо лише там, де вона справді заважає: у картці
          товару (там своя кнопка покупки) і в перегляді знімка. */
@@ -6856,7 +6919,7 @@
       mark && mark.addEventListener('click', function (e) {
         if (!mark.classList.contains('is-up')) return;   /* звичайний перехід у каталог */
         e.preventDefault();
-        var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var reduced = window.OPTIX_reducedMotion();
         window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
       });
 
@@ -7656,7 +7719,7 @@
         var wishlist = (window.OPTIX_wishlistGet && window.OPTIX_wishlistGet()) || [];
         var html = items.map(function (p) { return cardHTML(p, wishlist); }).join('');
         var reduce = false;
-        try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+        reduce = window.OPTIX_reducedMotion();
         /* Смуга новинок їде сама. Набір дублюємо і зсуваємо доріжку на
            -50% — на стику виходить те саме місце, тому петля непомітна.
            Якщо товарів менше трьох або в системі вимкнено анімації,
