@@ -148,19 +148,19 @@
 
   /* product grid */
   .prod-search { margin-bottom:12px; }
-  .prod-brandbar { display:flex; gap:7px; overflow-x:auto; padding-bottom:10px; margin-bottom:14px; scrollbar-width:none; }
-  .prod-brandbar::-webkit-scrollbar { display:none; }
-  .prod-bchip { flex-shrink:0; padding:7px 13px; border-radius:999px; border:1px solid var(--line); background:var(--surface); font-size:12.5px; font-weight:500; color:var(--fg); cursor:pointer; font-family:var(--ui); white-space:nowrap; }
-  .prod-bchip.on { background:var(--accent); color:var(--bg); border-color:var(--accent); }
-  .prod-bchip-n { opacity:.5; font-size:11px; margin-left:2px; }
-  .prod-bchip.on .prod-bchip-n { opacity:.7; }
   .prod-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .pcard { background:var(--surface); border:1px solid var(--line); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; }
   .pcard.is-hidden { opacity:.6; }
-  .pcard-img { position:relative; aspect-ratio:1; background:#fff; display:flex; align-items:center; justify-content:center; overflow:hidden; }
-  .pcard-img img { width:100%; height:100%; object-fit:contain; }
+  /* 4:3 замість квадрата: знімки постачальників горизонтальні, у
+     квадраті окуляри займали половину висоти, а решта була порожня. */
+  .pcard-img { position:relative; aspect-ratio:4/3; background:#fff;
+               display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .pcard-img img { width:100%; height:100%; object-fit:contain; padding:4px; }
   .pcard-img svg { width:40px; stroke:var(--gold); fill:none; stroke-width:1.2; }
-  .pcard-tags { position:absolute; top:7px; left:7px; display:flex; gap:4px; }
+  /* Плашки переїхали праворуч: ліворуч тепер прапорець вибору, і
+     вдвох в одному куті вони перекривали одне одного — саме через
+     це на картці не було видно ні знижки, ні самого фото. */
+  .pcard-tags { position:absolute; top:7px; right:7px; display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
   .ptag { font-size:8.5px; font-weight:700; letter-spacing:.06em; padding:2px 6px; border-radius:5px; text-transform:uppercase; }
   .ptag.sale { background:var(--gold); color:#fff; }
   .ptag.new { background:var(--red); color:#fff; }
@@ -360,11 +360,20 @@
   .selall[hidden] { display:none; }
 
   .pcard { position:relative; }
-  .pcard-pick { position:absolute; top:7px; left:7px; z-index:3; width:22px; height:22px; border-radius:6px;
-                border:1.5px solid rgba(26,26,28,.25); background:rgba(255,255,255,.94); cursor:pointer; }
-  .pcard-pick.on { background:var(--acc); border-color:var(--acc); }
-  .pcard-pick.on::after { content:'✓'; color:#fff; font-size:13px; position:absolute; inset:0;
-                          display:grid; place-items:center; }
+  .pcard-pick {
+    position:absolute; top:7px; left:7px; z-index:3;
+    width:26px; height:26px; border-radius:50%;
+    border:0; cursor:pointer;
+    background:rgba(255,255,255,.92);
+    box-shadow:0 1px 3px rgba(26,26,28,.16);
+  }
+  .pcard-pick::after {
+    content:''; position:absolute; inset:6px;
+    border:1.5px solid rgba(26,26,28,.3); border-radius:4px;
+  }
+  .pcard-pick.on { background:var(--acc); box-shadow:0 1px 4px rgba(63,100,128,.4); }
+  .pcard-pick.on::after { content:'✓'; inset:0; border:0; color:#fff; font-size:14px;
+                          font-weight:700; display:grid; place-items:center; }
   .pcard.is-picked { outline:2px solid var(--acc); outline-offset:-2px; }
 
   /* ============ МОДАЛКА МАСОВОЇ ДІЇ ============ */
@@ -472,6 +481,34 @@
   .prod-schip, .blkchip { min-height: 34px; }
   .add-btn { min-height: 52px; }
 
+  .brandpick {
+    width:100%; display:flex; align-items:center; gap:8px;
+    min-height:46px; padding:10px 12px; margin-bottom:10px;
+    border:1px solid var(--line); border-radius:12px; background:var(--surface);
+    font-family:var(--ui); font-size:13px; color:var(--fg); cursor:pointer; text-align:left;
+    transition:transform .1s ease;
+  }
+  .brandpick:active { transform:scale(.98); }
+  .brandpick-lbl { font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+                   color:var(--fg-mute); flex:0 0 auto; }
+  .brandpick-val { font-weight:600; flex:1; min-width:0; overflow:hidden;
+                   text-overflow:ellipsis; white-space:nowrap; }
+  .brandpick-n { font-size:11px; font-weight:700; color:var(--acc);
+                 background:var(--gold-soft); padding:3px 8px; border-radius:999px; flex:0 0 auto; }
+  .brandpick svg { width:16px; height:16px; flex:0 0 auto; fill:none; stroke:var(--fg-mute);
+                   stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+
+  .brandlist { margin-top:10px; max-height:46vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .brandrow {
+    width:100%; display:flex; align-items:center; gap:10px; min-height:48px;
+    padding:11px 12px; border:0; border-radius:11px; background:transparent;
+    font-family:var(--ui); font-size:14px; color:var(--fg); cursor:pointer; text-align:left;
+  }
+  .brandrow + .brandrow { border-top:1px solid var(--line); border-radius:0; }
+  .brandrow.on { background:var(--gold-soft); font-weight:700; }
+  .brandrow .n { margin-left:auto; font-size:12px; color:var(--fg-mute); font-weight:600; }
+  .brandrow .tick { width:16px; flex:0 0 auto; color:var(--acc); font-weight:700; }
+
   /* toast */
   .toast { position:fixed; left:50%; bottom:calc(76px + max(env(safe-area-inset-bottom,0px), var(--tg-bottom))); transform:translateX(-50%) translateY(20px); background:var(--accent); color:var(--bg); font-size:13px; padding:11px 18px; border-radius:999px; opacity:0; transition:.25s; pointer-events:none; z-index:200; max-width:88%; text-align:center; }
   .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
@@ -545,7 +582,12 @@
         або «Позначити всі за фільтром». Внизу з'явиться синя смужка з діями.</div><button type="button" class="tip-x" data-tipx="tipProd">×</button></div>
     <button class="add-btn" data-go="add"><span class="plus">+</span> Додати товар</button>
     <input class="input prod-search" id="prodSearch" placeholder="Пошук за брендом або кодом…" autocomplete="off" />
-    <div class="prod-brandbar" id="prodBrandbar"></div>
+    <button type="button" class="brandpick" id="brandPick">
+      <span class="brandpick-lbl">Бренд</span>
+      <span class="brandpick-val" id="brandPickVal">Усі бренди</span>
+      <span class="brandpick-n" id="brandPickN"></span>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
 
     <!-- Фільтри стану. Саме вони роблять масові дії осмисленими:
          спершу звужуєш до потрібного, потім познач усе одразу. -->
@@ -879,6 +921,16 @@
     </button>
   </div>
 
+  <!-- Вибір бренду окремим аркушем. Стрічка з 16 брендів у рядок
+       вимагала гортати наосліп: видно три, решта за краєм. -->
+  <div class="modal" id="brandSheet" hidden>
+    <div class="modal-card">
+      <h3 class="modal-title">Бренд</h3>
+      <input class="input" id="brandSheetSearch" placeholder="Знайти бренд…" autocomplete="off" />
+      <div class="brandlist" id="brandSheetList"></div>
+    </div>
+  </div>
+
   <!-- Масова дія. Показуємо наслідки до натискання: скільки товарів
        зачепить і що станеться з тими, у кого знижка вже стоїть. -->
   <div class="modal" id="bulkModal" hidden>
@@ -1125,19 +1177,77 @@
   }
   var PRODUCTS_CACHE = {};
 
+  /* Список брендів для аркуша вибору. Рахуємо один раз при
+     завантаженні, а не при кожному відкритті. */
+  var BRAND_ROWS = [];
+  var brandSheetQuery = '';
+
   function buildProdBrandbar() {
-    var bar = document.getElementById('prodBrandbar'); if (!bar) return;
     var seen = {}, order = [];
-    ALL_PRODUCTS.forEach(function(p){ var b=(p.brand||'').trim(); if(b&&!seen[b]){seen[b]=1;order.push(b);} });
-    order.sort(function(a,b){ return a.localeCompare(b); });
-    if (prodFilterBrand !== 'all' && order.indexOf(prodFilterBrand) === -1) prodFilterBrand = 'all';
-    var html = '<button type="button" class="prod-bchip' + (prodFilterBrand==='all'?' on':'') + '" data-fbrand="all">Усі</button>';
-    order.forEach(function(b){
-      var n = ALL_PRODUCTS.filter(function(p){ return (p.brand||'').trim()===b; }).length;
-      html += '<button type="button" class="prod-bchip' + (prodFilterBrand===b?' on':'') + '" data-fbrand="' + b.replace(/"/g,'&quot;') + '">' + esc(b) + ' <span class="prod-bchip-n">' + n + '</span></button>';
+    ALL_PRODUCTS.forEach(function (p) {
+      var b = (p.brand || '').trim();
+      if (b && !seen[b]) { seen[b] = 1; order.push(b); }
     });
-    bar.innerHTML = html;
+    order.sort(function (a, b) { return a.localeCompare(b); });
+    if (prodFilterBrand !== 'all' && order.indexOf(prodFilterBrand) === -1) prodFilterBrand = 'all';
+    BRAND_ROWS = order.map(function (b) {
+      return { name: b, n: ALL_PRODUCTS.filter(function (p) { return (p.brand || '').trim() === b; }).length };
+    });
+    syncBrandPick();
   }
+
+  function syncBrandPick() {
+    var val = document.getElementById('brandPickVal');
+    var n = document.getElementById('brandPickN');
+    if (!val) return;
+    if (prodFilterBrand === 'all') {
+      val.textContent = 'Усі бренди';
+      n.textContent = ALL_PRODUCTS.length || '';
+    } else {
+      val.textContent = prodFilterBrand;
+      var row = BRAND_ROWS.filter(function (r) { return r.name === prodFilterBrand; })[0];
+      n.textContent = row ? row.n : '';
+    }
+  }
+
+  function renderBrandSheet() {
+    var list = document.getElementById('brandSheetList');
+    var q = brandSheetQuery.trim().toLowerCase();
+    var rows = BRAND_ROWS.filter(function (r) { return !q || r.name.toLowerCase().indexOf(q) > -1; });
+    var head = (!q)
+      ? '<button type="button" class="brandrow' + (prodFilterBrand === 'all' ? ' on' : '') +
+        '" data-pbrand="all"><span class="tick">' + (prodFilterBrand === 'all' ? '✓' : '') +
+        '</span>Усі бренди<span class="n">' + ALL_PRODUCTS.length + '</span></button>'
+      : '';
+    list.innerHTML = head + (rows.length
+      ? rows.map(function (r) {
+          return '<button type="button" class="brandrow' + (prodFilterBrand === r.name ? ' on' : '') +
+                 '" data-pbrand="' + r.name.replace(/"/g, '&quot;') + '"><span class="tick">' +
+                 (prodFilterBrand === r.name ? '✓' : '') + '</span>' + esc(r.name) +
+                 '<span class="n">' + r.n + '</span></button>';
+        }).join('')
+      : '<div class="empty">Такого бренду немає</div>');
+  }
+
+  document.getElementById('brandPick').addEventListener('click', function () {
+    brandSheetQuery = '';
+    document.getElementById('brandSheetSearch').value = '';
+    renderBrandSheet();
+    document.getElementById('brandSheet').hidden = false;
+  });
+  document.getElementById('brandSheetSearch').addEventListener('input', function () {
+    brandSheetQuery = this.value || '';
+    renderBrandSheet();
+  });
+  document.getElementById('brandSheet').addEventListener('click', function (e) {
+    if (e.target === this) { this.hidden = true; return; }
+    var row = e.target.closest('[data-pbrand]');
+    if (!row) return;
+    prodFilterBrand = row.dataset.pbrand;
+    this.hidden = true;
+    syncBrandPick();
+    renderProductGrid();
+  });
 
   function renderProductGrid() {
     var list = document.getElementById('productList');
@@ -1277,13 +1387,6 @@
     renderProductGrid();
   });
 
-  /* brand filter chips */
-  document.getElementById('prodBrandbar').addEventListener('click', function(e){
-    var c = e.target.closest('[data-fbrand]'); if(!c) return;
-    prodFilterBrand = c.dataset.fbrand;
-    document.querySelectorAll('#prodBrandbar .prod-bchip').forEach(function(x){ x.classList.toggle('on', x===c); });
-    renderProductGrid();
-  });
   /* search */
   document.getElementById('prodSearch').addEventListener('input', function(){
     prodSearchQuery = this.value || '';
