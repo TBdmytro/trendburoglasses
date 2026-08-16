@@ -1063,7 +1063,6 @@
 
 
 
-    .catalog-filter:active { transform: scale(0.96); }
 
 
     /* ---------- Products grid ---------- */
@@ -1762,43 +1761,7 @@
       padding-top: 4px;
     }
 
-    /* unset position from old catalog-filters when nested in controls */
-    .catalog-controls .catalog-filters {
-      position: static;
-      background: transparent;
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-    }
 
-    .catalog-filters-toggle {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin: 0 20px 2px;
-      padding: 4px 0;
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-family: var(--font-ui);
-      font-size: 12px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--fg);
-      opacity: 0.6;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .catalog-filters-toggle svg {
-      width: 15px;
-      height: 15px;
-      stroke: currentColor;
-      fill: none;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      transition: transform 0.25s ease;
-    }
-    .catalog-filters-toggle.is-open { opacity: 1; }
-    .catalog-filters-toggle.is-open svg { transform: rotate(180deg); }
 
     .catalog-advanced {
       padding: 6px 20px 14px;
@@ -2366,16 +2329,7 @@
     /* Знімок у картці натискається — показуємо це курсором і підказкою */
 
     /* ---------- Лічильники у фільтрах ---------- */
-    .filter-n {
-      font-style: normal;
-      font-size: 10px;
-      font-weight: 700;
-      opacity: 0.5;
-      margin-left: 4px;
-      letter-spacing: 0;
-    }
-    .catalog-filter--active .filter-n,
-    .gender-pill.is-active .filter-n { opacity: 0.75; }
+        .gender-pill.is-active .filter-n { opacity: 0.75; }
     /* Значення, під яким зараз нічого немає, не ховаємо — притлумлюємо.
        Зникле значення читається як помилка, притлумлене — як факт. */
 
@@ -2444,12 +2398,66 @@
       box-shadow: 0 1px 3px color-mix(in srgb, var(--fg) 10%, transparent);
     }
 
-    .cat-chips {
+    .cat-chips { display: flex; gap: 8px; padding: 0 18px 10px; align-items: center; }
+
+    /* Один рядок замість стрічки, яку треба було гортати. Звільнений
+       рядок віддано карткам: перший ряд знімків тепер видно одразу. */
+    .brand-pick {
+      flex: 1;
+      min-width: 0;
       display: flex;
-      gap: 8px;
-      padding: 0 18px 10px;
       align-items: center;
+      gap: 8px;
+      height: 36px;
+      padding: 0 12px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--raise);
+      color: var(--fg);
+      font-family: var(--font-ui);
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.1s ease, background-color 0.3s ease;
     }
+    .brand-pick:active { transform: scale(0.98); }
+    .brand-pick-val {
+      flex: 1; min-width: 0; text-align: left;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .brand-pick-n { font-size: 11px; font-weight: 700; color: var(--fg-3); flex: 0 0 auto; }
+    .brand-pick svg {
+      width: 15px; height: 15px; flex: 0 0 auto;
+      fill: none; stroke: var(--fg-3); stroke-width: 2;
+      stroke-linecap: round; stroke-linejoin: round;
+    }
+    .brand-pick.is-set { background: var(--fg); color: var(--bg); }
+    .brand-pick.is-set .brand-pick-n { color: var(--bg); opacity: 0.6; }
+    .brand-pick.is-set svg { stroke: var(--bg); }
+
+    .brandlist { padding: 6px 0 24px; }
+    .brandrow {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 52px;
+      padding: 13px 20px;
+      border: 0;
+      background: transparent;
+      font-family: var(--font-ui);
+      font-size: 15px;
+      color: var(--fg);
+      cursor: pointer;
+      text-align: left;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .brandrow + .brandrow { border-top: 1px solid var(--line); }
+    .brandrow.is-on { font-weight: 700; }
+    .brandrow .tick { width: 16px; flex: 0 0 auto; color: var(--acc); font-weight: 700; }
+    .brandrow .n { margin-left: auto; font-size: 13px; color: var(--fg-3); font-weight: 600; }
+
     .cat-chip--icon {
       flex: 0 0 36px;
       width: 36px;
@@ -2488,56 +2496,6 @@
       background: var(--acc);
     }
 
-    .catalog-filters {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      padding: 0;
-      margin: 0;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-      position: sticky;
-      top: calc(var(--header-height) + var(--tg-top));
-      z-index: 20;
-      background: linear-gradient(to bottom,
-        var(--bg) 0%,
-        var(--bg) 70%,
-        var(--line) 100%);
-      flex: 1 1 auto;
-      padding-bottom: 1px;
-    }
-    .catalog-filters::-webkit-scrollbar {
-      display: none;
-    }
-    .catalog-filter {
-      flex-shrink: 0;
-      font-family: var(--font-ui);
-      font-size: 12px;
-      letter-spacing: 0.05em;
-      color: var(--fg);
-      background: var(--raise);
-      border: 0;
-      border-radius: 999px;
-      padding: 0 14px;
-      cursor: pointer;
-      transition: background-color 0.2s ease, color 0.2s ease;
-      -webkit-tap-highlight-color: transparent;
-      white-space: nowrap;
-      flex: 0 0 auto;
-      height: 36px;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .catalog-filter--active {
-      background: var(--fg);
-      color: var(--bg);
-      border-color: var(--fg);
-    }
-    .catalog-filter.is-empty {
-      opacity: 0.4;
-    }
 
     .cat-meta {
       display: flex;
@@ -4008,7 +3966,11 @@
       <button type="button" class="cat-chip cat-chip--icon" id="catalogFiltersToggle" aria-label="Фільтри">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
       </button>
-      <div class="catalog-filters" id="catalogFilters"></div>
+      <button type="button" class="brand-pick" id="brandPickBtn">
+        <span class="brand-pick-val" id="brandPickVal">Всі бренди</span>
+        <span class="brand-pick-n" id="brandPickN"></span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
     </div>
 
     <div class="cat-meta">
@@ -4160,6 +4122,21 @@
     </div>
     <div class="sheet-body" id="wishlistSheetBody"></div>
     <div class="sheet-footer" id="wishlistSheetFooter" hidden></div>
+  </div>
+
+  <!-- Вибір бренду. Стрічка в один рядок показувала три марки з
+       чотирнадцяти, решту треба було гортати наосліп — і вона ж
+       з'їдала цілий рядок над картками. -->
+  <div class="sheet" id="brandSheet" aria-hidden="true" role="dialog" aria-label="Бренд">
+    <div class="sheet-header">
+      <button type="button" class="sheet-back" id="brandSheetBack" aria-label="Назад">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M15 6 L9 12 L15 18" /></svg>
+      </button>
+      <h2 class="sheet-title">Бренд</h2>
+    </div>
+    <div class="sheet-body">
+      <div class="brandlist" id="brandSheetList"></div>
+    </div>
   </div>
 
   <!-- Cart sheet (opens from header cart icon) -->
@@ -5250,7 +5227,6 @@
 
       var grid        = document.getElementById('productsGrid');
       var count       = document.getElementById('catalogCount');
-      var brandStrip  = document.getElementById('catalogFilters');
       var saleToggle  = document.getElementById('catalogSaleToggle');
       var sortBtn     = document.getElementById('catalogSortBtn');
       var filtersToggle = document.getElementById('catalogFiltersToggle');
@@ -5260,7 +5236,7 @@
       var priceRangeEl = document.getElementById('priceRange');
       var priceValueEl = document.getElementById('priceValue');
 
-      if (!grid || !count || !brandStrip) return;
+      if (!grid || !count) return;
 
       var state = {
         brand: 'all',
@@ -5282,8 +5258,12 @@
       function countsBy(field) {
         var out = {}, total = 0;
         PRODUCTS.forEach(function (p) {
-          if (p.inStock === false) return;
-          /* Рахуємо з урахуванням інших активних умов, крім самого
+          /* Рахуємо всі, що потраплять у сітку, разом із тими, яких
+             зараз немає: каталог їх показує з міткою «Уточнити». Коли
+             ми їх пропускали, кнопка бренду писала 10, а карток на
+             екрані лежало 12 — цифра суперечила самому екрану.
+
+             Рахуємо з урахуванням інших активних умов, крім самого
              поля — інакше цифри брехали б при вже ввімкненому відборі. */
           if (field !== 'brand' && state.brand !== 'all' && p.brand !== state.brand) return;
           if (field !== 'gender' && state.gender !== 'all') {
@@ -5310,18 +5290,34 @@
         });
         order.sort(function (a, b) { return a.localeCompare(b); });
         var cnt = countsBy('brand');
-        var html = '<button type="button" class="catalog-filter' +
-          (state.brand === 'all' ? ' catalog-filter--active' : '') +
-          '" data-brand="all">Всі бренди <i class="filter-n">' + (cnt.__total || 0) + '</i></button>';
-        order.forEach(function (b) {
-          var n = cnt[b] || 0;
-          html += '<button type="button" class="catalog-filter' +
-            (state.brand === b ? ' catalog-filter--active' : '') +
-            (n === 0 ? ' is-empty' : '') +
-            '" data-brand="' + b.replace(/"/g, '&quot;') + '">' + b +
-            ' <i class="filter-n">' + n + '</i></button>';
-        });
-        brandStrip.innerHTML = html;
+
+        /* Порожні марки лишаємо в списку, але з нулем: зникома марка
+           збиває — людина пам'ятає, що вона щойно була. */
+        var list = document.getElementById('brandSheetList');
+        if (list) {
+          var html = '<button type="button" class="brandrow' +
+            (state.brand === 'all' ? ' is-on' : '') + '" data-brand="all">' +
+            '<span class="tick">' + (state.brand === 'all' ? '✓' : '') + '</span>' +
+            'Всі бренди<span class="n">' + (cnt.__total || 0) + '</span></button>';
+          order.forEach(function (b) {
+            var n = cnt[b] || 0;
+            html += '<button type="button" class="brandrow' +
+              (state.brand === b ? ' is-on' : '') + '" data-brand="' + b.replace(/"/g, '&quot;') + '">' +
+              '<span class="tick">' + (state.brand === b ? '✓' : '') + '</span>' +
+              window.OPTIX_esc(b) + '<span class="n">' + n + '</span></button>';
+          });
+          list.innerHTML = html;
+        }
+
+        var val = document.getElementById('brandPickVal');
+        var num = document.getElementById('brandPickN');
+        var btn = document.getElementById('brandPickBtn');
+        if (val && num && btn) {
+          var isAll = state.brand === 'all';
+          val.textContent = isAll ? 'Всі бренди' : state.brand;
+          num.textContent = isAll ? (cnt.__total || 0) : (cnt[state.brand] || 0);
+          btn.classList.toggle('is-set', !isAll);
+        }
         paintGenderCounts();
       }
 
@@ -5560,30 +5556,42 @@
       }, { passive: true });
 
       /* Brand chip clicks */
-      brandStrip.addEventListener('click', function (e) {
-        var btn = e.target.closest('.catalog-filter');
-        if (!btn) return;
-        state.brand = btn.dataset.brand;
-        brandStrip.querySelectorAll('.catalog-filter').forEach(function (b) {
-          b.classList.toggle('catalog-filter--active', b === btn);
+      var brandSheet = document.getElementById('brandSheet');
+      var brandPickBtn = document.getElementById('brandPickBtn');
+      if (brandPickBtn && brandSheet) {
+        brandPickBtn.addEventListener('click', function () {
+          buildBrandFilters();                 /* цифри могли змінитись від статі */
+          window.OPTIX_sheetOpen(brandSheet);
         });
-        window.scrollTo(0, 0);
-        render();
-      });
+        var bBack = document.getElementById('brandSheetBack');
+        if (bBack) bBack.addEventListener('click', function () { window.OPTIX_sheetClose(brandSheet); });
+        brandSheet.addEventListener('click', function (e) {
+          var row = e.target.closest('[data-brand]');
+          if (!row) return;
+          state.brand = row.dataset.brand;
+          window.OPTIX_sheetClose(brandSheet);
+          buildBrandFilters();
+          paintActiveCount();
+          render();
+        });
+      }
 
       /* Public: select a brand from outside (e.g. home page brand chips).
          Matches by data-brand; if that brand isn't a filter button, falls
          back to "all" so the catalog still opens. */
       window.OPTIX_selectBrand = function (brandName) {
-        var target = null;
-        brandStrip.querySelectorAll('.catalog-filter').forEach(function (b) {
-          if (b.dataset.brand === brandName) target = b;
-        });
-        state.brand = target ? brandName : 'all';
-        brandStrip.querySelectorAll('.catalog-filter').forEach(function (b) {
-          b.classList.toggle('catalog-filter--active',
-            target ? (b === target) : (b.dataset.brand === 'all'));
-        });
+        /* Викликається з плиток брендів на головній. Раніше шукало
+           кнопку у стрічці фільтрів — стрічки більше немає, тому
+           звіряємось із самим каталогом. */
+        var exists = false;
+        if (brandName && brandName !== 'all') {
+          for (var i = 0; i < PRODUCTS.length; i++) {
+            if ((PRODUCTS[i].brand || '').trim() === brandName) { exists = true; break; }
+          }
+        }
+        state.brand = exists ? brandName : 'all';
+        buildBrandFilters();
+        paintActiveCount();
         render();
       };
 
