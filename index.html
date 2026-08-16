@@ -43,7 +43,7 @@
       --ok: #2f7a4a;
       --shadow: 0 1px 2px rgba(20, 22, 26, 0.05), 0 8px 24px rgba(20, 22, 26, 0.07);
       --panel: #ffffff;
-  /* Висота нижнього меню. На неї спираються .to-top і нижні відступи
+  /* Висота нижнього меню. На неї спираються шторки-розділи й відступи
      екранів — тримаємо в одному місці, щоб не розповзалось. */
   --nav-h: 64px;
   --fg-soft: color-mix(in srgb, var(--fg) 55%, transparent);
@@ -597,7 +597,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      z-index: 50;
+      z-index: 120;
       display: flex;
       align-items: stretch;
       justify-content: space-around;
@@ -613,23 +613,33 @@
 
     /* Знак посередині меню — трохи піднятий кружок, як у застосунках
        маркетплейсів. Він тримає марку на очах на кожному екрані. */
-    .bottomnav-mark {
-      flex: 0 0 54px;
-      align-self: center;
-      width: 54px;
-      height: 54px;
-      margin-top: -18px;
-      border-radius: 50%;
-      background: var(--fg);
-      color: var(--bg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      box-shadow: 0 3px 12px color-mix(in srgb, var(--fg) 28%, transparent);
-      transition: transform 0.15s ease;
-      -webkit-tap-highlight-color: transparent;
+    .bottomnav-mark { flex: 0 0 54px; align-self: center; width: 54px; height: 54px; margin-top: -18px; border-radius: 50%; background: var(--fg); color: var(--bg); display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 3px 12px color-mix(in srgb, var(--fg) 28%, transparent); transition: transform 0.15s ease; -webkit-tap-highlight-color: transparent; transition: transform 0.25s cubic-bezier(0.32,0.72,0,1), background-color 0.3s ease; }
+    /* Знак у центрі змінює роль за станом екрана: зазвичай веде в
+       каталог, а коли сторінку прогорнули — стає кнопкою «нагору».
+       Одна кнопка замість двох: окрема плавуча стрілка перекривала
+       картки саме там, куди дивишся. */
+    .bottomnav-mark .mark-ox,
+    .bottomnav-mark .mark-up {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      transition: opacity 0.18s ease, transform 0.25s cubic-bezier(0.32,0.72,0,1);
     }
+    .bottomnav-mark .mark-up { opacity: 0; transform: translateY(8px); }
+    .bottomnav-mark .mark-up svg {
+      width: 22px; height: 22px; fill: none;
+      stroke: currentColor; stroke-width: 2.2;
+      stroke-linecap: round; stroke-linejoin: round;
+    }
+    .bottomnav-mark.is-up .mark-ox { opacity: 0; transform: translateY(-8px); }
+    .bottomnav-mark.is-up .mark-up { opacity: 1; transform: none; }
+    /* Каталог відкритий — знак отримує кільце. Решта розділів
+       позначається крапкою під написом; знаку крапку ставити нікуди,
+       він піднятий над панеллю. */
+    .bottomnav-mark.is-mark-active {
+      box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--fg);
+    }
+    .bottomnav-mark:active { transform: scale(0.92); }
     .bottomnav-mark:active { transform: scale(0.94); }
     .bottomnav-mark span {
       font-family: var(--font-logo);
@@ -677,7 +687,23 @@
     }
 
     .bottomnav-item:active { transform: scale(0.94); }
+    /* Активний розділ. Самої непрозорості мало — на маленькій іконці
+       різниця 0.5 проти 1.0 майже не читається. Додаємо колір,
+       насиченість напису й крапку під ним. */
     .bottomnav-item--active { opacity: 1; }
+    .bottomnav-item--active .bottomnav-label { font-weight: 700; }
+    .bottomnav-item--active .bottomnav-icon { stroke-width: 2.1; }
+    .bottomnav-item--active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 50%;
+      width: 4px;
+      height: 4px;
+      margin-left: -2px;
+      border-radius: 999px;
+      background: var(--fg);
+    }
 
     .bottomnav-icon {
       width: 22px;
@@ -702,9 +728,14 @@
     /* ---------- Search overlay (full-screen) ---------- */
     body.search-open { overflow: hidden; }
 
+    /* Зупиняється над нижньою панеллю: пошук — такий самий розділ,
+       як обране й кошик, і панель має лишатись під рукою. */
     .search-overlay {
       position: fixed;
-      inset: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: calc(var(--nav-h) + max(env(safe-area-inset-bottom, 0px), var(--tg-bottom)));
       z-index: 100;
       display: flex;
       flex-direction: column;
@@ -1921,7 +1952,10 @@
 
     .sheet {
       position: fixed;
-      inset: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
       z-index: 110;
       display: flex;
       flex-direction: column;
@@ -1930,6 +1964,21 @@
       transition: transform 0.34s cubic-bezier(0.32, 0.72, 0.32, 1);
       visibility: hidden;
     }
+    /* Шторки, які є розділами меню, більше не перекривають панель:
+       вона потрібна, щоб з обраного можна було піти в кошик одним
+       дотиком, а не через «назад». Картка товару — виняток: це не
+       розділ, а екран «вглиб», і в неї своя кнопка покупки. */
+    .sheet--tab {
+      bottom: calc(var(--nav-h) + max(env(safe-area-inset-bottom, 0px), var(--tg-bottom)));
+      top: 0;
+    }
+    /* Панель ховається тільки там, де вона заважає. */
+    body.nav-off .bottomnav {
+      transform: translateY(130%);
+      pointer-events: none;
+    }
+    .bottomnav { transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1); }
+
     .sheet.is-open {
       transform: translateY(0);
       visibility: visible;
@@ -2742,35 +2791,6 @@
     }
 
     /* ---------- кнопка нагору ---------- */
-    .to-top {
-      position: fixed;
-      right: 16px;
-      bottom: calc(var(--nav-h, 64px) + 16px + var(--tg-bottom));
-      width: 42px;
-      height: 42px;
-      border: 0;
-      border-radius: 999px;
-      background: var(--surface);
-      display: grid;
-      place-items: center;
-      cursor: pointer;
-      z-index: 40;
-      box-shadow: 0 2px 6px rgba(26, 26, 28, 0.14), 0 10px 24px rgba(26, 26, 28, 0.16);
-      opacity: 0;
-      visibility: hidden;
-      transform: translateY(8px);
-      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
-    }
-    .to-top.is-on { opacity: 1; visibility: visible; transform: translateY(0); }
-    .to-top svg {
-      width: 17px;
-      height: 17px;
-      stroke: #1a1a1c;
-      fill: none;
-      stroke-width: 1.9;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
 
     /* ---------- Product detail sheet ---------- */
 
@@ -4066,7 +4086,10 @@
     <!-- Знак посередині веде в каталог. Це найчастіша дія, і саме
          тому вона стоїть під великим пальцем у центрі. -->
     <a href="#catalog" id="catalogNavBtn" class="bottomnav-mark" aria-label="Каталог">
-      <span>Ox</span>
+      <span class="mark-ox">Ox</span>
+      <span class="mark-up" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 19V6M6 12l6-6 6 6"/></svg>
+      </span>
     </a>
 
     <a href="#wishlist" id="wishlistNavBtn" class="bottomnav-item">
@@ -4101,9 +4124,6 @@
     <div class="sheet-footer" id="productSheetFooter"></div>
   </div>
 
-  <button type="button" class="to-top" id="toTopBtn" aria-label="Нагору">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
-  </button>
 
   <!-- Повноекранний перегляд фото. Лежить поза шторками, бо мусить
        бути поверх усього, включно з панеллю покупки. -->
@@ -4138,7 +4158,7 @@
   </div>
 
   <!-- Wishlist sheet (opens from header heart icon) -->
-  <div class="sheet" id="wishlistSheet" aria-hidden="true" role="dialog" aria-label="Обране">
+  <div class="sheet sheet--tab" id="wishlistSheet" aria-hidden="true" role="dialog" aria-label="Обране">
     <div class="sheet-header">
       <button type="button" class="sheet-back" id="wishlistSheetBack" aria-label="Назад">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -4167,7 +4187,7 @@
   </div>
 
   <!-- Cart sheet (opens from header cart icon) -->
-  <div class="sheet" id="cartSheet" aria-hidden="true" role="dialog" aria-label="Кошик">
+  <div class="sheet sheet--tab" id="cartSheet" aria-hidden="true" role="dialog" aria-label="Кошик">
     <div class="sheet-header">
       <button type="button" class="sheet-back" id="cartSheetBack" aria-label="Назад">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -4975,19 +4995,19 @@
 
       function showView(name) {
         if (!homeView || !catalogView) return;
+        /* Підсвітку розділу ставить один модуль панелі: раніше це
+           робилось тут і ще в двох місцях, і при відкритій шторці
+           вона лишалась на попередньому розділі. */
         if (name === 'catalog') {
           homeView.hidden = true;
           catalogView.hidden = false;
-          if (catalogNavBtn) catalogNavBtn.classList.add('bottomnav-item--active');
-          if (homeNavBtn) homeNavBtn.classList.remove('bottomnav-item--active');
         } else {
           homeView.hidden = false;
           catalogView.hidden = true;
-          if (homeNavBtn) homeNavBtn.classList.add('bottomnav-item--active');
-          if (catalogNavBtn) catalogNavBtn.classList.remove('bottomnav-item--active');
         }
         window.scrollTo(0, 0);
         syncBack();
+        if (window.OPTIX_navSync) window.OPTIX_navSync();
       }
 
       /* Кнопка «назад» у шапці. Показується тільки там, звідки є куди
@@ -5073,6 +5093,7 @@
         overlay.classList.add('is-open');
         overlay.setAttribute('aria-hidden', 'false');
         document.body.classList.add('search-open');
+        if (window.OPTIX_navSync) window.OPTIX_navSync();
         /* delay focus so mobile keyboard appears after slide-down completes */
         setTimeout(function () { input.focus(); }, 320);
       }
@@ -5082,6 +5103,7 @@
         overlay.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('search-open');
         input.blur();
+        if (window.OPTIX_navSync) window.OPTIX_navSync();
       }
 
       /* Ukrainian plural: 1 модель / 2-4 моделі / 5+ моделей */
@@ -5788,10 +5810,12 @@
       window.OPTIX_sheetOpen = function (el) {
         open(el);
         if (window.OPTIX_syncBack) window.OPTIX_syncBack();
+        if (window.OPTIX_navSync) window.OPTIX_navSync();
       };
       window.OPTIX_sheetClose = function (el) {
         close(el);
         if (window.OPTIX_syncBack) window.OPTIX_syncBack();
+        if (window.OPTIX_navSync) window.OPTIX_navSync();
       };
 
       /* ESC closes the topmost sheet */
@@ -6610,6 +6634,7 @@
         view.classList.add('is-open');
         view.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
+        if (window.OPTIX_navSync) window.OPTIX_navSync();
         if (hint) hint.classList.remove('is-hidden');
         view.style.opacity = '';            /* могло лишитись від свайпу вниз */
         show(idx, false);
@@ -6620,6 +6645,7 @@
         view.classList.remove('is-open');
         view.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
+        if (window.OPTIX_navSync) window.OPTIX_navSync();
         setTimeout(function () { img.removeAttribute('src'); }, 240);
       }
       window.OPTIX_zoomOpen = open;
@@ -6760,23 +6786,84 @@
       });
     })();
 
-    /* ---------- кнопка «нагору» ---------- */
+    /* ---------- нижня панель: стан розділу і динамічний знак ----------
+       Один модуль на всю панель. Раніше активний розділ ставили в двох
+       різних місцях, і при відкритті шторки підсвітка лишалась на
+       попередньому — людина не розуміла, де вона.
+       ------------------------------------------------------------------ */
     (function () {
-      var btn = document.getElementById('toTopBtn');
-      if (!btn) return;
-      var catalogView = document.getElementById('catalogView');
-      function sync() {
-        /* Показуємо тільки в каталозі й тільки коли є куди вертатись. */
-        var inCatalog = catalogView && !catalogView.hidden;
-        btn.classList.toggle('is-on', !!inCatalog && window.scrollY > 900);
+      var nav   = document.querySelector('.bottomnav');
+      var mark  = document.getElementById('catalogNavBtn');
+      if (!nav) return;
+
+      var ITEMS = {
+        home:     document.getElementById('homeBtn'),
+        search:   document.getElementById('searchBtn'),
+        wishlist: document.getElementById('wishlistNavBtn'),
+        cart:     document.getElementById('cartNavBtn')
+      };
+
+      /* Який розділ зараз відкритий. Порядок важливий: те, що лежить
+         зверху, і є поточним місцем людини. */
+      function currentKey() {
+        var ov = document.getElementById('searchOverlay');
+        if (ov && ov.classList.contains('is-open')) return 'search';
+        var w = document.getElementById('wishlistSheet');
+        if (w && w.classList.contains('is-open')) return 'wishlist';
+        var c = document.getElementById('cartSheet');
+        if (c && c.classList.contains('is-open')) return 'cart';
+        var cat = document.getElementById('catalogView');
+        if (cat && !cat.hidden) return 'catalog';
+        return 'home';
       }
-      window.addEventListener('scroll', sync, { passive: true });
-      btn.addEventListener('click', function () {
+
+      /* Панель ховаємо лише там, де вона справді заважає: у картці
+         товару (там своя кнопка покупки) і в перегляді знімка. */
+      function navShouldHide() {
+        var ps = document.getElementById('productSheet');
+        var zv = document.getElementById('zoomView');
+        var ab = document.getElementById('aboutSheet');
+        return !!((ps && ps.classList.contains('is-open')) ||
+                  (zv && zv.classList.contains('is-open')) ||
+                  (ab && ab.classList.contains('is-open')));
+      }
+
+      function syncNav() {
+        var key = currentKey();
+        Object.keys(ITEMS).forEach(function (k) {
+          var el = ITEMS[k];
+          if (!el) return;
+          var on = (k === key);
+          el.classList.toggle('bottomnav-item--active', on);
+          if (on) el.setAttribute('aria-current', 'page');
+          else el.removeAttribute('aria-current');
+        });
+        if (mark) mark.classList.toggle('is-mark-active', key === 'catalog');
+        document.body.classList.toggle('nav-off', navShouldHide());
+        syncMark();
+      }
+
+      /* Знак у центрі: поки сторінка вгорі — це «каталог», коли
+         прогорнули — «нагору». Поріг 500 px: приблизно два ряди
+         карток, раніше стрілка миготіла б від найменшого руху. */
+      function syncMark() {
+        if (!mark) return;
+        var deep = window.scrollY > 500 && !navShouldHide();
+        mark.classList.toggle('is-up', deep);
+        mark.setAttribute('aria-label', deep ? 'Нагору' : 'Каталог');
+      }
+
+      mark && mark.addEventListener('click', function (e) {
+        if (!mark.classList.contains('is-up')) return;   /* звичайний перехід у каталог */
+        e.preventDefault();
         var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
       });
-      window.OPTIX_toTopSync = sync;
-      sync();
+
+      window.addEventListener('scroll', syncMark, { passive: true });
+      window.OPTIX_navSync = syncNav;
+      window.OPTIX_toTopSync = syncNav;   /* стара назва — щоб не ламати виклики */
+      syncNav();
     })();
 
     /* ===== Wishlist sheet ===== */
