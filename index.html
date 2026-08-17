@@ -636,6 +636,25 @@
     /* Каталог відкритий — знак отримує кільце. Решта розділів
        позначається крапкою під написом; знаку крапку ставити нікуди,
        він піднятий над панеллю. */
+    /* Коли людина не в каталозі — знак раз на кілька секунд легко
+       підстрибує. Це найчастіша дія в застосунку, і без підказки
+       кнопку в центрі часто просто не помічають. Стрибок маленький
+       і рідкий: більше — і він почне дратувати вже на другій хвилині. */
+    @keyframes ox-hop {
+      0%, 84%, 100% { transform: translateY(0); }
+      88%           { transform: translateY(-7px); }
+      92%           { transform: translateY(0); }
+      95%           { transform: translateY(-3px); }
+      98%           { transform: translateY(0); }
+    }
+    .bottomnav-mark:not(.is-mark-active):not(.is-up) {
+      animation: ox-hop 6s ease-in-out infinite;
+    }
+    /* У каталозі, у режимі «нагору» і при вимкнених анімаціях — стоїть. */
+    @media (prefers-reduced-motion: reduce) {
+      .bottomnav-mark:not(.is-mark-active):not(.is-up) { animation: none; }
+    }
+
     .bottomnav-mark.is-mark-active {
       box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--fg);
     }
@@ -2961,15 +2980,19 @@
        виглядає саме як «зазумили дрібний текст»: пропорції букв
        розраховані на 12-14 px. Prata для великого кегля і зроблена —
        нею ж набрано логотип, тож сторінка читається як одне ціле. */
+    /* Великими літерами й на весь рядок: назва бренду — єдине, що
+       людина шукає очима, коли відкриває картку. Prata тримає такий
+       кегль, бо це антиква для заголовків, а не збільшений інтерфейс.
+       Довгі назви JS підтискає, щоб лишались в один рядок. */
     .pdp-brand {
       font-family: var(--font-logo);
-      font-size: 27px;
+      font-size: 34px;
       font-weight: 400;
-      letter-spacing: 0.005em;
-      text-transform: none;
-      line-height: 1.1;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      line-height: 1.05;
       color: var(--fg);
-      margin: 0 0 4px;
+      margin: 0 0 6px;
       white-space: nowrap;
       overflow: hidden;
     }
@@ -3093,16 +3116,7 @@
       margin: 0 -3px;
     }
     .pdp-cols::-webkit-scrollbar { display: none; }
-    .pdp-col {
-      flex: 0 0 84px;
-      border-radius: 10px;
-      overflow: hidden;
-      background: var(--surface);
-      position: relative;
-      display: block;
-      -webkit-tap-highlight-color: transparent;
-      transition: background 0.3s ease;
-    }
+    .pdp-col { flex: 0 0 84px; border-radius: 10px; overflow: hidden; background: var(--surface); opacity: 0.55; box-shadow: inset 0 0 0 1px var(--line); position: relative; display: block; -webkit-tap-highlight-color: transparent; transition: opacity 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease; }
     .pdp-col img {
       width: 100%;
       aspect-ratio: 16 / 9;
@@ -3124,26 +3138,16 @@
     /* Вибраний колір: суцільне кільце впритул до знімка плюс галочка.
        Раніше кільце висіло на відстані 2 px і читалось як випадкова
        рамка поруч, а не як «оце вибрано». */
+    /* Вибраний колір: волосяне кільце в один піксель і легкий підйом.
+       Галочка тут була зайвою — вона перекривала саму оправу, тобто
+       ховала те, заради чого людина і дивиться на плитку. Невибрані
+       трохи притлумлені, тому вибраний читається сам собою. */
     .pdp-col.is-current {
-      box-shadow: 0 0 0 2px var(--fg);
-    }
-    .pdp-col.is-current::after {
-      content: '';
-      position: absolute;
-      right: 5px;
-      bottom: 5px;
-      width: 17px;
-      height: 17px;
-      border-radius: 999px;
-      background: var(--fg);
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5 10 17.5 19 7'/%3E%3C/svg%3E");
-      background-size: 11px 11px;
-      background-position: center;
-      background-repeat: no-repeat;
-      box-shadow: 0 1px 3px rgba(26, 26, 28, 0.25);
+      opacity: 1;
+      box-shadow: inset 0 0 0 1px var(--line), 0 0 0 1.5px var(--fg);
+      transform: translateY(-1px);
     }
     .pdp-col:active { transform: scale(0.96); }
-    .pdp-col { transition: transform 0.12s ease, background 0.3s ease; }
     /* Розпроданий колір не прибираємо, а притлумлюємо: людина бачить,
        що варіант існує, і може про нього спитати — це заявка, не втрата. */
     .pdp-col.is-oos img { opacity: 0.4; }
@@ -3348,14 +3352,14 @@
        Найдовший артикул у базі — 30 знаків. */
     /* Код у рядок без пробілів: це один артикул, а не три слова.
        Повна версія з пробілами лишилась нижче, у рядку «Артикул». */
+    /* Код — службова інформація, клієнту при виборі вона не потрібна.
+       Лишаємо, але тихо: повний артикул усе одно є нижче. */
     .product-code {
       font-family: var(--font-ui);
-      font-size: 11.5px;
+      font-size: 10.5px;
       font-weight: 600;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      /* Не --fg-3: на 11.5 px він дає контраст 2.6 при нормі 4.5.
-         Це артикул, який людина диктує менеджеру — має читатись. */
       color: var(--fg-2);
       margin: 0 0 16px;
       white-space: nowrap;
@@ -6228,6 +6232,20 @@
             similarBlock +
             '<div class="pdp-pad"></div>' +
           '</div>';
+
+        /* Назва бренду в один рядок. «Bottega Veneta» великими
+           літерами ширша за екран — зменшуємо кегль, але не нижче 22,
+           інакше зникає сам сенс великої назви. */
+        var brandEl = bodyEl.querySelector('.pdp-brand');
+        if (brandEl) {
+          var bs = 34, bguard = 0;
+          brandEl.style.fontSize = bs + 'px';
+          while (brandEl.scrollWidth > brandEl.clientWidth &&
+                 brandEl.clientWidth > 0 && bs > 22 && bguard++ < 40) {
+            bs -= 1;
+            brandEl.style.fontSize = bs + 'px';
+          }
+        }
 
         /* Код завжди в один рядок. Спершу прикидка за довжиною — вона
            працює навіть коли шрифт ще не завантажився і міряти нічим.
