@@ -118,7 +118,9 @@
       position: fixed;
       top: 0; left: 0; right: 0;
       height: var(--tg-top);
-      z-index: 300;
+      z-index: 190;
+      /* Нижче за перегляд знімка (200 у .zoom): там кадр займає
+         весь екран, і світла смуга вгорі різала його навпіл. */
       background: var(--raise);
       border-bottom: 1px solid var(--line);
       pointer-events: none;
@@ -665,12 +667,16 @@
        підстрибує. Це найчастіша дія в застосунку, і без підказки
        кнопку в центрі часто просто не помічають. Стрибок маленький
        і рідкий: більше — і він почне дратувати вже на другій хвилині. */
+    /* Стрибок через властивість translate, а не transform. Інакше
+       нескінченна анімація перехоплює transform, і :active зі
+       scale(0.92) не спрацьовує зовсім — кнопка перестає відгукуватись
+       на натиск, і саме це читається як «глючить». */
     @keyframes ox-hop {
-      0%, 84%, 100% { transform: translateY(0); }
-      88%           { transform: translateY(-7px); }
-      92%           { transform: translateY(0); }
-      95%           { transform: translateY(-3px); }
-      98%           { transform: translateY(0); }
+      0%, 84%, 100% { translate: 0 0; }
+      88%           { translate: 0 -7px; }
+      92%           { translate: 0 0; }
+      95%           { translate: 0 -3px; }
+      98%           { translate: 0 0; }
     }
     .bottomnav-mark:not(.is-mark-active):not(.is-up) {
       animation: ox-hop 6s ease-in-out infinite;
@@ -3929,8 +3935,8 @@
   <section class="hero-c" aria-label="Головне">
     <div class="hero-track" id="heroTrack">
 
-      <div class="hero-slide">
-        <img class="hero-c-img" src="assets/hero-glasses.jpg" alt="" fetchpriority="high" />
+      <div class="hero-slide" id="heroSlide1">
+        <img class="hero-c-img" id="heroImg1" src="assets/hero-glasses.jpg" alt="" fetchpriority="high" />
         <div class="hero-c-shade" aria-hidden="true"></div>
         <div class="hero-c-text">
           <p class="hero-c-kicker" data-t="b1Kicker">Нова колекція</p>
@@ -3941,12 +3947,13 @@
         </div>
       </div>
 
-      <div class="hero-slide">
+      <div class="hero-slide" id="heroSlide2">
+        <img class="hero-c-img" id="heroImg2" alt="" hidden />
         <div class="hero-collage" id="heroCollage" aria-hidden="true"></div>
         <div class="hero-c-shade" aria-hidden="true"></div>
         <div class="hero-c-text">
           <p class="hero-c-kicker" data-t="b2Kicker">Чотири бренди</p>
-          <p class="hero-c-title" id="heroCountTitle">Каталог</p>
+          <p class="hero-c-title" id="heroCountTitle" data-t="b2Title">Каталог</p>
           <button class="hero-c-cta" type="button" data-go-catalog>
             <span class="hero-ox">Ox</span><span data-t="b2Cta">Дивитись усі</span>
           </button>
@@ -3954,11 +3961,12 @@
       </div>
 
       <div class="hero-slide" id="heroSpotSlide" hidden>
+        <img class="hero-c-img" id="heroImg3" alt="" hidden />
         <div class="hero-spot" id="heroSpot"></div>
         <div class="hero-c-shade" aria-hidden="true"></div>
         <div class="hero-c-text">
           <p class="hero-c-kicker" id="heroSpotKicker" data-t="b3Kicker">Знижка тижня</p>
-          <p class="hero-c-title" id="heroSpotTitle"></p>
+          <p class="hero-c-title" id="heroSpotTitle" data-t="b3Title"></p>
           <button class="hero-c-cta" type="button" data-go-sale>
             <span class="hero-ox">Ox</span><span data-t="b3Cta">До акції</span>
           </button>
@@ -4343,7 +4351,7 @@
 
       var PROMO_QUERY = '*[_type == "promo" && active == true] { name, type, discount, brand, scope, startDate, endDate, code }';
 
-      var SETTINGS_QUERY = '*[_type == "settings"][0] { tgUsername, deliveryTime, pair2Discount, pair3Discount, giftBrandsNote, rateUAH, rateUSDT, "heroUrl": heroImage.asset->url, heroTitle, heroCta, saleTitle, saleSubtitle, aboutKicker, aboutTitle, aboutWhoTitle, aboutWhoText, aboutQuote, aboutStepsTitle, b1Kicker, b2Kicker, b2Cta, b3Cta, secBrands, secBrandsLink, secNew, secNewLink, lookKicker, lookTitle, lookOff, trust1T, trust1S, trust2T, trust2S, trust3T, trust3S, conKicker, conTitle, conText, conCta, aboutLinkT, aboutLinkS, promoEyebrow, promoTitle, promoText, promoCta, promoOff }';
+      var SETTINGS_QUERY = '*[_type == "settings"][0] { tgUsername, deliveryTime, pair2Discount, pair3Discount, giftBrandsNote, rateUAH, rateUSDT, "heroUrl": heroImage.asset->url, heroTitle, heroCta, saleTitle, saleSubtitle, aboutKicker, aboutTitle, aboutWhoTitle, aboutWhoText, aboutQuote, aboutStepsTitle, "b1Url": b1Image.asset->url, b1Kicker, b1Title, b1Cta, b1Link, b1Off, "b2Url": b2Image.asset->url, b2Kicker, b2Title, b2Cta, b2Link, b2Off, "b3Url": b3Image.asset->url, b3Kicker, b3Title, b3Cta, b3Link, b3Off, secBrands, secBrandsLink, secNew, secNewLink, lookKicker, lookTitle, lookOff, trust1T, trust1S, trust2T, trust2S, trust3T, trust3S, conKicker, conTitle, conText, conCta, aboutLinkT, aboutLinkS, promoEyebrow, promoTitle, promoText, promoCta, promoOff }';
 
       /* Products */
       /* Показові товари з коду потрібні у двох місцях: щоб сторінку
@@ -4491,6 +4499,41 @@
               el.textContent = v;
             }
           });
+          /* ---------- Три банери: фото, тексти й куди ведуть ----------
+             Кожен слайд повністю керується з адмінки. Порожні поля не
+             ламають нічого: там, де нічого не задано, лишається те, що
+             сайт рахує сам — колаж брендів на другому і найбільша
+             знижка на третьому. */
+          [1, 2, 3].forEach(function (i) {
+            var slide = document.getElementById(i === 3 ? 'heroSpotSlide' : 'heroSlide' + i);
+            if (!slide) return;
+
+            /* Сховати слайд цілком */
+            if (s['b' + i + 'Off'] === true) {
+              slide.hidden = true;
+              slide.dataset.off = '1';
+              return;
+            }
+            slide.dataset.off = '';
+
+            /* Своє фото перекриває те, що слайд малює за замовчуванням */
+            var url = s['b' + i + 'Url'];
+            var img = document.getElementById('heroImg' + i);
+            if (url && img) {
+              img.src = url + '?w=1200&fit=max';
+              img.hidden = false;
+              /* автоматичну підкладку ховаємо, інакше вона проступає */
+              var auto = slide.querySelector('.hero-collage, .hero-spot');
+              if (auto) auto.hidden = true;
+              if (i === 3) slide.hidden = false;   /* фото задано — показуємо */
+            }
+
+            /* Куди веде кнопка */
+            var dest = s['b' + i + 'Link'];
+            var btn = slide.querySelector('.hero-c-cta');
+            if (dest && btn) btn.setAttribute('data-hero-go', dest);
+          });
+
           /* Блок «Образ» можна взагалі прибрати з головної. */
           if (s.lookOff === true) {
             var look = document.getElementById('lookSection');
@@ -6889,6 +6932,23 @@
       });
     })();
 
+    /* Куди ведуть кнопки банерів. Один обробник на всі три: адреса
+       береться з атрибута, який проставляється з налаштувань. */
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-hero-go]');
+      if (!b) return;
+      e.preventDefault();
+      var d = b.getAttribute('data-hero-go');
+      if (d === 'catalog') { if (window.OPTIX_showView) window.OPTIX_showView('catalog'); return; }
+      if (d === 'sale')    { if (window.OPTIX_selectSale) window.OPTIX_selectSale();
+                             else if (window.OPTIX_showView) window.OPTIX_showView('catalog'); return; }
+      if (d === 'new')     { var n = document.getElementById('newArrivalsStrip');
+                             if (n) n.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+      if (d === 'about')   { var ab = document.getElementById('aboutOpenBtn');
+                             if (ab) ab.click(); return; }
+      if (d === 'manager') { if (window.OPTIX_openTgChat) window.OPTIX_openTgChat('Вітаю! Питання щодо оправ.'); return; }
+    }, true);
+
     /* ---------- нижня панель: стан розділу і динамічний знак ----------
        Один модуль на всю панель. Раніше активний розділ ставили в двох
        різних місцях, і при відкритті шторки підсвітка лишалась на
@@ -8037,6 +8097,10 @@
         var slide = document.getElementById('heroSpotSlide');
         var spot  = document.getElementById('heroSpot');
         if (!slide || !spot) return;
+        /* Вимкнено в адмінці — не вмикаємо назад. Автопідбір знижки
+           працює пізніше за налаштування, і без цієї перевірки він
+           повертав на екран банер, який щойно сховали. */
+        if (slide.dataset.off === '1') { slide.hidden = true; return; }
         var parse = window.OPTIX_parsePrice;
         var best = null, bestPct = 0;
         (window.OPTIX_PRODUCTS || []).forEach(function (p) {
@@ -8089,6 +8153,8 @@
 
       /* --- кнопки на слайдах --- */
       document.addEventListener('click', function (e) {
+        /* Якщо в адмінці задано куди вести — рішення за нею. */
+        if (e.target.closest('[data-hero-go]')) return;
         if (e.target.closest('[data-go-catalog]')) { goCatalog(); return; }
         var sale = e.target.closest('[data-go-sale]');
         if (sale) {
