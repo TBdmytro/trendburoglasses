@@ -2633,32 +2633,33 @@
       border-radius: 0;
     }
     .product-card-info { padding: 11px 12px 13px; }
+    /* Бренд — головне, що людина шукає очима. Код моделі потрібен уже
+       на етапі замовлення, тому він і став другорядним. Раніше було
+       навпаки: 8.5 px на бренд і 13 px на набір цифр. */
     .product-card-brand {
-      font-family: var(--font-ui);
-      font-size: 8.5px;
-      font-weight: 800;
-      letter-spacing: 0.18em;
-      line-height: 1.2;
-      margin: 0 0 5px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      text-transform: uppercase;
-      color: var(--fg-2);
-    }
-    .product-card-code {
       font-family: var(--font-ui);
       font-size: 13px;
       font-weight: 700;
-      letter-spacing: 0;
+      letter-spacing: 0.01em;
+      line-height: 1.2;
       text-transform: none;
       color: var(--fg);
-      opacity: 1;
+      margin: 0 0 3px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .product-card-code {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      text-transform: none;
+      color: var(--fg-2);
       margin: 0 0 6px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      line-height: 1.2;
     }
     .product-card-pricing {
       display: flex;
@@ -2962,14 +2963,16 @@
     .pdp-hd { padding: 0 20px; }
     /* Порядок читання: спершу бренд дрібним, потім код великим.
        Бренд — це полиця, код — конкретна річ. */
+    /* На сторінці товару бренд став заголовком, код — підписом під ним. */
     .pdp-brand {
-      font-family: var(--font-ui);
-      font-size: 10.5px;
-      font-weight: 800;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--fg-2);
-      margin-bottom: 6px;
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      text-transform: none;
+      line-height: 1.15;
+      color: var(--fg);
+      margin-bottom: 2px;
     }
     .pdp-price {
       display: flex;
@@ -3344,19 +3347,7 @@
 
     /* Код завжди в один рядок: розмір підганяє скрипт під довжину.
        Найдовший артикул у базі — 30 знаків. */
-    .product-code {
-      font-family: var(--font-ui);
-      font-size: 24px;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      text-transform: none;
-      color: var(--fg);
-      opacity: 1;
-      margin: 6px 0 14px;
-      white-space: nowrap;
-      overflow: hidden;
-      line-height: 1.1;
-    }
+    .product-code { font-family: var(--font-ui); font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-2); opacity: 1; margin: 0 0 14px; white-space: nowrap; overflow: hidden; line-height: 1.1; }
 
     .product-pricing {
       display: flex;
@@ -4715,9 +4706,11 @@
         if (k.model !== me.model) continue;
         out.push({ product: q, color: k.color, size: k.size });
       }
+      /* Порядок сталий — тільки за кодом кольору. Раніше вибраний
+         ставав першим, і при перемиканні весь ряд перебудовувався:
+         людина тиснула четверту плитку, а вибраною бачила першу й
+         не розуміла, що взагалі вибрала. */
       out.sort(function (a, b) {
-        if (a.product.code === product.code) return -1;
-        if (b.product.code === product.code) return 1;
         return String(a.color).localeCompare(String(b.color));
       });
       return out;
@@ -6330,8 +6323,18 @@
         e.preventDefault();
         var code = chip.getAttribute('data-color-code');
         if (!code || code === currentCode) return;
+        /* Прокрутку не чіпаємо: людина дивиться на ряд кольорів, і
+           стрибок сторінки вгору щоразу відкидав би її від нього. */
+        var keepScroll = bodyEl.scrollTop;
         window.OPTIX_openProduct(code, true);
-        bodyEl.scrollTop = 0;
+        bodyEl.scrollTop = keepScroll;
+        /* Підводимо вибрану плитку в поле зору, якщо вона за краєм. */
+        var row = bodyEl.querySelector('.pdp-cols');
+        var picked = bodyEl.querySelector('.pdp-col.is-current');
+        if (row && picked) {
+          var left = picked.offsetLeft - (row.clientWidth - picked.offsetWidth) / 2;
+          row.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
+        }
       });
 
       window.OPTIX_openProduct = function (code, silent) {
