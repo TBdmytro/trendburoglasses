@@ -8,9 +8,9 @@
   <!-- Знак «ox» просто у розмітці: окремий файл вантажити не треба,
        тому іконка є одразу, навіть якщо картинки ще не завантажились. -->
   <link rel="icon" type="image/svg+xml"
-    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' rx='44' fill='%231a1a1c'/%3E%3Ctext x='100' y='118' text-anchor='middle' font-family='Georgia,serif' font-size='44' letter-spacing='4' fill='%23fbfaf8'%3EOPTIX%3C/text%3E%3C/svg%3E" />
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' rx='44' fill='%2312293e'/%3E%3Ctext x='100' y='118' text-anchor='middle' font-family='Georgia,serif' font-size='44' letter-spacing='4' fill='%23fbfaf8'%3EOPTIX%3C/text%3E%3C/svg%3E" />
   <link rel="apple-touch-icon"
-    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' rx='44' fill='%231a1a1c'/%3E%3Ctext x='100' y='118' text-anchor='middle' font-family='Georgia,serif' font-size='44' letter-spacing='4' fill='%23fbfaf8'%3EOPTIX%3C/text%3E%3C/svg%3E" />
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' rx='44' fill='%2312293e'/%3E%3Ctext x='100' y='118' text-anchor='middle' font-family='Georgia,serif' font-size='44' letter-spacing='4' fill='%23fbfaf8'%3EOPTIX%3C/text%3E%3C/svg%3E" />
   <meta name="theme-color" content="#fbfaf8" id="themeColorMeta" />
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -34,7 +34,10 @@
       --bg: #fbfaf8;          /* майже білий, теплий */
       --surface: #ffffff;     /* плитка під фото товару */
       --raise: #f1efeb;       /* підняті блоки, підписи карток */
-      --fg: #1a1a1c;          /* графіт замість чорного */
+      /* Основний колір — фірмовий темно-синій замість чорного. Ним
+     набрано текст, ним же залиті кнопки, знак Ox і кільце вибраного
+     кольору: усе «чорне» на сайті насправді тепер синє. */
+  --fg: #12293e;          /* графіт замість чорного */
       --fg-2: #5a5c60;        /* другорядний текст, контраст 5.97 */
       --fg-3: #9b9da1;        /* підказки */
       --line: #e7e4de;        /* волосяні лінії */ /* там, де потрібен жорсткий контур */
@@ -1537,7 +1540,7 @@
       align-items: center;
       gap: 8px;
       background: rgba(255, 255, 255, 0.94);
-      color: #1a1a1c;
+      color: #12293e;
       border: none;
       border-radius: 999px;
       padding: 6px 13px 6px 6px;
@@ -1624,8 +1627,8 @@
       border-radius: 5px;
       line-height: 1.2;
       background: rgba(255, 255, 255, 0.94);
-      color: #1a1a1c;
-      box-shadow: 0 1px 3px rgba(26, 26, 28, 0.12);
+      color: #12293e;
+      box-shadow: 0 1px 3px rgba(18, 41, 62, 0.12);
     }
 
 
@@ -2742,7 +2745,7 @@
       border: 0;
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.92);
-      box-shadow: 0 1px 3px rgba(26, 26, 28, 0.12);
+      box-shadow: 0 1px 3px rgba(18, 41, 62, 0.12);
       cursor: pointer;
       padding: 0;
       -webkit-tap-highlight-color: transparent;
@@ -2751,7 +2754,7 @@
     .product-card-heart svg {
       width: 15px;
       height: 15px;
-      stroke: #1a1a1c;
+      stroke: #12293e;
       fill: none;
       stroke-width: 1.7;
       display: block;
@@ -2769,7 +2772,7 @@
       font-size: 10px;
       letter-spacing: 0.16em;
       padding-left: 0.16em;
-      color: #1a1a1c;
+      color: #12293e;
       opacity: 0.3;
       pointer-events: none;
       z-index: 1;
@@ -2858,13 +2861,13 @@
     #productSheet .sheet-title { display: none; }
     #productSheet .sheet-back {
       background: rgba(255, 255, 255, 0.92);
-      color: #1a1a1c;
+      color: #12293e;
       border-radius: 999px;
       width: 38px;
       height: 38px;
-      box-shadow: 0 1px 6px rgba(26, 26, 28, 0.16);
+      box-shadow: 0 1px 6px rgba(18, 41, 62, 0.16);
     }
-    #productSheet .sheet-back svg { stroke: #1a1a1c; }
+    #productSheet .sheet-back svg { stroke: #12293e; }
 
     /* Смуга Телеграма («Закрити», «...») малюється поверх сторінки.
        Знімок починався від самого верху й опинявся під нею — саме
@@ -2936,7 +2939,7 @@
        двадцять разів підряд. */
     /* Знак у нижньому куті кадру, впритул до краю: раніше він висів
        на межі знімка й картки й виглядав як випадковий. */
-    .pdp-ox { position: absolute; left: 12px; bottom: 10px; z-index: 4; width: 28px; height: 28px; border-radius: 999px; background: #1a1a1c; color: #ffffff; display: grid; place-items: center; font-family: var(--font-logo); font-size: 11px; letter-spacing: 0.04em; padding-left: 12px; pointer-events: none; border: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform 0.12s ease; }
+    .pdp-ox { position: absolute; left: 12px; bottom: 10px; z-index: 4; width: 28px; height: 28px; border-radius: 999px; background: #12293e; color: #ffffff; display: grid; place-items: center; font-family: var(--font-logo); font-size: 11px; letter-spacing: 0.04em; padding-left: 12px; pointer-events: none; border: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform 0.12s ease; }
     .pdp-ox:active { transform: scale(0.9); }
 
     /* Крапки під знімком, а не поверх нього: на світлій оправі вони
@@ -2970,7 +2973,7 @@
       width: 5px;
       height: 5px;
       border-radius: 999px;
-      background: #1a1a1c;
+      background: #12293e;
       opacity: 0.22;
       transition: width 0.2s ease, opacity 0.2s ease;
     }
@@ -3182,7 +3185,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(26, 26, 28, 0.72);
+      background: rgba(18, 41, 62, 0.72);
       color: #fff;
       font-size: 7.5px;
       font-weight: 700;
@@ -4995,7 +4998,7 @@
         t = document.createElement('div');
         t.id = 'optixToast';
         t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);' +
-          'background:#1a1a1c;color:#fbfaf8;font-family:Manrope,sans-serif;font-size:13px;line-height:1.4;' +
+          'background:#12293e;color:#fbfaf8;font-family:Manrope,sans-serif;font-size:13px;line-height:1.4;' +
           'padding:12px 18px;border-radius:999px;max-width:88%;text-align:center;z-index:9999;' +
           'box-shadow:0 8px 28px rgba(27,45,64,.3);opacity:0;transition:opacity .25s ease,transform .25s ease;pointer-events:none;';
         document.body.appendChild(t);
