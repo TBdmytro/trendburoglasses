@@ -15,17 +15,17 @@
     --bg: #fbfaf8;
     --surface: #ffffff;
     --raise: #f1efeb;
-    --fg: #1a1a1c;
+    --fg: #12293e;
     --fg-soft: #5a5c60;
     --fg-mute: #9b9da1;
     --line: #e7e4de;
     --acc: #3f6480;
     --gold: #7d5a18;
     --gold-soft: rgba(63,100,128,.10);
-    --accent: #1a1a1c;
+    --accent: #12293e;
     --green: #2f7a4a;
     --red: #b23b30;
-    --shadow: 0 1px 2px rgba(20,22,26,.05), 0 8px 24px rgba(20,22,26,.07);
+    --shadow: 0 1px 2px rgba(18,41,62,.05), 0 8px 24px rgba(18,41,62,.07);
     --display: 'Prata', Georgia, serif;
     --ui: 'Manrope', system-ui, -apple-system, sans-serif;
     /* Заповнює JS з Телеграма. Поза Телеграмом лишається 0, і тоді
@@ -365,11 +365,11 @@
     width:26px; height:26px; border-radius:50%;
     border:0; cursor:pointer;
     background:rgba(255,255,255,.92);
-    box-shadow:0 1px 3px rgba(26,26,28,.16);
+    box-shadow:0 1px 3px rgba(18,41,62,.16);
   }
   .pcard-pick::after {
     content:''; position:absolute; inset:6px;
-    border:1.5px solid rgba(26,26,28,.3); border-radius:4px;
+    border:1.5px solid rgba(18,41,62,.3); border-radius:4px;
   }
   .pcard-pick.on { background:var(--acc); box-shadow:0 1px 4px rgba(63,100,128,.4); }
   .pcard-pick.on::after { content:'✓'; inset:0; border:0; color:#fff; font-size:14px;
@@ -377,7 +377,7 @@
   .pcard.is-picked { outline:2px solid var(--acc); outline-offset:-2px; }
 
   /* ============ МОДАЛКА МАСОВОЇ ДІЇ ============ */
-  .modal { position:fixed; inset:0; z-index:220; background:rgba(20,22,26,.5);
+  .modal { position:fixed; inset:0; z-index:220; background:rgba(18,41,62,.5);
            display:flex; align-items:flex-end; justify-content:center; }
   .modal[hidden] { display:none; }
   .modal-card { background:var(--bg); width:100%; max-width:520px; border-radius:20px 20px 0 0;
@@ -397,7 +397,7 @@
   .pv-theme { position:absolute; top:8px; right:8px; z-index:4; width:28px; height:28px; border-radius:50%;
               border:1px solid var(--line); background:rgba(255,255,255,.9); font-size:13px; cursor:pointer; }
   .pv { background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden;
-        font-size:11px; color:#1a1a1c; }
+        font-size:11px; color:#12293e; }
   .pv[data-dark] { background:#14171b; color:#f1eee8; border-color:#272c33; }
   .pv[data-dark] .pv-row i, .pv[data-dark] .pv-banner i { background:#1d2127; }
   .pv[data-dark] .pv-sl, .pv[data-dark] .pv-albk span { color:#a0a5ad; }
