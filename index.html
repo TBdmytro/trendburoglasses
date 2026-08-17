@@ -2838,11 +2838,15 @@
     /* Кадр знімка. Пропорцію ставить JS за реальним файлом
        (--gal-ar), тому смуг згори й знизу не лишається.
        До завантаження тримаємо 16:9, щоб сторінка не стрибала. */
+    /* Пропорцію задає JS за самим файлом (--gal-ar) — тоді знімок
+       заповнює кадр без полів. max-height — страховка: якщо файл
+       не встиг зміряти, кадр не перетвориться на порожню шахту. */
     .pdp-gal-track {
       background: var(--surface);
       display: flex;
       align-items: center;
       aspect-ratio: var(--gal-ar, 16 / 9);
+      max-height: 38vh;
       overflow-x: auto;
       scroll-snap-type: x mandatory;
       -webkit-overflow-scrolling: touch;
@@ -2877,23 +2881,10 @@
     }
     /* Бейдж завжди лежить на світлій фотоплитці, тому кольори фіксовані:
        через змінні вони у темній темі світлішають і білий текст зникає. */
-    .pdp-badge {
-      position: absolute;
-      top: calc(58px + var(--tg-top));
-      left: 12px;
-      height: 22px;
-      padding: 0 9px 0 calc(9px + 0.08em);
-      border-radius: 8px;
-      display: grid;
-      place-items: center;
-      font-family: var(--font-ui);
-      font-size: 9.5px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #fff;
-      z-index: 4;
-    }
+    /* Плашка знижки праворуч угорі. Ліворуч стоїть кнопка «назад», а
+       посередині — сама оправа: у лівому куті плашка лягала просто на
+       скло. Праворуч зверху вільно завжди. */
+    .pdp-badge { position: absolute; top: calc(14px + var(--tg-top)); right: 12px; height: 22px; padding: 0 9px 0 calc(9px + 0.08em); border-radius: 8px; display: grid; place-items: center; font-family: var(--font-ui); font-size: 9.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; z-index: 4; }
     .pdp-badge--sale { background: #3f6480; }
     .pdp-badge--new  { background: #b23b30; }
 
@@ -2901,7 +2892,9 @@
        меню веде в каталог: людина бачить, що це один і той самий знак.
        У каталозі його немає навмисно — там він повторювався б
        двадцять разів підряд. */
-    .pdp-ox { position: absolute; left: 12px; bottom: 32px; z-index: 4; width: 30px; height: 30px; border-radius: 999px; background: #1a1a1c; color: #ffffff; display: grid; place-items: center; font-family: var(--font-logo); font-size: 11px; letter-spacing: 0.04em; padding-left: 0.04em; pointer-events: none; border: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform 0.12s ease; }
+    /* Знак у нижньому куті кадру, впритул до краю: раніше він висів
+       на межі знімка й картки й виглядав як випадковий. */
+    .pdp-ox { position: absolute; left: 12px; bottom: 10px; z-index: 4; width: 28px; height: 28px; border-radius: 999px; background: #1a1a1c; color: #ffffff; display: grid; place-items: center; font-family: var(--font-logo); font-size: 11px; letter-spacing: 0.04em; padding-left: 12px; pointer-events: none; border: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform 0.12s ease; }
     .pdp-ox:active { transform: scale(0.9); }
 
     /* Крапки під знімком, а не поверх нього: на світлій оправі вони
@@ -2964,15 +2957,21 @@
     /* Порядок читання: спершу бренд дрібним, потім код великим.
        Бренд — це полиця, код — конкретна річ. */
     /* На сторінці товару бренд став заголовком, код — підписом під ним. */
+    /* Антиква, а не збільшений інтерфейсний шрифт. Manrope у 26 px
+       виглядає саме як «зазумили дрібний текст»: пропорції букв
+       розраховані на 12-14 px. Prata для великого кегля і зроблена —
+       нею ж набрано логотип, тож сторінка читається як одне ціле. */
     .pdp-brand {
-      font-family: var(--font-display);
-      font-size: 26px;
-      font-weight: 700;
-      letter-spacing: -0.01em;
+      font-family: var(--font-logo);
+      font-size: 27px;
+      font-weight: 400;
+      letter-spacing: 0.005em;
       text-transform: none;
-      line-height: 1.15;
+      line-height: 1.1;
       color: var(--fg);
-      margin-bottom: 2px;
+      margin: 0 0 4px;
+      white-space: nowrap;
+      overflow: hidden;
     }
     .pdp-price {
       display: flex;
@@ -3347,7 +3346,20 @@
 
     /* Код завжди в один рядок: розмір підганяє скрипт під довжину.
        Найдовший артикул у базі — 30 знаків. */
-    .product-code { font-family: var(--font-ui); font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-2); opacity: 1; margin: 0 0 14px; white-space: nowrap; overflow: hidden; line-height: 1.1; }
+    /* Код у рядок без пробілів: це один артикул, а не три слова.
+       Повна версія з пробілами лишилась нижче, у рядку «Артикул». */
+    .product-code {
+      font-family: var(--font-ui);
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      /* Не --fg-3: на 11.5 px він дає контраст 2.6 при нормі 4.5.
+         Це артикул, який людина диктує менеджеру — має читатись. */
+      color: var(--fg-2);
+      margin: 0 0 16px;
+      white-space: nowrap;
+    }
 
     .product-pricing {
       display: flex;
@@ -5589,7 +5601,7 @@
               '</div>' +
               '<div class="product-card-info">' +
                 '<p class="product-card-brand">' + esc(p.brand) + '</p>' +
-                '<p class="product-card-code">' + esc(p.code) + '</p>' +
+                '<p class="product-card-code">' + esc(String(p.code).replace(/\s+/g, '')) + '</p>' +
                 '<p class="product-card-pricing">' +
                   '<span class="product-card-price">' + window.OPTIX_money(p.price) + '</span>' +
                   (p.oldPrice ? '<span class="product-card-old-price">' + window.OPTIX_money(p.oldPrice) + '</span>' : '') +
@@ -6205,7 +6217,7 @@
             '<div class="pdp-grab"></div>' +
             '<div class="pdp-hd">' +
               '<div class="pdp-brand">' + esc(p.brand) + '</div>' +
-              '<h2 class="product-code">' + esc(p.code) + '</h2>' +
+              '<h2 class="product-code">' + esc(String(p.code).replace(/\s+/g, '')) + '</h2>' +
               '<div class="pdp-price">' + pricing + '</div>' +
               savingLine +
               ship +
@@ -6354,21 +6366,36 @@
         var gallery = document.getElementById('productGallery');
         var dotsWrap = document.getElementById('productGalleryDots');
 
-        /* Кадр підганяємо під сам знімок. Постачальники віддають
-           різні пропорції; фіксована рамка або ріже оправу, або
-           лишає широкі порожні поля. Обмежуємо розумними межами,
-           щоб дуже вузьке чи дуже високе фото не ламало сторінку. */
+        /* Кадр підганяємо під сам знімок, інакше по краях лишаються
+           порожні поля і оправа виглядає дрібною. Раніше міряли лише
+           один раз: якщо в ту мить розміри ще не були відомі, кадр
+           так і лишався з запасною пропорцією 16:9. Тепер пробуємо
+           кілька разів і перевіряємо кожен знімок. */
         if (gallery) {
-          var first = gallery.querySelector('img');
-          if (first) {
-            var fit = function () {
-              var w = first.naturalWidth, h = first.naturalHeight;
-              if (!w || !h) return;
-              var ar = Math.min(2.1, Math.max(1.15, w / h));
-              var host = gallery.closest('.pdp-gal') || gallery;
-              host.style.setProperty('--gal-ar', ar.toFixed(3));
+          var host = gallery.closest('.pdp-gal') || gallery;
+          var fit = function () {
+            var imgs = gallery.querySelectorAll('img');
+            for (var i = 0; i < imgs.length; i++) {
+              var w = imgs[i].naturalWidth, h = imgs[i].naturalHeight;
+              if (w && h) {
+                /* Межі широкі: ріже лише відверто зламані файли. */
+                var ar = Math.min(2.6, Math.max(0.9, w / h));
+                host.style.setProperty('--gal-ar', ar.toFixed(3));
+                return true;
+              }
+            }
+            return false;
+          };
+          if (!fit()) {
+            var tries = 0;
+            var retry = function () {
+              if (fit() || ++tries > 20) return;
+              requestAnimationFrame(retry);
             };
-            if (first.complete) fit(); else first.addEventListener('load', fit, { once: true });
+            requestAnimationFrame(retry);
+            gallery.querySelectorAll('img').forEach(function (im) {
+              im.addEventListener('load', fit, { once: true });
+            });
           }
         }
         if (gallery && dotsWrap) {
@@ -7610,7 +7637,7 @@
             '</div>' +
             '<div class="product-card-info">' +
               '<p class="product-card-brand">' + esc(p.brand) + '</p>' +
-              '<p class="product-card-code">' + esc(p.code) + '</p>' +
+              '<p class="product-card-code">' + esc(String(p.code).replace(/\s+/g, '')) + '</p>' +
               '<p class="product-card-pricing">' +
                 '<span class="product-card-price">' + window.OPTIX_money(p.price) + '</span>' +
                 (p.oldPrice ? '<span class="product-card-old-price">' + window.OPTIX_money(p.oldPrice) + '</span>' : '') +
@@ -7707,7 +7734,7 @@
             '</div>' +
             '<div class="product-card-info">' +
               '<p class="product-card-brand">' + esc(p.brand) + '</p>' +
-              '<p class="product-card-code">' + esc(p.code) + '</p>' +
+              '<p class="product-card-code">' + esc(String(p.code).replace(/\s+/g, '')) + '</p>' +
               '<p class="product-card-pricing">' +
                 '<span class="product-card-price">' + window.OPTIX_money(p.price) + '</span>' +
                 (p.oldPrice ? '<span class="product-card-old-price">' + window.OPTIX_money(p.oldPrice) + '</span>' : '') +
@@ -7848,7 +7875,7 @@
               '</div>' +
               '<div class="product-card-info">' +
                 '<p class="product-card-brand">' + esc(p.brand) + '</p>' +
-                '<p class="product-card-code">' + esc(p.code) + '</p>' +
+                '<p class="product-card-code">' + esc(String(p.code).replace(/\s+/g, '')) + '</p>' +
                 '<p class="product-card-pricing">' +
                   '<span class="product-card-price">' + window.OPTIX_money(p.price) + '</span>' +
                   '<span class="product-card-old-price">' + window.OPTIX_money(p.oldPrice) + '</span>' +
