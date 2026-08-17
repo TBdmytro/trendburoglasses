@@ -437,12 +437,6 @@
   .pv-albk b { font-size:11px; }
   .pv-albk span { font-size:9.5px; color:var(--fg-mute); }
 
-  .blkbar { display:flex; gap:6px; overflow-x:auto; margin-bottom:12px; scrollbar-width:none; }
-  .blkbar::-webkit-scrollbar { display:none; }
-  .blkchip { flex:0 0 auto; font-family:var(--ui); font-size:11.5px; font-weight:600; padding:7px 12px;
-             border-radius:999px; border:1px solid var(--line); background:var(--surface);
-             color:var(--fg-soft); cursor:pointer; white-space:nowrap; }
-  .blkchip.on { background:var(--acc); border-color:var(--acc); color:#fff; }
   .blk[hidden] { display:none; }
   .blk-note { margin-bottom:10px; }
   .blk .settings-divider:first-of-type { margin-top:0; }
@@ -475,10 +469,10 @@
   .tip ol li { margin-bottom:3px; }
 
   .qa:active, .al:active, .pcard-pick:active,
-  .prod-schip:active, .blkchip:active, .add-btn:active { transform: scale(.97); }
-  .qa, .al, .pcard-pick, .prod-schip, .blkchip, .add-btn { transition: transform .1s ease; }
+  .prod-schip:active, .srow:active, .add-btn:active { transform: scale(.97); }
+  .qa, .al, .pcard-pick, .prod-schip, .add-btn { transition: transform .1s ease; }
   /* Мінімум 44 px висоти для всього, у що треба влучити пальцем. */
-  .prod-schip, .blkchip { min-height: 34px; }
+  .prod-schip { min-height: 34px; }
   .add-btn { min-height: 52px; }
 
   .brandpick {
@@ -508,6 +502,48 @@
   .brandrow.on { background:var(--gold-soft); font-weight:700; }
   .brandrow .n { margin-left:auto; font-size:12px; color:var(--fg-mute); font-weight:600; }
   .brandrow .tick { width:16px; flex:0 0 auto; color:var(--acc); font-weight:700; }
+
+  /* ============ СПИСОК БЛОКІВ САЙТУ ============
+     Групований список, як у налаштуваннях iOS: спершу вибираєш, що
+     саме правиш, і лише потім бачиш поля. Раніше всі дев'ять блоків
+     і 35 полів лежали на одному екрані — знайти потрібне було
+     неможливо. */
+  .sgroup-t {
+    font-size: 11px; font-weight: 700; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--fg-mute);
+    margin: 22px 4px 8px;
+  }
+  .sgroup {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .srow {
+    width: 100%; display: flex; align-items: center; gap: 10px;
+    min-height: 62px; padding: 12px 14px;
+    border: 0; background: transparent; cursor: pointer; text-align: left;
+    font-family: var(--ui); color: var(--fg);
+    transition: background .15s ease;
+  }
+  .srow + .srow { border-top: 1px solid var(--line); }
+  .srow:active { background: var(--raise); }
+  .srow-tx { flex: 1; min-width: 0; }
+  .srow-tx b { display: block; font-size: 14.5px; font-weight: 600; margin-bottom: 2px; }
+  .srow-tx span { display: block; font-size: 11.5px; color: var(--fg-soft); line-height: 1.35; }
+  .srow-st {
+    flex: 0 0 auto; font-size: 10.5px; font-weight: 700;
+    padding: 4px 8px; border-radius: 999px; white-space: nowrap;
+    background: var(--gold-soft); color: var(--acc);
+  }
+  .srow-st.is-default { background: var(--raise); color: var(--fg-mute); }
+  .srow-st.is-off { background: #fdf4f2; color: var(--red); }
+  .srow-ch { flex: 0 0 auto; width: 16px; height: 16px; fill: none;
+             stroke: var(--fg-mute); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* На екрані блока прев'ю показує тільки цей блок — решта прихована,
+     щоб нічого не відволікало. */
+  .pv-block[hidden] { display: none; }
 
   /* toast */
   .toast { position:fixed; left:50%; bottom:calc(76px + max(env(safe-area-inset-bottom,0px), var(--tg-bottom))); transform:translateX(-50%) translateY(20px); background:var(--accent); color:var(--bg); font-size:13px; padding:11px 18px; border-radius:999px; opacity:0; transition:.25s; pointer-events:none; z-index:200; max-width:88%; text-align:center; }
@@ -706,56 +742,51 @@
   </div>
 
   <!-- SETTINGS -->
-  <div class="screen" data-screen="site" hidden>
+    <div class="screen" data-screen="site" hidden>
     <h1 class="screen-title">Сайт</h1>
-    <p class="screen-sub">Натисни блок у прев'ю — знизу відкриються його поля</p>
+    <p class="screen-sub">Що показувати відвідувачу і якими словами</p>
 
-    <div class="tip" id="tipSite" hidden><div><b>Як це працює.</b> Угорі — зменшена копія головної. Натисни будь-який блок:
-        він підсвітиться, а знизу відкриються тільки його поля. Кнопка ☾ показує,
-        як блок виглядає в темній темі. Цифри біля назви поля — скільки символів
-        уміщується в рядок.</div><button type="button" class="tip-x" data-tipx="tipSite">×</button></div>
+    <div class="tip" id="tipSite" hidden><div><b>Як це працює.</b> Кожен рядок — окремий блок сайту.
+      Натисни його, щоб відкрити тільки його поля з прев'ю і поясненнями. Нічого зайвого на екрані
+      не буде.</div><button type="button" class="tip-x" data-tipx="tipSite">×</button></div>
 
-    <!-- Зменшена копія головної. Не картинка: та сама розмітка й ті
-         самі змінні кольору, тому темна тема показує правду. -->
-    <div class="pv-wrap">
+    <div class="sgroup-t">Головна сторінка</div><div class="sgroup"><button type="button" class="srow" data-openblk="hero"><span class="srow-tx"><b>Головне фото</b><span>Знімок на весь екран і заголовок поверх нього</span></span><span class="srow-st" data-st="hero"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="banner"><span class="srow-tx"><b>Банер-карусель</b><span>Три слайди одразу під головним фото</span></span><span class="srow-st" data-st="banner"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="sects"><span class="srow-tx"><b>Заголовки секцій</b><span>Підписи над «Брендами» та «Новинками»</span></span><span class="srow-st" data-st="sects"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="look"><span class="srow-tx"><b>Блок «Образ»</b><span>Живе фото з міткою моделі</span></span><span class="srow-st" data-st="look"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="trust"><span class="srow-tx"><b>Три факти</b><span>Оригінал · відправка · викуп під замовлення</span></span><span class="srow-st" data-st="trust"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="con"><span class="srow-tx"><b>Консьєрж</b><span>Блок «Не знайшли свою модель?»</span></span><span class="srow-st" data-st="con"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="albk"><span class="srow-tx"><b>Рядок «Про OPTIX»</b><span>Посилання в самому низу головної</span></span><span class="srow-st" data-st="albk"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button></div>
+    <div class="sgroup-t">Каталог</div><div class="sgroup"><button type="button" class="srow" data-openblk="cat"><span class="srow-tx"><b>Банер у каталозі</b><span>Плашка між рядами карток товару</span></span><span class="srow-st" data-st="cat"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button></div>
+    <div class="sgroup-t">Окремі екрани</div><div class="sgroup"><button type="button" class="srow" data-openblk="about"><span class="srow-tx"><b>Екран «Про нас»</b><span>Окрема сторінка: хто ми і як працює викуп</span></span><span class="srow-st" data-st="about"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button></div>
+
+    <p class="screen-sub" style="margin-top:18px">Порожнє поле — не помилка: сайт підставить
+      власний текст. У списку такі блоки позначені як «за замовчуванням».</p>
+  </div>
+
+  <!-- Один блок — один екран. Саме через це в Apple налаштування
+       читаються з першого разу: на екрані рівно те, що ти прийшов
+       змінити, і нічого більше. -->
+  <div class="screen" data-screen="blockedit" hidden>
+    <h1 class="screen-title" id="blkTitle">Блок</h1>
+    <p class="screen-sub" id="blkSub"></p>
+
+    <div class="pv-wrap" id="blkPreviewWrap">
       <button type="button" class="pv-theme" id="pvTheme" aria-label="Тема прев'ю">☾</button>
       <div class="pv" id="sitePreview">
-        <div class="pv-block" data-blk="hero">
-          <div class="pv-hero" id="pvHero"><span class="pv-t" id="pvHeroT">Великий вибір.<br>Великі знижки.</span></div>
-        </div>
-        <div class="pv-block" data-blk="banner">
-          <div class="pv-banner"><span id="pvBanK">Нова колекція</span><i></i><i></i><i></i></div>
-        </div>
+        <div class="pv-block" data-blk="hero"><div class="pv-hero" id="pvHero"><span class="pv-t" id="pvHeroT">Великий вибір.<br>Великі знижки.</span></div></div>
+        <div class="pv-block" data-blk="banner"><div class="pv-banner"><span id="pvBanK">Нова колекція</span><i></i><i></i><i></i></div></div>
         <div class="pv-block" data-blk="sects">
           <div class="pv-sec"><span class="pv-st" id="pvSecBrands">Бренди</span><span class="pv-sl" id="pvSecBrandsL">Усі</span></div>
           <div class="pv-row"><i></i><i></i><i></i><i></i></div>
           <div class="pv-sec"><span class="pv-st" id="pvSecNew">Новинки</span><span class="pv-sl" id="pvSecNewL">Дивитись усі</span></div>
           <div class="pv-row"><i></i><i></i><i></i></div>
         </div>
-        <div class="pv-block" data-blk="look">
-          <div class="pv-look"><span id="pvLookT">Овальна оправа з золотом</span></div>
-        </div>
-        <div class="pv-block" data-blk="trust">
-          <div class="pv-trust"><span id="pvTr1">100% оригінал</span><span id="pvTr2">Відправка щосуботи</span><span id="pvTr3">Викуп під замовлення</span></div>
-        </div>
-        <div class="pv-block" data-blk="con">
-          <div class="pv-con"><b id="pvConT">Не знайшли свою модель?</b><span id="pvConC">Написати менеджеру</span></div>
-        </div>
-        <div class="pv-block" data-blk="cat">
-          <div class="pv-cat"><b id="pvCatT">Дві оправи — знижка ще 10%</b></div>
-        </div>
-        <div class="pv-block" data-blk="about">
-          <div class="pv-albk" style="background:var(--raise)"><b>Екран «Про нас»</b><span id="pvAboutT">Про нас</span></div>
-        </div>
-        <div class="pv-block" data-blk="albk">
-          <div class="pv-albk"><b id="pvAlbkT">Про OPTIX</b><span id="pvAlbkS">Хто ми, як працює викуп</span></div>
-        </div>
+        <div class="pv-block" data-blk="look"><div class="pv-look"><span id="pvLookT">Овальна оправа з золотом</span></div></div>
+        <div class="pv-block" data-blk="trust"><div class="pv-trust"><span id="pvTr1">100% оригінал</span><span id="pvTr2">Відправка щосуботи</span><span id="pvTr3">Викуп під замовлення</span></div></div>
+        <div class="pv-block" data-blk="con"><div class="pv-con"><b id="pvConT">Не знайшли свою модель?</b><span id="pvConC">Написати менеджеру</span></div></div>
+        <div class="pv-block" data-blk="cat"><div class="pv-cat"><b id="pvCatT">Дві оправи — знижка ще 10%</b></div></div>
+        <div class="pv-block" data-blk="about"><div class="pv-albk" style="background:var(--raise)"><b>Екран «Про нас»</b><span id="pvAboutT">Про нас</span></div></div>
+        <div class="pv-block" data-blk="albk"><div class="pv-albk"><b id="pvAlbkT">Про OPTIX</b><span id="pvAlbkS">Хто ми, як працює викуп</span></div></div>
       </div>
     </div>
 
-    <div class="blkbar" id="blkBar"><button type="button" class="blkchip on" data-blk="hero">Головне фото</button><button type="button" class="blkchip" data-blk="banner">Банер-карусель</button><button type="button" class="blkchip" data-blk="sects">Заголовки секцій</button><button type="button" class="blkchip" data-blk="look">Блок «Образ»</button><button type="button" class="blkchip" data-blk="trust">Довіра</button><button type="button" class="blkchip" data-blk="con">Консьєрж</button><button type="button" class="blkchip" data-blk="cat">Банер у каталозі</button><button type="button" class="blkchip" data-blk="albk">Рядок «Про OPTIX»</button><button type="button" class="blkchip" data-blk="about">Екран «Про нас»</button></div>
-
-    <div class="blk" data-blkbody="hero">
+    <div id="blkFields">
+      <div class="blk" data-blkbody="hero" hidden>
       <p class="screen-sub blk-note">Фото на весь екран і заголовок поверх нього</p>
 <div class="settings-divider">Головне фото</div>
     <p class="screen-sub" style="margin-top:-4px">Горизонтальне, від 1200 px по ширині. Порожньо — лишиться те, що вшите в сайт.</p>
@@ -768,92 +799,70 @@
 <div class="settings-divider">Текст на фото</div>
     <div class="field"><label class="field-label">Заголовок (Enter — новий рядок)</label><textarea class="input" id="hTitle" rows="2" placeholder="Великий вибір.&#10;Великі знижки."></textarea></div>
     <div class="field"><label class="field-label">Напис на кнопці</label><input class="input" id="hCta" placeholder="Переходь та обирай" /></div>
-    </div>
-
-    <div class="blk" data-blkbody="banner" hidden>
+      </div>
+      <div class="blk" data-blkbody="banner" hidden>
       <p class="screen-sub blk-note">Три слайди під головним фото</p>
 <div class="settings-divider">Банер акції</div>
     <p class="screen-sub" style="margin-top:-4px">Порожньо — сайт напише сам: «Sale · до −25%» і порахує моделі.</p>
     <div class="field"><label class="field-label">Заголовок банера</label><input class="input" id="hSaleTitle" placeholder="Sale · до −25%" /></div>
     <div class="field"><label class="field-label">Підпис під ним</label><input class="input" id="hSaleSub" placeholder="5 моделей зі знижкою просто зараз" /></div>
 <div class="settings-divider">Банер · слайд 1 (живе фото)</div>
-    <div class="field"><label class="field-label">Мітка над заголовком</label><input class="input" id="b1Kicker" placeholder="Нова колекція" /></div>
+    <div class="field"><label class="field-label">Маленький напис зверху</label><input class="input" id="b1Kicker" placeholder="Нова колекція" /></div>
 <div class="settings-divider">Банер · слайд 2 (колаж)</div>
     <p class="screen-sub" style="margin-top:-4px">Заголовок рахується сам: скільки моделей у наявності.</p>
-    <div class="field"><label class="field-label">Мітка</label><input class="input" id="b2Kicker" placeholder="Чотири бренди" /></div>
-    <div class="field"><label class="field-label">Напис на кнопці</label><input class="input" id="b2Cta" placeholder="Дивитись усі" /></div>
+    <div class="field"><label class="field-label">Маленький напис зверху</label><input class="input" id="b2Kicker" placeholder="Чотири бренди" /></div>
+    <div class="field"><label class="field-label">Напис на кнопці слайда 2</label><input class="input" id="b2Cta" placeholder="Дивитись усі" /></div>
 <div class="settings-divider">Банер · слайд 3 (акція)</div>
     <p class="screen-sub" style="margin-top:-4px">Порожньо — сайт сам знайде найбільшу знижку й напише модель і відсоток.</p>
-    <div class="field"><label class="field-label">Напис на кнопці</label><input class="input" id="b3Cta" placeholder="До акції" /></div>
-    </div>
-
-    <div class="blk" data-blkbody="sects" hidden>
+    <div class="field"><label class="field-label">Напис на кнопці слайда 3</label><input class="input" id="b3Cta" placeholder="До акції" /></div>
+      </div>
+      <div class="blk" data-blkbody="sects" hidden>
       <p class="screen-sub blk-note">Підписи над «Брендами» й «Новинками»</p>
 <div class="settings-divider">Заголовки секцій</div>
     <div class="field2">
-      <div class="field"><label class="field-label">Бренди</label><input class="input" id="secBrands" placeholder="Бренди" /></div>
-      <div class="field"><label class="field-label">Посилання</label><input class="input" id="secBrandsLink" placeholder="Усі" /></div>
-    </div>
-    <div class="field2">
-      <div class="field"><label class="field-label">Новинки</label><input class="input" id="secNew" placeholder="Новинки" /></div>
-      <div class="field"><label class="field-label">Посилання</label><input class="input" id="secNewLink" placeholder="Дивитись усі" /></div>
-    </div>
-    </div>
-
-    <div class="blk" data-blkbody="look" hidden>
+      <div class="field"><label class="field-label">Заголовок секції «Бренди»</label><input class="input" id="secBrands" placeholder="Бренди" /></div>
+      <div class="field"><label class="field-label">Напис-посилання праворуч</label><input class="input" id="secBrandsLink" placeholder="Усі" /></div>
+      </div>
+      <div class="blk" data-blkbody="look" hidden>
       <p class="screen-sub blk-note">Живе фото з міткою моделі</p>
 <div class="settings-divider">Блок «Образ»</div>
     <p class="screen-sub" style="margin-top:-4px">Живе фото з міткою моделі. Знімок береться той самий, що на банері.</p>
-    <div class="field"><label class="field-label">Мітка</label><input class="input" id="lookKicker" placeholder="Образ" /></div>
-    <div class="field"><label class="field-label">Заголовок</label><input class="input" id="lookTitle" placeholder="Овальна оправа з золотом" /></div>
+    <div class="field"><label class="field-label">Маленький напис зверху</label><input class="input" id="lookKicker" placeholder="Образ" /></div>
+    <div class="field"><label class="field-label">Назва моделі на фото</label><input class="input" id="lookTitle" placeholder="Овальна оправа з золотом" /></div>
     <label class="checkrow"><input type="checkbox" id="lookOff" /><span>Приховати блок «Образ» на сайті</span></label>
-    </div>
-
-    <div class="blk" data-blkbody="trust" hidden>
+      </div>
+      <div class="blk" data-blkbody="trust" hidden>
       <p class="screen-sub blk-note">Три факти під каталогом</p>
 <div class="settings-divider">Довіра · три факти</div>
     <div class="field2">
       <div class="field"><label class="field-label">Заголовок 1</label><input class="input" id="trust1T" placeholder="100% оригінал" /></div>
       <div class="field"><label class="field-label">Підпис 1</label><input class="input" id="trust1S" placeholder="Артикул на кожній моделі" /></div>
-    </div>
-    <div class="field2">
-      <div class="field"><label class="field-label">Заголовок 2</label><input class="input" id="trust2T" placeholder="Відправка щосуботи" /></div>
-      <div class="field"><label class="field-label">Підпис 2</label><input class="input" id="trust2S" placeholder="Зазвичай 7-14 днів" /></div>
-    </div>
-    <div class="field2">
-      <div class="field"><label class="field-label">Заголовок 3</label><input class="input" id="trust3T" placeholder="Викуп під замовлення" /></div>
-      <div class="field"><label class="field-label">Підпис 3</label><input class="input" id="trust3S" placeholder="Привеземо те, чого немає" /></div>
-    </div>
-    </div>
-
-    <div class="blk" data-blkbody="con" hidden>
+      </div>
+      <div class="blk" data-blkbody="con" hidden>
       <p class="screen-sub blk-note">Блок «Не знайшли свою модель?»</p>
 <div class="settings-divider">Консьєрж</div>
-    <div class="field"><label class="field-label">Мітка</label><input class="input" id="conKicker" placeholder="Менеджер" /></div>
-    <div class="field"><label class="field-label">Заголовок</label><input class="input" id="conTitle" placeholder="Не знайшли свою модель?" /></div>
+    <div class="field"><label class="field-label">Маленький напис зверху</label><input class="input" id="conKicker" placeholder="Менеджер" /></div>
+    <div class="field"><label class="field-label">Головне питання блоку</label><input class="input" id="conTitle" placeholder="Не знайшли свою модель?" /></div>
     <div class="field"><label class="field-label">Текст</label><textarea class="input" id="conText" rows="3" placeholder="Напишіть артикул або надішліть фото..."></textarea></div>
     <div class="field"><label class="field-label">Напис на кнопці</label><input class="input" id="conCta" placeholder="Написати менеджеру" /></div>
-    </div>
-
-    <div class="blk" data-blkbody="cat" hidden>
+      </div>
+      <div class="blk" data-blkbody="albk" hidden>
+      <p class="screen-sub blk-note">Посилання внизу головної</p>
+<div class="settings-divider">Рядок «Про OPTIX» унизу головної</div>
+    <div class="field"><label class="field-label">Назва посилання</label><input class="input" id="aboutLinkT" placeholder="Про OPTIX" /></div>
+    <div class="field"><label class="field-label">Пояснення під назвою</label><input class="input" id="aboutLinkS" placeholder="Хто ми, як працює викуп, строки" /></div>
+      </div>
+      <div class="blk" data-blkbody="cat" hidden>
       <p class="screen-sub blk-note">Плашка між рядами карток</p>
 <div class="settings-divider">Банер у каталозі</div>
     <p class="screen-sub" style="margin-top:-4px">Стоїть між рядами карток, після четвертої. Один на екран.</p>
-    <div class="field"><label class="field-label">Мітка</label><input class="input" id="promoEyebrow" placeholder="Друга пара" /></div>
-    <div class="field"><label class="field-label">Заголовок</label><input class="input" id="promoTitle" placeholder="Дві оправи - знижка ще 10%" /></div>
+    <div class="field"><label class="field-label">Маленький напис зверху</label><input class="input" id="promoEyebrow" placeholder="Друга пара" /></div>
+    <div class="field"><label class="field-label">Суть пропозиції</label><input class="input" id="promoTitle" placeholder="Дві оправи - знижка ще 10%" /></div>
     <div class="field"><label class="field-label">Текст</label><textarea class="input" id="promoText" rows="2" placeholder="Рахується в кошику автоматично..."></textarea></div>
     <div class="field"><label class="field-label">Напис на кнопці</label><input class="input" id="promoCta" placeholder="Написати менеджеру" /></div>
     <label class="checkrow"><input type="checkbox" id="promoOff" /><span>Прибрати банер із каталогу</span></label>
-    </div>
-
-    <div class="blk" data-blkbody="albk" hidden>
-      <p class="screen-sub blk-note">Посилання внизу головної</p>
-<div class="settings-divider">Рядок «Про OPTIX» унизу головної</div>
-    <div class="field"><label class="field-label">Заголовок</label><input class="input" id="aboutLinkT" placeholder="Про OPTIX" /></div>
-    <div class="field"><label class="field-label">Підпис</label><input class="input" id="aboutLinkS" placeholder="Хто ми, як працює викуп, строки" /></div>
-    </div>
-
-    <div class="blk" data-blkbody="about" hidden>
+      </div>
+      <div class="blk" data-blkbody="about" hidden>
       <p class="screen-sub blk-note">Окремий екран, відкривається з рядка «Про OPTIX»</p>
 
     <p class="screen-sub" style="margin-top:8px">Цифри — бренди, моделі, кольори, ціна від — рахуються з каталогу самі. Вписувати не треба.</p>
@@ -866,13 +875,13 @@
     <div class="field"><label class="field-label">Текст «Хто ми» (Enter — новий абзац)</label><textarea class="input" id="aWhoText" rows="5" placeholder="Ми не тримаємо товар на полиці…"></textarea></div>
     <div class="field"><label class="field-label">Цитата — ваша фраза (порожньо — блок не показується)</label><textarea class="input" id="aQuote" rows="2" placeholder="Одна фраза про ваш підхід"></textarea></div>
     <div class="field"><label class="field-label">Заголовок «Як це працює» (Enter — новий рядок)</label><textarea class="input" id="aStepsTitle" rows="2" placeholder="Шлях від вибору&#10;до відділення"></textarea></div>
+      </div>
     </div>
 
     <button class="add-btn" id="saveHome" style="background:var(--green)">Зберегти</button>
   </div>
 
-
-  <div class="screen" data-screen="settings" hidden>
+<div class="screen" data-screen="settings" hidden>
     <h1 class="screen-title">Налаштування</h1>
     <p class="screen-sub">Контакт, доставка та знижки за пари</p>
     <div class="field"><label class="field-label">Telegram менеджера (без @)</label><input class="input" id="sTg" placeholder="trendburomanager" /></div>
@@ -1070,7 +1079,8 @@
   /* Назви екранів для шапки. Ключ той самий, що data-screen. */
   var TITLES = {
     dash: 'Магазин', products: 'Товари', add: 'Новий товар',
-    promos: 'Акції', addpromo: 'Нова акція', site: 'Сайт', settings: 'Ще'
+    promos: 'Акції', addpromo: 'Нова акція', site: 'Сайт',
+    blockedit: 'Блок', settings: 'Ще'
   };
   /* Кореневі — ті, що в нижньому меню. Решта відкривається «вглиб». */
   var ROOTS = ['dash', 'products', 'site', 'promos', 'settings'];
@@ -1124,7 +1134,8 @@
     if (s === 'settings') loadSettings();
     /* Не перезавантажуємо поля, якщо в них є незбережене: інакше
        вийшов у товари, повернувся — і набраний текст зник без сліду. */
-    if (s === 'site') { if (dirtyCount() === 0) loadHome(); syncPreview(); }
+    if (s === 'site') { if (dirtyCount() === 0) loadHome(); syncBlkList(); }
+    if (s === 'blockedit') { syncPreview(); }
     syncDirty();
   }
   document.addEventListener('click', function(e){
@@ -1755,6 +1766,7 @@
         Object.keys(LIMITS).forEach(syncCounter);
         syncPreview();
         takeSnapshot();
+        syncBlkList();
       }).catch(function () {});
   }
 
@@ -2240,20 +2252,78 @@
     if (promoOff && catBlk) catBlk.style.opacity = promoOff.checked ? '.35' : '';
   }
 
-  /* ---------- вибір блока ---------- */
-  function selectBlock(k) {
-    document.querySelectorAll('.blkchip').forEach(function (c) { c.classList.toggle('on', c.dataset.blk === k); });
-    document.querySelectorAll('.blk').forEach(function (b) { b.hidden = b.dataset.blkbody !== k; });
-    document.querySelectorAll('.pv-block').forEach(function (b) { b.classList.toggle('on', b.dataset.blk === k); });
-    var chip = document.querySelector('.blkchip[data-blk="' + k + '"]');
-    if (chip && chip.scrollIntoView) chip.scrollIntoView({ block: 'nearest', inline: 'center' });
+  /* ---------- вибір блока: список → окремий екран ---------- */
+  var BLK = {
+    hero:   ['Головне фото',      'Знімок на весь екран і заголовок поверх нього'],
+    banner: ['Банер-карусель',    'Три слайди одразу під головним фото'],
+    sects:  ['Заголовки секцій',  'Підписи над «Брендами» та «Новинками»'],
+    look:   ['Блок «Образ»',      'Живе фото з міткою моделі'],
+    trust:  ['Три факти',         'Оригінал · відправка · викуп під замовлення'],
+    con:    ['Консьєрж',          'Блок «Не знайшли свою модель?»'],
+    cat:    ['Банер у каталозі',  'Плашка між рядами карток товару'],
+    albk:   ['Рядок «Про OPTIX»', 'Посилання в самому низу головної'],
+    about:  ['Екран «Про нас»',   'Окрема сторінка: хто ми і як працює викуп']
+  };
+  /* Які поля належать якому блоку — з цього рахуємо стан у списку. */
+  var BLK_FIELDS = {
+    hero:   ['hTitle', 'hCta'],
+    banner: ['hSaleTitle', 'hSaleSub', 'b1Kicker', 'b2Kicker', 'b2Cta', 'b3Cta'],
+    sects:  ['secBrands', 'secBrandsLink', 'secNew', 'secNewLink'],
+    look:   ['lookKicker', 'lookTitle'],
+    trust:  ['trust1T', 'trust1S', 'trust2T', 'trust2S', 'trust3T', 'trust3S'],
+    con:    ['conKicker', 'conTitle', 'conText', 'conCta'],
+    cat:    ['promoEyebrow', 'promoTitle', 'promoText', 'promoCta'],
+    albk:   ['aboutLinkT', 'aboutLinkS'],
+    about:  ['aKicker', 'aTitle', 'aWhoTitle', 'aWhoText', 'aQuote', 'aStepsTitle']
+  };
+  var currentBlk = 'hero';
+
+  /* Стан рядка: заповнено / за замовчуванням / приховано. Людина має
+     бачити це до того, як відкриє блок, — інакше доводиться заходити
+     в кожен, щоб дізнатись, чи там взагалі щось є. */
+  function blkState(k) {
+    if (k === 'look' && document.getElementById('lookOff') && document.getElementById('lookOff').checked) return ['Приховано', 'is-off'];
+    if (k === 'cat' && document.getElementById('promoOff') && document.getElementById('promoOff').checked) return ['Прибрано', 'is-off'];
+    var f = BLK_FIELDS[k] || [];
+    var filled = 0;
+    f.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el && String(el.value || '').trim()) filled++;
+    });
+    if (!filled) return ['За замовчуванням', 'is-default'];
+    if (filled < f.length) return [filled + ' з ' + f.length, ''];
+    return ['Заповнено', ''];
   }
-  document.getElementById('blkBar').addEventListener('click', function (e) {
-    var c = e.target.closest('[data-blk]'); if (c) selectBlock(c.dataset.blk);
+
+  function syncBlkList() {
+    document.querySelectorAll('.srow-st').forEach(function (el) {
+      var s = blkState(el.dataset.st);
+      el.textContent = s[0];
+      el.className = 'srow-st' + (s[1] ? ' ' + s[1] : '');
+    });
+  }
+
+  function selectBlock(k) {
+    currentBlk = k;
+    document.querySelectorAll('.blk').forEach(function (b) { b.hidden = b.dataset.blkbody !== k; });
+    /* У прев'ю лишаємо тільки поточний блок: решта лише відволікає. */
+    document.querySelectorAll('.pv-block').forEach(function (b) {
+      b.hidden = b.dataset.blk !== k;
+      b.classList.toggle('on', b.dataset.blk === k);
+    });
+    var t = BLK[k] || ['Блок', ''];
+    document.getElementById('blkTitle').textContent = t[0];
+    document.getElementById('blkSub').textContent = t[1];
+    TITLES.blockedit = t[0];
+  }
+
+  document.addEventListener('click', function (e) {
+    var r = e.target.closest('[data-openblk]');
+    if (!r) return;
+    selectBlock(r.dataset.openblk);
+    show('blockedit');
   });
-  document.getElementById('sitePreview').addEventListener('click', function (e) {
-    var b = e.target.closest('.pv-block'); if (b) selectBlock(b.dataset.blk);
-  });
+
   document.getElementById('pvTheme').addEventListener('click', function () {
     var pv = document.getElementById('sitePreview');
     var dark = pv.hasAttribute('data-dark');
@@ -2287,7 +2357,10 @@
   function syncDirty() {
     var n = dirtyCount();
     var bar = document.getElementById('dirtyBar');
-    var onSite = !document.querySelector('.screen[data-screen="site"]').hidden;
+    /* Смужка потрібна і в списку, і на екрані блока: правки роблять
+       усередині блока, а піти можна і з того, і з іншого. */
+    var onSite = !document.querySelector('.screen[data-screen="site"]').hidden ||
+                 !document.querySelector('.screen[data-screen="blockedit"]').hidden;
     bar.hidden = !(n > 0 && onSite);
     document.getElementById('dirtyText').textContent =
       n === 1 ? '1 незбережена зміна' : n + ' незбережених змін';
