@@ -545,6 +545,15 @@
      щоб нічого не відволікало. */
   .pv-block[hidden] { display: none; }
 
+  .banner-prev { margin-bottom: 8px; }
+  .banner-prev img { width: 100%; border-radius: 12px; display: block; }
+  .banner-prev .none {
+    height: 90px; border-radius: 12px; border: 1px dashed var(--line);
+    display: grid; place-items: center; font-size: 12px; color: var(--fg-mute);
+  }
+  .add-btn.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+  .add-btn.ghost.danger { color: var(--red); }
+
   /* toast */
   .toast { position:fixed; left:50%; bottom:calc(76px + max(env(safe-area-inset-bottom,0px), var(--tg-bottom))); transform:translateX(-50%) translateY(20px); background:var(--accent); color:var(--bg); font-size:13px; padding:11px 18px; border-radius:999px; opacity:0; transition:.25s; pointer-events:none; z-index:200; max-width:88%; text-align:center; }
   .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
@@ -801,20 +810,114 @@
     <div class="field"><label class="field-label">Напис на кнопці</label><input class="input" id="hCta" placeholder="Переходь та обирай" /></div>
       </div>
       <div class="blk" data-blkbody="banner" hidden>
-      <p class="screen-sub blk-note">Три слайди під головним фото</p>
-<div class="settings-divider">Банер акції</div>
-    <p class="screen-sub" style="margin-top:-4px">Порожньо — сайт напише сам: «Sale · до −25%» і порахує моделі.</p>
-    <div class="field"><label class="field-label">Заголовок банера</label><input class="input" id="hSaleTitle" placeholder="Sale · до −25%" /></div>
-    <div class="field"><label class="field-label">Підпис під ним</label><input class="input" id="hSaleSub" placeholder="5 моделей зі знижкою просто зараз" /></div>
-<div class="settings-divider">Банер · слайд 1 (живе фото)</div>
-    <div class="field"><label class="field-label">Маленький напис зверху</label><input class="input" id="b1Kicker" placeholder="Нова колекція" /></div>
-<div class="settings-divider">Банер · слайд 2 (колаж)</div>
-    <p class="screen-sub" style="margin-top:-4px">Заголовок рахується сам: скільки моделей у наявності.</p>
-    <div class="field"><label class="field-label">Маленький напис зверху</label><input class="input" id="b2Kicker" placeholder="Чотири бренди" /></div>
-    <div class="field"><label class="field-label">Напис на кнопці слайда 2</label><input class="input" id="b2Cta" placeholder="Дивитись усі" /></div>
-<div class="settings-divider">Банер · слайд 3 (акція)</div>
-    <p class="screen-sub" style="margin-top:-4px">Порожньо — сайт сам знайде найбільшу знижку й напише модель і відсоток.</p>
-    <div class="field"><label class="field-label">Напис на кнопці слайда 3</label><input class="input" id="b3Cta" placeholder="До акції" /></div>
+        <p class="screen-sub blk-note">Три банери вгорі головної. Кожен — своє фото, свій текст
+          і своя кнопка. Порожнє поле не ламає нічого: сайт підставить те, що рахує сам.</p>
+
+        <div class="settings-divider">Банер 1</div>
+        <p class="screen-sub" style="margin-top:-4px">Перший екран, який бачить людина.</p>
+
+        <div class="field">
+          <label class="field-label">Фото</label>
+          <div id="b1Preview" class="banner-prev"></div>
+          <label class="add-btn ghost">Вибрати фото
+            <input type="file" id="b1File" accept="image/*" hidden />
+          </label>
+          <button class="add-btn ghost danger" id="b1Clear">Прибрати фото</button>
+        </div>
+
+        <div class="field"><label class="field-label">Маленький напис зверху</label>
+          <input class="input" id="b1Kicker" placeholder="Нова колекція" /></div>
+        <div class="field"><label class="field-label">Заголовок</label>
+          <input class="input" id="b1Title" placeholder="Весна 2026" /></div>
+        <div class="field"><label class="field-label">Напис на кнопці</label>
+          <input class="input" id="b1Cta" placeholder="Каталог" /></div>
+
+        <div class="field">
+          <label class="field-label">Куди веде кнопка</label>
+          <select class="input" id="b1Link">
+            <option value="">За замовчуванням</option>
+            <option value="catalog">Каталог</option>
+            <option value="sale">Знижки</option>
+            <option value="new">Новинки</option>
+            <option value="about">Про нас</option>
+            <option value="manager">Менеджер у Телеграмі</option>
+          </select>
+        </div>
+
+        <label class="checkrow"><input type="checkbox" id="b1Off" /><span>Сховати банер 1</span></label>
+
+        <div class="settings-divider">Банер 2</div>
+        <p class="screen-sub" style="margin-top:-4px">Порожнє фото — сайт покаже колаж брендів.</p>
+
+        <div class="field">
+          <label class="field-label">Фото</label>
+          <div id="b2Preview" class="banner-prev"></div>
+          <label class="add-btn ghost">Вибрати фото
+            <input type="file" id="b2File" accept="image/*" hidden />
+          </label>
+          <button class="add-btn ghost danger" id="b2Clear">Прибрати фото</button>
+        </div>
+
+        <div class="field"><label class="field-label">Маленький напис зверху</label>
+          <input class="input" id="b2Kicker" placeholder="Нова колекція" /></div>
+        <div class="field"><label class="field-label">Заголовок</label>
+          <input class="input" id="b2Title" placeholder="Весна 2026" /></div>
+        <div class="field"><label class="field-label">Напис на кнопці</label>
+          <input class="input" id="b2Cta" placeholder="Каталог" /></div>
+
+        <div class="field">
+          <label class="field-label">Куди веде кнопка</label>
+          <select class="input" id="b2Link">
+            <option value="">За замовчуванням</option>
+            <option value="catalog">Каталог</option>
+            <option value="sale">Знижки</option>
+            <option value="new">Новинки</option>
+            <option value="about">Про нас</option>
+            <option value="manager">Менеджер у Телеграмі</option>
+          </select>
+        </div>
+
+        <label class="checkrow"><input type="checkbox" id="b2Off" /><span>Сховати банер 2</span></label>
+
+        <div class="settings-divider">Банер 3</div>
+        <p class="screen-sub" style="margin-top:-4px">Порожнє фото — сайт сам знайде найбільшу знижку.</p>
+
+        <div class="field">
+          <label class="field-label">Фото</label>
+          <div id="b3Preview" class="banner-prev"></div>
+          <label class="add-btn ghost">Вибрати фото
+            <input type="file" id="b3File" accept="image/*" hidden />
+          </label>
+          <button class="add-btn ghost danger" id="b3Clear">Прибрати фото</button>
+        </div>
+
+        <div class="field"><label class="field-label">Маленький напис зверху</label>
+          <input class="input" id="b3Kicker" placeholder="Нова колекція" /></div>
+        <div class="field"><label class="field-label">Заголовок</label>
+          <input class="input" id="b3Title" placeholder="Весна 2026" /></div>
+        <div class="field"><label class="field-label">Напис на кнопці</label>
+          <input class="input" id="b3Cta" placeholder="Каталог" /></div>
+
+        <div class="field">
+          <label class="field-label">Куди веде кнопка</label>
+          <select class="input" id="b3Link">
+            <option value="">За замовчуванням</option>
+            <option value="catalog">Каталог</option>
+            <option value="sale">Знижки</option>
+            <option value="new">Новинки</option>
+            <option value="about">Про нас</option>
+            <option value="manager">Менеджер у Телеграмі</option>
+          </select>
+        </div>
+
+        <label class="checkrow"><input type="checkbox" id="b3Off" /><span>Сховати банер 3</span></label>
+
+        <div class="settings-divider">Плашка «Sale» під банером</div>
+        <div class="field"><label class="field-label">Заголовок плашки</label>
+          <input class="input" id="hSaleTitle" placeholder="Sale · до −25%" /></div>
+        <div class="field"><label class="field-label">Підпис під ним</label>
+          <input class="input" id="hSaleSub" placeholder="5 моделей зі знижкою просто зараз" /></div>
+
       </div>
       <div class="blk" data-blkbody="sects" hidden>
       <p class="screen-sub blk-note">Підписи над «Брендами» й «Новинками»</p>
@@ -1684,6 +1787,41 @@
      налаштувань: не треба ні нового типу, ні другого запиту з сайту. */
   var heroAssetId = null;
 
+  /* ---------- фото трьох банерів ---------- */
+  var bannerAsset = { 1: null, 2: null, 3: null };
+
+  function assetUrl(id) {
+    return 'https://cdn.sanity.io/images/' + CFG.projectId + '/' + CFG.dataset + '/' +
+           id.replace(/^image-/, '').replace(/-(\w+)$/, '.$1') + '?w=600&fit=max';
+  }
+
+  function renderBanner(i) {
+    var box = document.getElementById('b' + i + 'Preview');
+    if (!box) return;
+    box.innerHTML = bannerAsset[i]
+      ? '<img src="' + assetUrl(bannerAsset[i]) + '" alt="">'
+      : '<div class="none">Фото не вибране — сайт покаже своє</div>';
+  }
+
+  [1, 2, 3].forEach(function (i) {
+    var f = document.getElementById('b' + i + 'File');
+    if (f) f.addEventListener('change', function (e) {
+      var file = e.target.files && e.target.files[0];
+      e.target.value = '';
+      if (!file) return;
+      toast('Завантажую…');
+      uploadImage(file).then(function (id) {
+        bannerAsset[i] = id; renderBanner(i);
+        syncDirty(); toast('Фото готове — натисни «Зберегти»');
+      }).catch(function () { toast('Фото не завантажилось'); });
+    });
+    var c = document.getElementById('b' + i + 'Clear');
+    if (c) c.addEventListener('click', function () {
+      bannerAsset[i] = null; renderBanner(i);
+      syncDirty(); toast('Прибрано — натисни «Зберегти»');
+    });
+  });
+
   function renderHeroPreview() {
     var wrap = document.getElementById('heroPreviewWrap');
     if (!heroAssetId) {
@@ -1707,7 +1845,7 @@
   }
 
   function loadHome() {
-    sanityQuery('*[_type=="settings"][0]{_id,"heroAsset":heroImage.asset._ref,heroTitle,heroCta,saleTitle,saleSubtitle,aboutKicker,aboutTitle,aboutWhoTitle,aboutWhoText,aboutQuote,aboutStepsTitle,promoEyebrow,promoTitle,promoText,promoCta,promoOff,b1Kicker,b2Kicker,b2Cta,b3Cta,secBrands,secBrandsLink,secNew,secNewLink,lookKicker,lookTitle,trust1T,trust1S,trust2T,trust2S,trust3T,trust3S,conKicker,conTitle,conText,conCta,aboutLinkT,aboutLinkS,lookOff}')
+    sanityQuery('*[_type=="settings"][0]{_id,"heroAsset":heroImage.asset._ref,"b1Asset":b1Image.asset._ref,"b2Asset":b2Image.asset._ref,"b3Asset":b3Image.asset._ref,b1Title,b1Cta,b1Link,b1Off,b2Title,b2Link,b2Off,b3Kicker,b3Title,b3Link,b3Off,heroTitle,heroCta,saleTitle,saleSubtitle,aboutKicker,aboutTitle,aboutWhoTitle,aboutWhoText,aboutQuote,aboutStepsTitle,promoEyebrow,promoTitle,promoText,promoCta,promoOff,b1Kicker,b2Kicker,b2Cta,b3Cta,secBrands,secBrandsLink,secNew,secNewLink,lookKicker,lookTitle,trust1T,trust1S,trust2T,trust2S,trust3T,trust3S,conKicker,conTitle,conText,conCta,aboutLinkT,aboutLinkS,lookOff}')
       .then(function (s) {
         /* Документа налаштувань ще немає — це нормально для першого
            запуску. Порожні поля теж треба порахувати й зняти знімок,
@@ -1732,6 +1870,17 @@
         document.getElementById('aWhoText').value = s.aboutWhoText || '';
         document.getElementById('aQuote').value = s.aboutQuote || '';
         document.getElementById('aStepsTitle').value = s.aboutStepsTitle || '';
+        /* Три банери: фото, тексти, куди веде, показувати чи ні. */
+        [1, 2, 3].forEach(function (i) {
+          bannerAsset[i] = s['b' + i + 'Asset'] || null;
+          setVal('b' + i + 'Kicker', s['b' + i + 'Kicker']);
+          setVal('b' + i + 'Title',  s['b' + i + 'Title']);
+          setVal('b' + i + 'Cta',    s['b' + i + 'Cta']);
+          setVal('b' + i + 'Link',   s['b' + i + 'Link']);
+          var off = document.getElementById('b' + i + 'Off');
+          if (off) off.checked = s['b' + i + 'Off'] === true;
+          renderBanner(i);
+        });
         setVal('b1Kicker', s.b1Kicker);
         setVal('b2Kicker', s.b2Kicker);
         setVal('b2Cta', s.b2Cta);
@@ -1802,6 +1951,12 @@
       aboutQuote: document.getElementById('aQuote').value.trim(),
       aboutStepsTitle: getVal('aStepsTitle'),
       b1Kicker: getVal('b1Kicker'),
+      b1Title: getVal('b1Title'), b1Cta: getVal('b1Cta'), b1Link: getVal('b1Link'),
+      b2Title: getVal('b2Title'), b2Link: getVal('b2Link'),
+      b3Kicker: getVal('b3Kicker'), b3Title: getVal('b3Title'), b3Link: getVal('b3Link'),
+      b1Off: !!(document.getElementById('b1Off') && document.getElementById('b1Off').checked),
+      b2Off: !!(document.getElementById('b2Off') && document.getElementById('b2Off').checked),
+      b3Off: !!(document.getElementById('b3Off') && document.getElementById('b3Off').checked),
       b2Kicker: getVal('b2Kicker'),
       b2Cta: getVal('b2Cta'),
       b3Cta: getVal('b3Cta'),
@@ -1835,17 +1990,29 @@
     var mut;
     if (settingsId) {
       var patch = { id: settingsId, set: data };
+      var unset = [];
       if (heroAssetId) {
         patch.set.heroImage = { _type: 'image', asset: { _type: 'reference', _ref: heroAssetId } };
-      } else {
-        patch.unset = ['heroImage'];
-      }
+      } else { unset.push('heroImage'); }
+      /* Порожнє фото банера треба саме стерти, а не лишити старе:
+         інакше кнопка «Прибрати фото» нічого б не робила. */
+      [1, 2, 3].forEach(function (i) {
+        if (bannerAsset[i]) {
+          patch.set['b' + i + 'Image'] = { _type: 'image', asset: { _type: 'reference', _ref: bannerAsset[i] } };
+        } else { unset.push('b' + i + 'Image'); }
+      });
+      if (unset.length) patch.unset = unset;
       mut = [{ patch: patch }];
     } else {
       var doc = Object.assign({ _type: 'settings' }, data);
       if (heroAssetId) {
         doc.heroImage = { _type: 'image', asset: { _type: 'reference', _ref: heroAssetId } };
       }
+      [1, 2, 3].forEach(function (i) {
+        if (bannerAsset[i]) {
+          doc['b' + i + 'Image'] = { _type: 'image', asset: { _type: 'reference', _ref: bannerAsset[i] } };
+        }
+      });
       mut = [{ create: doc }];
     }
     sanityMutate(mut)
@@ -2267,7 +2434,8 @@
   /* Які поля належать якому блоку — з цього рахуємо стан у списку. */
   var BLK_FIELDS = {
     hero:   ['hTitle', 'hCta'],
-    banner: ['hSaleTitle', 'hSaleSub', 'b1Kicker', 'b2Kicker', 'b2Cta', 'b3Cta'],
+    banner: ['b1Kicker', 'b1Title', 'b1Cta', 'b2Kicker', 'b2Title', 'b2Cta',
+             'b3Kicker', 'b3Title', 'b3Cta', 'hSaleTitle', 'hSaleSub'],
     sects:  ['secBrands', 'secBrandsLink', 'secNew', 'secNewLink'],
     look:   ['lookKicker', 'lookTitle'],
     trust:  ['trust1T', 'trust1S', 'trust2T', 'trust2S', 'trust3T', 'trust3S'],
@@ -2336,13 +2504,16 @@
      введення порівнюємо зі знімком: смужка з'являється тільки
      коли щось дійсно відрізняється, а не на кожен дотик поля. */
   var SITE_IDS = Object.keys(LIMITS).concat(['aTitle', 'aKicker', 'aWhoTitle', 'aWhoText', 'aQuote', 'aStepsTitle',
-                                             'conText', 'promoText']);
+                                             'conText', 'promoText',
+                                             'b1Title', 'b1Cta', 'b1Link',
+                                             'b2Title', 'b2Link',
+                                             'b3Kicker', 'b3Title', 'b3Link']);
   var snapshot = null;
 
   function currentState() {
     var o = {};
     SITE_IDS.forEach(function (id) { var el = document.getElementById(id); if (el) o[id] = el.value; });
-    ['lookOff', 'promoOff'].forEach(function (id) {
+    ['lookOff', 'promoOff', 'b1Off', 'b2Off', 'b3Off'].forEach(function (id) {
       var el = document.getElementById(id); if (el) o[id] = el.checked ? '1' : '';
     });
     return o;
