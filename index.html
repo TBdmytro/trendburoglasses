@@ -57,11 +57,11 @@
          Антиква лишилась тільки в логотипі: він знак, йому
          відрізнятись належить. Prata має єдине накреслення 400 —
          будь-яка інша вага буде підробленою. */
-      /* Один шрифт на весь сайт — та сама антиква, якою набрано OPTIX
-     у шапці. У Prata лише одне накреслення, тому жирного тексту тут
-     не буде за визначенням: усе однаково тонке. */
-  --font-display: 'Prata', Georgia, 'Times New Roman', serif;
-      --font-ui: 'Prata', Georgia, 'Times New Roman', serif;
+      /* Інтерфейс — Manrope: він розбірливий на дрібному й має жирність.
+     Антиква Prata лишається там, де стоїть ім'я: логотип і назви
+     брендів. Саме її ти й хотів бачити на назвах. */
+  --font-display: 'Manrope', system-ui, -apple-system, sans-serif;
+      --font-ui: 'Manrope', system-ui, -apple-system, sans-serif;
       --font-logo: 'Prata', Georgia, 'Times New Roman', serif;
     }
 
@@ -105,6 +105,24 @@
     }
 
     /* ---------- Header ---------- */
+    /* Смуга Телеграма («Закрити», «...») малюється поверх сторінки на
+       всіх екранах. Раніше під нею просто лишався порожній проміжок
+       того ж кольору, що й контент, — виглядало як недоліт вёрстки.
+       Тепер це окрема смуга з власним тоном і волосяною лінією знизу:
+       системна зона явно відділена від нашої. */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--tg-top);
+      z-index: 300;
+      background: var(--raise);
+      border-bottom: 1px solid var(--line);
+      pointer-events: none;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+    /* Без Телеграма висота нульова — смуги просто немає. */
+
     .header {
       position: sticky;
       top: 0;
@@ -284,7 +302,7 @@
     .banner-text {
       font-family: var(--font-display);
       font-size: 21px;
-      font-weight: 400;
+      font-weight: 700;
       line-height: 1.3;
       margin: 0 0 18px;
       color: var(--bg);
@@ -332,7 +350,7 @@
     .section-title {
       font-family: var(--font-display);
       font-size: 22px;
-      font-weight: 400;
+      font-weight: 700;
       letter-spacing: 0.04em;
       margin: 0;
       color: var(--fg);
@@ -414,7 +432,7 @@
     .brand-tile-name {
       display: block;
       font-size: 11px;
-      font-weight: 400;
+      font-weight: 800;
       letter-spacing: 0.14em;
       text-transform: uppercase;
       margin-bottom: 2px;
@@ -502,7 +520,7 @@
     .promo-card-title {
       font-family: var(--font-display);
       font-size: 16px;
-      font-weight: 400;
+      font-weight: 700;
       color: var(--fg);
       letter-spacing: 0.01em;
       overflow: hidden;
@@ -513,7 +531,7 @@
     .promo-card-discount {
       font-family: var(--font-ui);
       font-size: 18px;
-      font-weight: 400;
+      font-weight: 700;
       color: var(--acc);
       letter-spacing: -0.01em;
       flex-shrink: 0;
@@ -585,7 +603,7 @@
       z-index: 2;
       font-family: var(--font-ui);
       font-size: 10px;
-      font-weight: 400;
+      font-weight: 700;
       letter-spacing: 0.06em;
       background: var(--acc);
       color: #fff;
@@ -686,7 +704,7 @@
       color: #fff;
       font-family: var(--font-ui);
       font-size: 10px;
-      font-weight: 400;
+      font-weight: 700;
       display: none;
       align-items: center;
       justify-content: center;
@@ -747,7 +765,7 @@
     .bottomnav-label {
       font-family: var(--font-ui);
       font-size: 11.5px;
-      font-weight: 400;
+      font-weight: 500;
       letter-spacing: 0.18em;
       padding-left: 0.18em;
       text-transform: uppercase;
@@ -953,7 +971,7 @@
        і не тицяє у бренд, у якого дві позиції. */
     .search-suggestion-count {
       font-size: 11px;
-      font-weight: 400;
+      font-weight: 600;
       color: var(--fg);
       opacity: 0.55;
     }
@@ -1032,7 +1050,7 @@
     .search-result-brand {
       font-family: var(--font-display);
       font-size: 17px;
-      font-weight: 400;
+      font-weight: 700;
       letter-spacing: 0.02em;
       line-height: 1.15;
       margin: 0 0 3px;
@@ -1044,7 +1062,7 @@
     .search-result-code {
       font-family: var(--font-ui);
       font-size: 11.5px;
-      font-weight: 400;
+      font-weight: 500;
       letter-spacing: 0.18em;
       padding-left: 0.18em;
       text-transform: uppercase;
@@ -1056,7 +1074,7 @@
     .search-result-price {
       font-family: var(--font-ui);
       font-size: 15px;
-      font-weight: 400;
+      font-weight: 500;
       color: var(--fg);
       flex-shrink: 0;
       margin-left: 6px;
@@ -1121,7 +1139,7 @@
     .catalog-title {
       font-family: var(--font-display);
       font-size: 21px;
-      font-weight: 400;
+      font-weight: 700;
       letter-spacing: 0.03em;
       margin: 0;
       color: var(--fg);
@@ -1192,7 +1210,7 @@
       flex-shrink: 0;
       font-family: var(--font-ui);
       font-size: 11px;
-      font-weight: 400;
+      font-weight: 600;
       letter-spacing: 0.16em;
       padding-left: 0.16em;
       text-transform: uppercase;
@@ -1236,7 +1254,7 @@
       display: block;
       font-family: var(--font-ui);
       font-size: 13px;
-      font-weight: 400;
+      font-weight: 700;
       line-height: 1.3;
     }
     .trust-row span {
@@ -1382,7 +1400,7 @@
       font-size: 10.5px;
       letter-spacing: 0.24em;
       text-transform: uppercase;
-      font-weight: 400;
+      font-weight: 700;
       color: #fff;
       opacity: 0.86;
       margin: 0 0 5px;
@@ -1390,7 +1408,7 @@
     .hero-c-title {
       font-family: var(--font-display);
       font-size: 24px;
-      font-weight: 400;
+      font-weight: 700;
       color: #fff;
       line-height: 1.15;
       margin: 0 0 14px;
@@ -1401,7 +1419,7 @@
       gap: 7px;
       font-family: var(--font-ui);
       font-size: 12.5px;
-      font-weight: 400;
+      font-weight: 700;
       letter-spacing: 0.03em;
       color: var(--fg);
       background: var(--bg);
@@ -1514,7 +1532,7 @@
       font-size: 10.5px;
       letter-spacing: 0.24em;
       text-transform: uppercase;
-      font-weight: 400;
+      font-weight: 700;
       color: #fff;
       opacity: 0.85;
       margin: 0 0 5px;
@@ -1522,7 +1540,7 @@
     .look-title {
       font-family: var(--font-display);
       font-size: 20px;
-      font-weight: 400;
+      font-weight: 700;
       color: #fff;
       margin: 0 0 10px;
     }
@@ -1536,7 +1554,7 @@
       border-radius: 999px;
       padding: 6px 13px 6px 6px;
       font-size: 11.5px;
-      font-weight: 400;
+      font-weight: 700;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
@@ -1611,7 +1629,7 @@
       z-index: 2;
       font-family: var(--font-ui);
       font-size: 10.5px;
-      font-weight: 400;
+      font-weight: 600;
       letter-spacing: 0.05em;
       padding: 3px 7px;
       text-transform: none;
@@ -1656,7 +1674,7 @@
     .product-card-savings {
       font-family: var(--font-ui);
       font-size: 10.5px;
-      font-weight: 400;
+      font-weight: 600;
       color: var(--acc);
       margin: 3px 0 0;
     }
@@ -1726,7 +1744,7 @@
       color: #fff;
       font-family: var(--font-ui);
       font-size: 10px;
-      font-weight: 400;
+      font-weight: 600;
       letter-spacing: 0;
       border-radius: 999px;
       display: none;
@@ -1770,7 +1788,7 @@
     .concierge-eyebrow {
       font-family: var(--font-ui);
       font-size: 10px;
-      font-weight: 400;
+      font-weight: 500;
       letter-spacing: 0.32em;
       padding-left: 0.32em;
       text-transform: uppercase;
@@ -1782,7 +1800,7 @@
     .concierge-title {
       font-family: var(--font-display);
       font-size: 24px;
-      font-weight: 400;
+      font-weight: 700;
       line-height: 1.2;
       margin: 0 0 10px;
       letter-spacing: 0.02em;
@@ -1863,7 +1881,7 @@
     .price-filter-value {
       font-family: var(--font-ui);
       font-size: 14px;
-      font-weight: 400;
+      font-weight: 600;
       color: var(--fg);
     }
 
@@ -2058,7 +2076,7 @@
     .sheet-title {
       font-family: var(--font-display);
       font-size: 17px;
-      font-weight: 400;
+      font-weight: 700;
       letter-spacing: 0.04em;
       margin: 0;
       flex: 1;
@@ -2133,7 +2151,7 @@
       font-size: 10.5px;
       letter-spacing: 0.22em;
       text-transform: uppercase;
-      font-weight: 400;
+      font-weight: 800;
       color: var(--acc);
     }
     .ab-sec { padding: 40px 20px 0; }
@@ -2162,7 +2180,7 @@
       font-size: 10.5px;
       letter-spacing: 0.22em;
       text-transform: uppercase;
-      font-weight: 400;
+      font-weight: 800;
       color: #c9b48a;
     }
     .ab-hero-t { font-family: var(--font-logo); font-size: 26px; line-height: 1.18; margin: 0; font-weight: 400; }
@@ -2202,7 +2220,7 @@
       font-size: 10.5px;
       letter-spacing: 0.22em;
       text-transform: uppercase;
-      font-weight: 400;
+      font-weight: 800;
       color: #c9b48a;
     }
 
@@ -2271,7 +2289,7 @@
       border: 0;
       font-family: var(--font-ui);
       font-size: 11.5px;
-      font-weight: 400;
+      font-weight: 700;
       letter-spacing: 0.14em;
       text-transform: uppercase;
       cursor: pointer;
@@ -2389,7 +2407,7 @@
       text-align: center;
       font-family: var(--font-ui);
       font-size: 12.5px;
-      font-weight: 400;
+      font-weight: 600;
       letter-spacing: 0.06em;
       color: rgba(255, 255, 255, 0.72);
       pointer-events: none;
@@ -2428,7 +2446,7 @@
       background: var(--acc);
       color: #fff;
       font-size: 10px;
-      font-weight: 400;
+      font-weight: 800;
       display: inline-grid;
       place-items: center;
     }
@@ -2463,7 +2481,7 @@
       min-width: 0;
       font-family: var(--font-ui);
       font-size: 12px;
-      font-weight: 400;
+      font-weight: 600;
       padding: 8px 4px;
       border: 0;
       border-radius: 999px;
@@ -2479,7 +2497,7 @@
     .gender-pill.is-active {
       background: var(--fg);
       color: var(--bg);
-      font-weight: 400;
+      font-weight: 700;
       box-shadow: 0 1px 3px color-mix(in srgb, var(--fg) 10%, transparent);
     }
 
@@ -2501,7 +2519,7 @@
       color: var(--fg);
       font-family: var(--font-ui);
       font-size: 12.5px;
-      font-weight: 400;
+      font-weight: 600;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
       transition: transform 0.1s ease, background-color 0.3s ease;
@@ -2511,7 +2529,7 @@
       flex: 1; min-width: 0; text-align: left;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
-    .brand-pick-n { font-size: 11px; font-weight: 400; color: var(--fg-3); flex: 0 0 auto; }
+    .brand-pick-n { font-size: 11px; font-weight: 700; color: var(--fg-3); flex: 0 0 auto; }
     .brand-pick svg {
       width: 15px; height: 15px; flex: 0 0 auto;
       fill: none; stroke: var(--fg-3); stroke-width: 2;
@@ -2539,9 +2557,9 @@
       -webkit-tap-highlight-color: transparent;
     }
     .brandrow + .brandrow { border-top: 1px solid var(--line); }
-    .brandrow.is-on { font-weight: 400; }
-    .brandrow .tick { width: 16px; flex: 0 0 auto; color: var(--acc); font-weight: 400; }
-    .brandrow .n { margin-left: auto; font-size: 13px; color: var(--fg-3); font-weight: 400; }
+    .brandrow.is-on { font-weight: 700; }
+    .brandrow .tick { width: 16px; flex: 0 0 auto; color: var(--acc); font-weight: 700; }
+    .brandrow .n { margin-left: auto; font-size: 13px; color: var(--fg-3); font-weight: 600; }
 
     .cat-chip--icon {
       flex: 0 0 36px;
@@ -2606,7 +2624,7 @@
       background: none;
       font-family: var(--font-ui);
       font-size: 12px;
-      font-weight: 400;
+      font-weight: 600;
       color: var(--fg-2);
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
@@ -2673,19 +2691,30 @@
        на етапі замовлення, тому він і став другорядним. Раніше було
        навпаки: 8.5 px на бренд і 13 px на набір цифр. */
     .product-card-brand {
-      font-family: var(--font-ui);
-      font-size: 16px;
+      font-family: var(--font-logo);
+      font-size: 20px;
       font-weight: 400;
       letter-spacing: 0.01em;
-      line-height: 1.2;
+      line-height: 1.15;
       text-transform: none;
       color: var(--fg);
-      margin: 0 0 3px;
+      margin: 0 0 2px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .product-card-code { font-family: var(--font-ui); font-size: 11.5px; font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-3); margin: 0 0 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .product-card-code {
+      font-family: var(--font-ui);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--fg-2);
+      margin: 0 0 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     .product-card-pricing {
       display: flex;
       align-items: baseline;
@@ -2696,7 +2725,7 @@
     .product-card-price {
       font-family: var(--font-ui);
       font-size: 14px;
-      font-weight: 400;
+      font-weight: 700;
       color: var(--fg);
     }
     .product-card-old-price {
@@ -2770,7 +2799,7 @@
     .cat-promo-eyebrow {
       display: block;
       font-size: 10.5px;
-      font-weight: 400;
+      font-weight: 800;
       letter-spacing: 0.24em;
       text-transform: uppercase;
       color: #c9b48a;
@@ -2801,7 +2830,7 @@
       color: var(--fg);
       font-family: var(--font-ui);
       font-size: 11px;
-      font-weight: 400;
+      font-weight: 800;
       letter-spacing: 0.07em;
       text-transform: uppercase;
       cursor: pointer;
@@ -2909,7 +2938,7 @@
     /* Плашка знижки праворуч угорі. Ліворуч стоїть кнопка «назад», а
        посередині — сама оправа: у лівому куті плашка лягала просто на
        скло. Праворуч зверху вільно завжди. */
-    .pdp-badge { position: absolute; top: calc(14px + var(--tg-top)); right: 12px; height: 22px; padding: 0 9px 0 calc(9px + 0.08em); border-radius: 8px; display: grid; place-items: center; font-family: var(--font-ui); font-size: 10.5px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; z-index: 4; }
+    .pdp-badge { position: absolute; top: calc(14px + var(--tg-top)); right: 12px; height: 22px; padding: 0 9px 0 calc(9px + 0.08em); border-radius: 8px; display: grid; place-items: center; font-family: var(--font-ui); font-size: 10.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; z-index: 4; }
     .pdp-badge--sale { background: #3f6480; }
     .pdp-badge--new  { background: #b23b30; }
 
@@ -2990,9 +3019,11 @@
        людина шукає очима, коли відкриває картку. Prata тримає такий
        кегль, бо це антиква для заголовків, а не збільшений інтерфейс.
        Довгі назви JS підтискає, щоб лишались в один рядок. */
+    /* Ім'я бренду — антиквою Prata, як логотип. У неї одне накреслення,
+       тому жирність тут не задаємо: вага 400 і є її нормальна форма. */
     .pdp-brand {
       font-family: var(--font-logo);
-      font-size: 34px;
+      font-size: 38px;
       font-weight: 400;
       letter-spacing: 0.02em;
       text-transform: uppercase;
@@ -3009,11 +3040,11 @@
       flex-wrap: wrap;
       margin-bottom: 9px;
     }
-    .pdp-price b { font-size: 23px; font-weight: 400; letter-spacing: -0.02em; }
+    .pdp-price b { font-size: 23px; font-weight: 800; letter-spacing: -0.02em; }
     .pdp-price s { font-size: 14.5px; color: var(--fg-3); }
     .pdp-pct {
       font-size: 10.5px;
-      font-weight: 400;
+      font-weight: 800;
       color: #fff;
       background: #3f6480;
       padding: 3px 7px;
@@ -3043,7 +3074,7 @@
       stroke-linecap: round;
       stroke-linejoin: round;
     }
-    .pdp-save b { font-weight: 400; }
+    .pdp-save b { font-weight: 700; }
 
     .pdp-ship {
       display: flex;
@@ -3061,7 +3092,7 @@
       flex: 0 0 7px;
       margin-top: 5px;
     }
-    .pdp-ship b { font-weight: 400; }
+    .pdp-ship b { font-weight: 700; }
     .pdp-ship span { color: var(--fg-2); }
 
     /* Твердження про оригінал стоїть тихо: дрібним і сірим.
@@ -3072,7 +3103,7 @@
       gap: 6px;
       margin-top: 10px;
       font-size: 11px;
-      font-weight: 400;
+      font-weight: 600;
       letter-spacing: 0.02em;
       color: var(--fg-3);
     }
@@ -3093,7 +3124,7 @@
       letter-spacing: 0.16em;
       text-transform: uppercase;
       color: var(--fg-3);
-      font-weight: 400;
+      font-weight: 700;
       margin-bottom: 12px;
       display: flex;
       justify-content: space-between;
@@ -3102,7 +3133,7 @@
     .pdp-lbl em {
       font-style: normal;
       color: var(--fg);
-      font-weight: 400;
+      font-weight: 700;
       letter-spacing: 0.02em;
       font-size: 11.5px;
       text-transform: none;
@@ -3166,7 +3197,7 @@
       background: rgba(26, 26, 28, 0.72);
       color: #fff;
       font-size: 10px;
-      font-weight: 400;
+      font-weight: 700;
       letter-spacing: 0.04em;
       text-align: center;
       padding: 2px 0;
@@ -3174,7 +3205,7 @@
 
     .pdp-desc { font-size: 13px; line-height: 1.6; color: var(--fg-2); }
     .pdp-art { margin-top: 10px; font-size: 11.5px; color: var(--fg-3); }
-    .pdp-art b { color: var(--fg-2); font-weight: 400; }
+    .pdp-art b { color: var(--fg-2); font-weight: 700; }
 
     .pdp-way {
       margin: 24px 20px 0;
@@ -3189,7 +3220,7 @@
       align-items: center;
       gap: 8px;
       font-size: 13px;
-      font-weight: 400;
+      font-weight: 800;
       margin-bottom: 16px;
     }
     .pdp-way-t svg {
@@ -3224,7 +3255,7 @@
       width: 1px;
       background: var(--line);
     }
-    .pdp-step-w { font-size: 12.5px; font-weight: 400; line-height: 1.35; }
+    .pdp-step-w { font-size: 12.5px; font-weight: 700; line-height: 1.35; }
     .pdp-step-s { font-size: 11.5px; color: var(--fg-2); line-height: 1.4; margin-top: 1px; }
 
     .pdp-strip {
@@ -3267,12 +3298,12 @@
     .pdp-mini-n {
       display: block;
       font-size: 10.5px;
-      font-weight: 400;
+      font-weight: 700;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .pdp-mini-p { display: block; font-size: 11.5px; font-weight: 400; margin-top: 1px; }
+    .pdp-mini-p { display: block; font-size: 11.5px; font-weight: 800; margin-top: 1px; }
 
     .pdp-pad { height: 8px; }
 
@@ -3304,12 +3335,12 @@
       gap: 9px;
       font-family: var(--font-ui);
       font-size: 13.5px;
-      font-weight: 400;
+      font-weight: 700;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
       transition: background-color 0.3s ease, color 0.3s ease;
     }
-    .pdp-buy .p { font-weight: 400; }
+    .pdp-buy .p { font-weight: 800; }
     .pdp-buy:active { transform: scale(0.99); }
 
 
@@ -3360,11 +3391,13 @@
        Повна версія з пробілами лишилась нижче, у рядку «Артикул». */
     /* Код — службова інформація, клієнту при виборі вона не потрібна.
        Лишаємо, але тихо: повний артикул усе одно є нижче. */
+    /* Код — рівно вдвічі дрібніший за ім'я і сірий. Це службовий
+       рядок: клієнту він потрібен лише коли вже щось замовляє. */
     .product-code {
       font-family: var(--font-ui);
-      font-size: 12px;
-      font-weight: 400;
-      letter-spacing: 0.12em;
+      font-size: 19px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
       color: var(--fg-2);
       margin: 0 0 16px;
@@ -3381,7 +3414,7 @@
     .product-section-title {
       font-family: var(--font-ui);
       font-size: 12px;
-      font-weight: 400;
+      font-weight: 500;
       letter-spacing: 0.28em;
       padding-left: 0.28em;
       text-transform: uppercase;
@@ -3423,7 +3456,7 @@
     }
     .product-specs .spec-value {
       color: var(--fg);
-      font-weight: 400;
+      font-weight: 500;
     }
 
     /* Product sheet footer: heart + add to cart */
@@ -3534,7 +3567,7 @@
     .list-row-brand {
       font-family: var(--font-display);
       font-size: 16px;
-      font-weight: 400;
+      font-weight: 700;
       margin: 0 0 2px;
       letter-spacing: 0.02em;
       line-height: 1.15;
@@ -3561,7 +3594,7 @@
     .list-row-price {
       font-family: var(--font-ui);
       font-size: 15px;
-      font-weight: 400;
+      font-weight: 500;
     }
     .list-row-old-price {
       font-family: var(--font-ui);
@@ -3573,7 +3606,7 @@
     .list-row-disc {
       font-family: var(--font-ui);
       font-size: 10px;
-      font-weight: 400;
+      font-weight: 700;
       color: #fff;
       background: var(--sale);
       padding: 1px 6px;
@@ -3642,7 +3675,7 @@
       text-align: center;
       font-family: var(--font-ui);
       font-size: 14px;
-      font-weight: 400;
+      font-weight: 500;
     }
 
     .list-move-to-cart {
@@ -3677,12 +3710,12 @@
     .promo-input::placeholder { color: color-mix(in srgb, var(--fg) 40%, transparent); text-transform: none; letter-spacing: 0; }
     .promo-apply {
       flex-shrink: 0; background: var(--fg); color: var(--bg); border: none;
-      border-radius: 10px; padding: 12px 16px; font-size: 12px; font-weight: 400;
+      border-radius: 10px; padding: 12px 16px; font-size: 12px; font-weight: 600;
       letter-spacing: .08em; text-transform: uppercase; cursor: pointer; font-family: var(--font-ui);
     }
     .promo-applied { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
     .promo-applied-code {
-      font-size: 13px; font-weight: 400; color: var(--ok);
+      font-size: 13px; font-weight: 600; color: var(--ok);
       background: rgba(47,158,111,.1); padding: 8px 14px; border-radius: 999px;
     }
     .promo-remove {
@@ -3722,7 +3755,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 400;
+      font-weight: 700;
       font-size: 12px;
     }
     .multipair-nudge--max .multipair-nudge-icon { background: var(--ok); }
@@ -3759,14 +3792,14 @@
     .cart-savings-label {
       font-family: var(--font-ui);
       font-size: 13px;
-      font-weight: 400;
+      font-weight: 600;
       letter-spacing: 0.04em;
       color: var(--acc);
     }
     .cart-savings-amount {
       font-family: var(--font-display, Georgia, serif);
       font-size: 24px;
-      font-weight: 400;
+      font-weight: 600;
       color: var(--acc);
     }
     .cart-savings-sub {
@@ -3795,7 +3828,7 @@
     }
     .cart-summary-row--total {
       font-size: 18px;
-      font-weight: 400;
+      font-weight: 500;
       opacity: 1;
       margin-top: 4px;
       margin-bottom: 0;
@@ -3814,7 +3847,7 @@
       width: 100%;
       font-family: var(--font-ui);
       font-size: 13px;
-      font-weight: 400;
+      font-weight: 500;
       letter-spacing: 0.22em;
       padding-left: 0.22em;
       text-transform: uppercase;
@@ -6244,7 +6277,7 @@
            інакше зникає сам сенс великої назви. */
         var brandEl = bodyEl.querySelector('.pdp-brand');
         if (brandEl) {
-          var bs = 34, bguard = 0;
+          var bs = 38, bguard = 0;
           brandEl.style.fontSize = bs + 'px';
           while (brandEl.scrollWidth > brandEl.clientWidth &&
                  brandEl.clientWidth > 0 && bs > 22 && bguard++ < 40) {
