@@ -4351,7 +4351,7 @@
 
       var PROMO_QUERY = '*[_type == "promo" && active == true] { name, type, discount, brand, scope, startDate, endDate, code }';
 
-      var SETTINGS_QUERY = '*[_type == "settings"][0] { tgUsername, deliveryTime, pair2Discount, pair3Discount, giftBrandsNote, rateUAH, rateUSDT, "heroUrl": heroImage.asset->url, heroTitle, heroCta, saleTitle, saleSubtitle, aboutKicker, aboutTitle, aboutWhoTitle, aboutWhoText, aboutQuote, aboutStepsTitle, "b1Url": b1Image.asset->url, gAll, gWomen, gMen, gUni, navHome, navSearch, navWish, navCart, catFootT, catFootCta, searchEmpty1, searchNone, searchNoneHint, b1Kicker, b1Title, b1Cta, b1Link, b1Off, "b2Url": b2Image.asset->url, b2Kicker, b2Title, b2Cta, b2Link, b2Off, "b3Url": b3Image.asset->url, b3Kicker, b3Title, b3Cta, b3Link, b3Off, secBrands, secBrandsLink, secNew, secNewLink, lookKicker, lookTitle, lookOff, trust1T, trust1S, trust2T, trust2S, trust3T, trust3S, conKicker, conTitle, conText, conCta, aboutLinkT, aboutLinkS, promoEyebrow, promoTitle, promoText, promoCta, promoOff }';
+      var SETTINGS_QUERY = '*[_type == "settings"][0] { tgUsername, deliveryTime, pair2Discount, pair3Discount, giftBrandsNote, rateUAH, rateUSDT, "heroUrl": heroImage.asset->url, heroTitle, heroCta, saleTitle, saleSubtitle, aboutKicker, aboutTitle, aboutWhoTitle, aboutWhoText, aboutQuote, aboutStepsTitle, "b1Url": b1Image.asset->url, heroFocus, b1Focus, b2Focus, b3Focus, gAll, gWomen, gMen, gUni, navHome, navSearch, navWish, navCart, catFootT, catFootCta, searchEmpty1, searchNone, searchNoneHint, b1Kicker, b1Title, b1Cta, b1Link, b1Off, "b2Url": b2Image.asset->url, b2Kicker, b2Title, b2Cta, b2Link, b2Off, "b3Url": b3Image.asset->url, b3Kicker, b3Title, b3Cta, b3Link, b3Off, secBrands, secBrandsLink, secNew, secNewLink, lookKicker, lookTitle, lookOff, trust1T, trust1S, trust2T, trust2S, trust3T, trust3S, conKicker, conTitle, conText, conCta, aboutLinkT, aboutLinkS, promoEyebrow, promoTitle, promoText, promoCta, promoOff }';
 
       /* Products */
       /* Показові товари з коду потрібні у двох місцях: щоб сторінку
@@ -4499,6 +4499,10 @@
               el.textContent = v;
             }
           });
+          /* Головне фото теж має свій кадр. */
+          var heroImg = document.querySelector('.hero-bg img, #heroImg1');
+          if (heroImg && s.heroFocus) window.OPTIX_applyFocus(heroImg, s.heroFocus);
+
           /* ---------- Три банери: фото, тексти й куди ведуть ----------
              Кожен слайд повністю керується з адмінки. Порожні поля не
              ламають нічого: там, де нічого не задано, лишається те, що
@@ -4522,6 +4526,7 @@
             if (url && img) {
               img.src = url + '?w=1200&fit=max';
               img.hidden = false;
+              window.OPTIX_applyFocus(img, s['b' + i + 'Focus']);
               /* автоматичну підкладку ховаємо, інакше вона проступає */
               var auto = slide.querySelector('.hero-collage, .hero-spot');
               if (auto) auto.hidden = true;
@@ -6931,6 +6936,29 @@
         if (view.classList.contains('is-open')) reset(false);
       });
     })();
+
+    /* Кадр знімка, який поставили в адмінці. Три числа: зсув по
+       горизонталі, по вертикалі і масштаб. Застосовуємо рівно так
+       само, як у редакторі, — інакше побачене при налаштуванні не
+       збігалося б із тим, що бачить покупець. */
+    window.OPTIX_applyFocus = function (img, val) {
+      if (!img) return;
+      var p = String(val || '').trim().split(/\s+/).map(Number);
+      if (p.length !== 3 || p.some(function (n) { return isNaN(n); })) {
+        img.style.transform = '';
+        img.style.objectPosition = '';
+        return;
+      }
+      var host = img.parentElement;
+      if (host && getComputedStyle(host).position === 'static') host.style.position = 'relative';
+      if (host) host.style.overflow = 'hidden';
+      img.style.position = 'absolute';
+      img.style.top = '50%';
+      img.style.left = '50%';
+      img.style.width = '100%';
+      img.style.transformOrigin = 'center';
+      img.style.transform = 'translate(' + (-p[0]) + '%, ' + (-p[1]) + '%) scale(' + p[2] + ')';
+    };
 
     /* Куди ведуть кнопки банерів. Один обробник на всі три: адреса
        береться з атрибута, який проставляється з налаштувань. */
