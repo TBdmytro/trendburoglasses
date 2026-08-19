@@ -2912,18 +2912,16 @@
       cursor: zoom-in;
       transition: background 0.3s ease;
     }
-    /* Кадр знімка. Пропорцію ставить JS за реальним файлом
-       (--gal-ar), тому смуг згори й знизу не лишається.
-       До завантаження тримаємо 16:9, щоб сторінка не стрибала. */
-    /* Пропорцію задає JS за самим файлом (--gal-ar) — тоді знімок
-       заповнює кадр без полів. max-height — страховка: якщо файл
-       не встиг зміряти, кадр не перетвориться на порожню шахту. */
+    /* Однаковий кадр у кожного товару. Раніше пропорцію рахував JS
+       по самому файлу — і плитка стрибала від картки до картки: у
+       когось знімок на всю ширину, у когось вузька смуга посередині.
+       Тепер рамка стала, а знімок вписується в неї цілком. */
     .pdp-gal-track {
       background: var(--surface);
       display: flex;
       align-items: center;
-      aspect-ratio: var(--gal-ar, 16 / 9);
-      max-height: 38vh;
+      aspect-ratio: 4 / 3;
+      max-height: 42vh;
       overflow-x: auto;
       scroll-snap-type: x mandatory;
       -webkit-overflow-scrolling: touch;
@@ -2947,6 +2945,11 @@
       padding: 0;
       display: block;
     }
+    /* Гортання пальцем — плавне, як у стрічці фото. Клас is-jump
+       вимикає анімацію на мить, коли стрічку треба поставити на
+       початок без ковзання через увесь ряд. */
+    .pdp-gal-track { scroll-behavior: smooth; }
+    .pdp-gal-track.is-jump { scroll-behavior: auto; }
     .pdp-gal-track .product-placeholder {
       flex: 0 0 100%;
       aspect-ratio: 1;
@@ -6464,18 +6467,44 @@
         e.preventDefault();
         var code = chip.getAttribute('data-color-code');
         if (!code || code === currentCode) return;
-        /* Прокрутку не чіпаємо: людина дивиться на ряд кольорів, і
-           стрибок сторінки вгору щоразу відкидав би її від нього. */
-        var keepScroll = bodyEl.scrollTop;
-        window.OPTIX_openProduct(code, true);
-        bodyEl.scrollTop = keepScroll;
-        /* Підводимо вибрану плитку в поле зору, якщо вона за краєм. */
-        var row = bodyEl.querySelector('.pdp-cols');
-        var picked = bodyEl.querySelector('.pdp-col.is-current');
-        if (row && picked) {
-          var left = picked.offsetLeft - (row.clientWidth - picked.offsetWidth) / 2;
-          row.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
+
+        /* Обідок переїжджає одразу — око бачить відповідь на дотик
+           ще до того, як підміняться дані. */
+        [].forEach.call(bodyEl.querySelectorAll('.pdp-col'), function (c) {
+          c.classList.toggle('is-current', c === chip);
+        });
+
+        function swap() {
+          /* Прокрутку не чіпаємо: людина дивиться на ряд кольорів, і
+             стрибок сторінки вгору щоразу відкидав би її від нього. */
+          var keepScroll = bodyEl.scrollTop;
+          window.OPTIX_openProduct(code, true);
+          bodyEl.scrollTop = keepScroll;
+          /* Підводимо вибрану плитку в поле зору, якщо вона за краєм. */
+          var row = bodyEl.querySelector('.pdp-cols');
+          var picked = bodyEl.querySelector('.pdp-col.is-current');
+          if (row && picked) {
+            var left = picked.offsetLeft - (row.clientWidth - picked.offsetWidth) / 2;
+            row.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
+          }
         }
+
+        /* Картка перемальовується цілком, тож новий знімок починає
+           вантажитись з нуля — і на мить лишалась порожня плитка.
+           Тому спершу тихо тягнемо знімок у кеш, а міняємо вміст уже
+           тоді, коли малювати є що. Довго чекати не станемо: якщо за
+           400 мс не приїхало — міняємо як є, зависла картка гірша за
+           блимання. */
+        var next = findProduct(code);
+        var src = next && next.images && next.images[0];
+        if (!src) { swap(); return; }
+        var done = false;
+        var go = function () { if (done) return; done = true; swap(); };
+        var pre = new Image();
+        pre.onload = go;
+        pre.onerror = go;
+        pre.src = src;
+        if (pre.complete) go(); else setTimeout(go, 400);
       });
 
       window.OPTIX_openProduct = function (code, silent) {
@@ -6499,8 +6528,12 @@
            там, де її прогорнули для попереднього товару, і знімок
            стояв криво: половина одного, половина наступного. */
         if (gallery) {
+          gallery.classList.add('is-jump');
           gallery.scrollLeft = 0;
-          requestAnimationFrame(function () { gallery.scrollLeft = 0; });
+          requestAnimationFrame(function () {
+            gallery.scrollLeft = 0;
+            gallery.classList.remove('is-jump');
+          });
         }
         /* Знак Ox має лежати на самому знімку, а не на шві між
            знімком і шторкою. Скільки під ним усього — стільки й
@@ -6512,38 +6545,10 @@
           galHost.style.setProperty('--ox-bottom', (foot + 10) + 'px');
         })();
 
-        /* Кадр підганяємо під сам знімок, інакше по краях лишаються
-           порожні поля і оправа виглядає дрібною. Раніше міряли лише
-           один раз: якщо в ту мить розміри ще не були відомі, кадр
-           так і лишався з запасною пропорцією 16:9. Тепер пробуємо
-           кілька разів і перевіряємо кожен знімок. */
-        if (gallery) {
-          var host = gallery.closest('.pdp-gal') || gallery;
-          var fit = function () {
-            var imgs = gallery.querySelectorAll('img');
-            for (var i = 0; i < imgs.length; i++) {
-              var w = imgs[i].naturalWidth, h = imgs[i].naturalHeight;
-              if (w && h) {
-                /* Межі широкі: ріже лише відверто зламані файли. */
-                var ar = Math.min(2.6, Math.max(0.9, w / h));
-                host.style.setProperty('--gal-ar', ar.toFixed(3));
-                return true;
-              }
-            }
-            return false;
-          };
-          if (!fit()) {
-            var tries = 0;
-            var retry = function () {
-              if (fit() || ++tries > 20) return;
-              requestAnimationFrame(retry);
-            };
-            requestAnimationFrame(retry);
-            gallery.querySelectorAll('img').forEach(function (im) {
-              im.addEventListener('load', fit, { once: true });
-            });
-          }
-        }
+        /* Пропорцію кадру більше не рахуємо: вона однакова в усіх
+           товарів і задана в стилях. Так плитка не стрибає, коли
+           перемикаєш кольори або відкриваєш іншу модель. */
+
         if (gallery && dotsWrap) {
           var dots = dotsWrap.querySelectorAll('.pdp-gal-dot');
           gallery.addEventListener('scroll', function () {
@@ -6799,6 +6804,7 @@
         scale = 1;
         tx = 0;
         ty = 0;
+        img.style.opacity = '1';   /* могло лишитись від гортання */
         apply(animate);
       }
 
@@ -6821,6 +6827,42 @@
         if (countEl) countEl.hidden = !many;
         if (prevBtn) prevBtn.hidden = !many;
         if (nextBtn) nextBtn.hidden = !many;
+        preloadAround();
+      }
+
+      /* Сусідні знімки тягнемо заздалегідь: інакше перший кадр
+         гортання — це порожнеча, поки файл їде мережею. */
+      function preloadAround() {
+        if (list.length < 2) return;
+        [idx + 1, idx - 1].forEach(function (i) {
+          var it = list[(i + list.length) % list.length];
+          if (it && it.src) { var im = new Image(); im.src = it.src; }
+        });
+      }
+
+      /* Гортання зі зсувом, а не миттєвою підміною: знімок їде вбік,
+         новий заходить з протилежного боку. Так око встигає зрозуміти,
+         що відбулось, — як у стрічці фото в месенджері. */
+      var sliding = false;
+      function slide(dir) {
+        if (sliding || list.length < 2) return;
+        sliding = true;
+        var w = view.clientWidth || 320;
+        img.style.transition = 'transform .16s ease-out, opacity .16s ease-out';
+        img.style.transform = 'translate(' + (-dir * w * 0.32) + 'px, 0) scale(1)';
+        img.style.opacity = '0';
+        setTimeout(function () {
+          show(idx + dir, false);              /* тут же скидає transform */
+          img.style.transition = 'none';
+          img.style.transform = 'translate(' + (dir * w * 0.32) + 'px, 0) scale(1)';
+          img.style.opacity = '0';
+          requestAnimationFrame(function () {
+            img.style.transition = 'transform .2s ease-out, opacity .2s ease-out';
+            img.style.transform = 'translate(0px, 0px) scale(1)';
+            img.style.opacity = '1';
+            setTimeout(function () { sliding = false; }, 210);
+          });
+        }, 165);
       }
 
       function open(src, alt) {
@@ -6853,15 +6895,15 @@
 
       closeBtn.addEventListener('click', close);
       if (prevBtn) prevBtn.addEventListener('click', function (e) {
-        e.stopPropagation(); show(idx - 1, false);
+        e.stopPropagation(); slide(-1);
       });
       if (nextBtn) nextBtn.addEventListener('click', function (e) {
-        e.stopPropagation(); show(idx + 1, false);
+        e.stopPropagation(); slide(1);
       });
       document.addEventListener('keydown', function (e) {
         if (!view.classList.contains('is-open')) return;
-        if (e.key === 'ArrowLeft')  show(idx - 1, false);
-        if (e.key === 'ArrowRight') show(idx + 1, false);
+        if (e.key === 'ArrowLeft')  slide(-1);
+        if (e.key === 'ArrowRight') slide(1);
         if (e.key === 'Escape')     close();
       });
       /* Раніше тут висів звичайний click: «повз знімок — закрити».
@@ -6986,7 +7028,7 @@
             var onBackdrop = start.target === view || start.target === stage;
             view.style.opacity = '';
             if (list.length > 1 && Math.abs(sdx) > 55 && Math.abs(sdx) > Math.abs(sdy)) {
-              show(idx + (sdx < 0 ? 1 : -1), false);   /* гортання вбік */
+              slide(sdx < 0 ? 1 : -1);                 /* гортання вбік */
             } else if (sdy > 110) {
               close(); reset(false);
             } else if (tapped && onBackdrop) {
