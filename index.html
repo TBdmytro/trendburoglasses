@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <!-- Мітка збірки: видно ззовні, тому завжди зрозуміло,
        яка саме версія зараз залита. -->
-  <meta name="optix-build" content="2026-08-19-hidden-fix" />
+  <meta name="optix-build" content="2026-08-19-swipe" />
   <title>optix — by Trend Büro</title>
 
   <!-- Знак «ox» просто у розмітці: окремий файл вантажити не треба,
@@ -2367,9 +2367,29 @@
     .zoom-stage {
       width: 100%;
       height: 100%;
+      display: flex;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      touch-action: pan-x;          /* горизонталь — браузеру, решта — нам */
+      overscroll-behavior: contain;
+    }
+    .zoom-stage::-webkit-scrollbar { display: none; }
+    /* Поки знімок наближений, гортати не можна — палець панорамує. */
+    .zoom-stage.is-zoomed {
+      overflow: hidden;
+      touch-action: none;
+      scroll-snap-type: none;
+    }
+    .zoom-slide {
+      flex: 0 0 100%;
+      width: 100%;
+      height: 100%;
       display: grid;
       place-items: center;
-      overflow: hidden;
+      scroll-snap-align: center;
     }
     .zoom-img {
       max-width: 100%;
@@ -4223,9 +4243,11 @@
     <button type="button" class="zoom-close" id="zoomClose" aria-label="Закрити">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
     </button>
-    <div class="zoom-stage" id="zoomStage">
-      <img class="zoom-img" id="zoomImg" alt="" />
-    </div>
+    <!-- Стрічка знімків, а не один. Гортання тепер робить сам
+         браузер — палець веде фото за собою, як у банері на головній.
+         Раніше тут був один <img>, який підмінювали з анімацією: між
+         кадрами була пауза, і жест не читався як гортання. -->
+    <div class="zoom-stage" id="zoomStage"></div>
     <button type="button" class="zoom-nav zoom-nav--prev" id="zoomPrev" aria-label="Попереднє фото" hidden>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6 9 12l6 6"/></svg>
     </button>
@@ -6508,12 +6530,21 @@
           var keepScroll = bodyEl.scrollTop;
           window.OPTIX_openProduct(code, true);
           bodyEl.scrollTop = keepScroll;
-          /* Підводимо вибрану плитку в поле зору, якщо вона за краєм. */
+          /* Ряд кольорів лишаємо рівно там, де він був. Раніше після
+             кожного вибору він плавно від'їжджав, щоб «підвести» плитку
+             під центр, — і виглядало це як гармошка: туди-сюди, а вже
+             потім зміна. Людина щойно влучила пальцем у цю плитку,
+             тобто бачить її; возити стрічку немає за чим.
+             Виняток один: плитка справді поїхала за край екрана —
+             тоді присуваємо її миттєво, без анімації. */
           var row = bodyEl.querySelector('.pdp-cols');
           var picked = bodyEl.querySelector('.pdp-col.is-current');
           if (row && picked) {
-            var left = picked.offsetLeft - (row.clientWidth - picked.offsetWidth) / 2;
-            row.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
+            var l = picked.offsetLeft - row.scrollLeft;
+            if (l < 0 || l + picked.offsetWidth > row.clientWidth) {
+              row.scrollLeft = Math.max(0, picked.offsetLeft -
+                                (row.clientWidth - picked.offsetWidth) / 2);
+            }
           }
         }
 
@@ -6793,293 +6824,265 @@
        user-scalable), і щипок без свого обробника просто не працює.
        ============================================================ */
     (function () {
-      var view  = document.getElementById('zoomView');
-      var stage = document.getElementById('zoomStage');
-      var img   = document.getElementById('zoomImg');
+      var view     = document.getElementById('zoomView');
+      var stage    = document.getElementById('zoomStage');
       var closeBtn = document.getElementById('zoomClose');
-      var hint  = document.getElementById('zoomHint');
-      var prevBtn = document.getElementById('zoomPrev');
-      var nextBtn = document.getElementById('zoomNext');
-      var countEl = document.getElementById('zoomCount');
-      if (!view || !img) return;
+      var hint     = document.getElementById('zoomHint');
+      var prevBtn  = document.getElementById('zoomPrev');
+      var nextBtn  = document.getElementById('zoomNext');
+      var countEl  = document.getElementById('zoomCount');
+      if (!view || !stage) return;
 
       var MIN = 1, MAX = 4;
+      var list = [], idx = 0;
       var scale = 1, tx = 0, ty = 0;
-      var start = null;          /* стан на початку жесту */
-      var pointers = {};         /* активні пальці */
-      var lastTap = 0;
+      var pointers = {}, start = null, pinch = null, lastTap = 0;
 
-      function apply(animate) {
-        img.style.transition = animate ? 'transform 0.22s ease' : 'none';
-        img.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';
+      function esc(v) { return window.OPTIX_esc ? window.OPTIX_esc(v) : String(v || ''); }
+      function slideEl(i) { return stage.children[i] || null; }
+      function currentImg() {
+        var sl = slideEl(idx);
+        return sl ? sl.querySelector('img') : null;
       }
 
-      /* Не даємо відтягнути знімок за межі екрана: інакше він
-         «губиться» і людина не розуміє, куди він подівся. */
-      /* Нуль — це центр екрана, бо .zoom-stage вже центрує знімок
-         сіткою. Тому обмеження симетричні: далі, ніж на власний
-         край, знімок відтягнути не можна. */
-      function clamp() {
+      /* ---------- масштаб ---------- */
+      function applyZoom(animate) {
+        var im = currentImg();
+        if (!im) return;
+        im.style.transition = animate ? 'transform 0.22s ease' : 'none';
+        im.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';
+        /* Поки збільшено — гортання вимкнене, палець панорамує знімок. */
+        stage.classList.toggle('is-zoomed', scale > 1.01);
+      }
+      /* Далі, ніж на власний край, знімок відтягнути не можна. */
+      function clampPan() {
+        var im = currentImg();
+        if (!im) return;
         var w = view.clientWidth, h = view.clientHeight;
-        var iw = img.offsetWidth * scale, ih = img.offsetHeight * scale;
-        var maxX = Math.max(0, (iw - w) / 2);
-        var maxY = Math.max(0, (ih - h) / 2);
+        var iw = im.offsetWidth * scale, ih = im.offsetHeight * scale;
+        var maxX = Math.max(0, (iw - w) / 2), maxY = Math.max(0, (ih - h) / 2);
         tx = Math.min(maxX, Math.max(-maxX, tx));
         ty = Math.min(maxY, Math.max(-maxY, ty));
       }
-
-      function reset(animate) {
-        scale = 1;
-        tx = 0;
-        ty = 0;
-        img.style.opacity = '1';   /* могло лишитись від гортання */
-        apply(animate);
+      function resetZoom(animate) {
+        scale = 1; tx = 0; ty = 0;
+        var im = currentImg();
+        if (im) im.style.opacity = '1';
+        applyZoom(animate);
       }
 
-      /* Перегляд тримає весь набір знімків товару, а не один.
-         Інакше, щоб глянути друге фото зблизька, треба вийти,
-         прогорнути стрічку й зайти знову. */
-      var list = [], idx = 0;
-
-      function show(i, animate) {
-        if (!list.length) return;
-        idx = (i + list.length) % list.length;
-        var it = list[idx];
-        img.src = it.src;
-        img.alt = it.alt || '';
-        reset(false);                       /* одразу, ще до завантаження */
-        var go = function () { reset(animate); };
-        if (img.complete) go(); else img.onload = go;
-        if (countEl) countEl.textContent = (idx + 1) + ' / ' + list.length;
+      /* ---------- стрічка ---------- */
+      function build() {
+        stage.innerHTML = list.map(function (it) {
+          return '<div class="zoom-slide"><img class="zoom-img" src="' +
+                 esc(it.src) + '" alt="' + esc(it.alt || '') + '" /></div>';
+        }).join('');
+      }
+      function syncCount() {
         var many = list.length > 1;
-        if (countEl) countEl.hidden = !many;
+        if (countEl) {
+          countEl.textContent = (idx + 1) + ' / ' + list.length;
+          countEl.hidden = !many;
+        }
         if (prevBtn) prevBtn.hidden = !many;
         if (nextBtn) nextBtn.hidden = !many;
-        preloadAround();
+      }
+      /* Проста математика: один знімок — одна ширина екрана. */
+      function goTo(i, smooth) {
+        if (!list.length) return;
+        i = Math.min(Math.max(i, 0), list.length - 1);
+        var w = stage.clientWidth;
+        if (idx !== i) resetZoom(false);          /* попередній лишаємо в масштабі 1 */
+        idx = i;
+        /* scrollTo є не всюди (старі webview, тестове середовище) —
+           там просто ставимо позицію. Гортання від цього не зникає. */
+        if (typeof stage.scrollTo === 'function') {
+          stage.scrollTo({ left: i * w, behavior: smooth ? 'smooth' : 'auto' });
+        } else {
+          stage.scrollLeft = i * w;
+        }
+        syncCount();
       }
 
-      /* Сусідні знімки тягнемо заздалегідь: інакше перший кадр
-         гортання — це порожнеча, поки файл їде мережею. */
-      function preloadAround() {
-        if (list.length < 2) return;
-        [idx + 1, idx - 1].forEach(function (i) {
-          var it = list[(i + list.length) % list.length];
-          if (it && it.src) { var im = new Image(); im.src = it.src; }
-        });
-      }
-
-      /* Гортання зі зсувом, а не миттєвою підміною: знімок їде вбік,
-         новий заходить з протилежного боку. Так око встигає зрозуміти,
-         що відбулось, — як у стрічці фото в месенджері. */
-      var sliding = false;
-      function slide(dir) {
-        if (sliding || list.length < 2) return;
-        sliding = true;
-        var w = view.clientWidth || 320;
-        img.style.transition = 'transform .16s ease-out, opacity .16s ease-out';
-        img.style.transform = 'translate(' + (-dir * w * 0.32) + 'px, 0) scale(1)';
-        img.style.opacity = '0';
-        setTimeout(function () {
-          show(idx + dir, false);              /* тут же скидає transform */
-          img.style.transition = 'none';
-          img.style.transform = 'translate(' + (dir * w * 0.32) + 'px, 0) scale(1)';
-          img.style.opacity = '0';
-          requestAnimationFrame(function () {
-            img.style.transition = 'transform .2s ease-out, opacity .2s ease-out';
-            img.style.transform = 'translate(0px, 0px) scale(1)';
-            img.style.opacity = '1';
-            setTimeout(function () { sliding = false; }, 210);
-          });
-        }, 165);
-      }
+      /* Гортає сам браузер — ми лише слухаємо, де зупинилися. */
+      stage.addEventListener('scroll', function () {
+        var w = stage.clientWidth;
+        if (!w || !list.length) return;
+        var i = Math.round(stage.scrollLeft / w);
+        i = Math.min(Math.max(i, 0), list.length - 1);
+        if (i !== idx) {
+          resetZoom(false);
+          idx = i;
+          syncCount();
+        }
+      }, { passive: true });
 
       function open(src, alt) {
         /* Приймаємо і один знімок, і масив {src, alt} з номером. */
         if (Array.isArray(src)) {
           list = src.slice();
-          idx = Math.min(Math.max(alt | 0, 0), list.length - 1);
+          idx = Math.min(Math.max(alt | 0, 0), Math.max(0, list.length - 1));
         } else {
           list = [{ src: src, alt: alt || '' }];
           idx = 0;
         }
+        build();
+        scale = 1; tx = 0; ty = 0;
         view.classList.add('is-open');
         view.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
         if (window.OPTIX_navSync) window.OPTIX_navSync();
         if (hint) hint.classList.remove('is-hidden');
-        view.style.opacity = '';            /* могло лишитись від свайпу вниз */
-        show(idx, false);
-        /* Підказка потрібна один раз — далі вона тільки заважає. */
+        view.style.opacity = '';
+        stage.classList.remove('is-zoomed');
+        syncCount();
+        /* Ширину стрічки видно лише після того, як вікно показали. */
+        requestAnimationFrame(function () {
+          stage.scrollLeft = idx * stage.clientWidth;
+        });
         setTimeout(function () { if (hint) hint.classList.add('is-hidden'); }, 2600);
       }
       function close() {
         view.classList.remove('is-open');
         view.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
+        stage.classList.remove('is-zoomed');
         if (window.OPTIX_navSync) window.OPTIX_navSync();
-        setTimeout(function () { img.removeAttribute('src'); }, 240);
+        setTimeout(function () { stage.innerHTML = ''; list = []; }, 240);
       }
       window.OPTIX_zoomOpen = open;
 
       closeBtn.addEventListener('click', close);
       if (prevBtn) prevBtn.addEventListener('click', function (e) {
-        e.stopPropagation(); slide(-1);
+        e.stopPropagation(); goTo(idx - 1, true);
       });
       if (nextBtn) nextBtn.addEventListener('click', function (e) {
-        e.stopPropagation(); slide(1);
+        e.stopPropagation(); goTo(idx + 1, true);
       });
       document.addEventListener('keydown', function (e) {
         if (!view.classList.contains('is-open')) return;
-        if (e.key === 'ArrowLeft')  slide(-1);
-        if (e.key === 'ArrowRight') slide(1);
+        if (e.key === 'ArrowLeft')  goTo(idx - 1, true);
+        if (e.key === 'ArrowRight') goTo(idx + 1, true);
         if (e.key === 'Escape')     close();
       });
-      /* Раніше тут висів звичайний click: «повз знімок — закрити».
-         Але нижче ми перехоплюємо вказівник через setPointerCapture,
-         і після цього браузер надсилає click уже не в знімок, а в саме
-         вікно. Виходило, що перший же дотик по фото закривав перегляд:
-         ні наблизити, ні погортати. Тепер рішення ухвалюємо в
-         pointerup — за тим, у що людина справді ткнула. */
 
-      function dist(a, b) {
-        return Math.hypot(a.x - b.x, a.y - b.y);
-      }
-      function mid(a, b) {
-        return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-      }
-      /* Раніше ця функція звалася list — так само, як масив знімків
-         вище. Оголошення масиву затирало функцію, і будь-який дотик
-         падав з помилкою: не працювали ні щипок, ні гортання. */
+      /* ---------- жести ----------
+         Горизонталь віддано браузеру (touch-action: pan-x), тому тут
+         лишились тільки три речі: подвійний дотик, щипок і потяг униз
+         на закриття. Плюс панорамування, коли знімок збільшено. */
       function touches() {
         return Object.keys(pointers).map(function (k) { return pointers[k]; });
       }
+      function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+      function mid(a, b) { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
 
       view.addEventListener('pointerdown', function (e) {
         if (e.target === closeBtn || closeBtn.contains(e.target)) return;
-        /* Захоплення вказівника не критичне: якщо браузер його не дав,
-           жест має працювати далі, а не валитися з помилкою. */
         try { view.setPointerCapture(e.pointerId); } catch (err) {}
         pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
         var p = touches();
 
-        if (p.length === 1) {
-          /* Подвійний дотик: перший раз наближає до 2.5, другий повертає. */
-          var now = Date.now();
-          if (now - lastTap < 300) {
-            if (scale > 1) {
-              reset(true);
-            } else {
-              /* Наближаємо до точки дотику: зміщення рахуємо від
-                 центру екрана, бо нуль тепер саме там. */
-              var k = 2.5;
-              tx = (view.clientWidth / 2 - e.clientX) * (k - 1);
-              ty = (view.clientHeight / 2 - e.clientY) * (k - 1);
-              scale = k;
-              clamp();
-              apply(true);
-            }
-            lastTap = 0;
-          } else {
-            lastTap = now;
-          }
-          start = { x: e.clientX, y: e.clientY, tx: tx, ty: ty,
-                    scale: scale, moved: 0, target: e.target };
-        } else if (p.length === 2) {
-          start = {
-            d: dist(p[0], p[1]),
-            m: mid(p[0], p[1]),
-            tx: tx, ty: ty, scale: scale
-          };
+        if (p.length === 2) {
+          start = null;
+          pinch = { d: dist(p[0], p[1]), m: mid(p[0], p[1]), tx: tx, ty: ty, scale: scale };
+          return;
         }
+
+        /* Подвійний дотик: перший раз наближає до 2.5, другий повертає. */
+        var now = Date.now();
+        if (now - lastTap < 300) {
+          if (scale > 1) {
+            resetZoom(true);
+          } else {
+            var k = 2.5;
+            tx = (view.clientWidth / 2 - e.clientX) * (k - 1);
+            ty = (view.clientHeight / 2 - e.clientY) * (k - 1);
+            scale = k;
+            clampPan();
+            applyZoom(true);
+          }
+          lastTap = 0;
+        } else {
+          lastTap = now;
+        }
+        start = { x: e.clientX, y: e.clientY, tx: tx, ty: ty,
+                  scale: scale, moved: 0, dx: 0, dy: 0, target: e.target };
       });
 
       view.addEventListener('pointermove', function (e) {
-        if (!pointers[e.pointerId]) return;
+        if (!(e.pointerId in pointers)) return;
         pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
         var p = touches();
+
+        if (pinch && p.length >= 2) {
+          var d = dist(p[0], p[1]);
+          var ns = Math.min(MAX, Math.max(MIN, pinch.scale * (d / pinch.d)));
+          var m = mid(p[0], p[1]);
+          var f = ns / pinch.scale;
+          var cx = view.clientWidth / 2, cy = view.clientHeight / 2;
+          /* Точка між пальцями лишається на місці. */
+          tx = m.x - cx - (pinch.m.x - cx - pinch.tx) * f;
+          ty = m.y - cy - (pinch.m.y - cy - pinch.ty) * f;
+          scale = ns;
+          clampPan();
+          applyZoom(false);
+          e.preventDefault();
+          return;
+        }
         if (!start) return;
 
-        if (p.length >= 2 && start.d) {
-          /* Щипок. Точка між пальцями лишається на місці — саме це
-             робить масштабування «природним» на дотик. */
-          var d = dist(p[0], p[1]);
-          var k = d / start.d;
-          var ns = Math.min(MAX, Math.max(MIN, start.scale * k));
-          var m = mid(p[0], p[1]);
-          var f = ns / start.scale;
-          var cxv = view.clientWidth / 2, cyv = view.clientHeight / 2;
-          /* Точка між пальцями лишається на місці. У центрових
-             координатах це зсув від центру, помножений на приріст. */
-          tx = m.x - cxv - (start.m.x - cxv - start.tx) * f;
-          ty = m.y - cyv - (start.m.y - cyv - start.ty) * f;
-          scale = ns;
-          clamp();
-          apply(false);
+        var dx = e.clientX - start.x, dy = e.clientY - start.y;
+        start.moved = Math.max(start.moved, Math.hypot(dx, dy));
+        start.dx = dx; start.dy = dy;
+
+        if (scale > 1) {
+          tx = start.tx + dx;
+          ty = start.ty + dy;
+          clampPan();
+          applyZoom(false);
           e.preventDefault();
-        } else if (p.length === 1 && start.tx != null) {
-          var dx = e.clientX - start.x, dy = e.clientY - start.y;
-          start.moved = Math.max(start.moved, Math.hypot(dx, dy));
-          start.dx = dx; start.dy = dy;
-          if (scale > 1) {
-            tx = start.tx + dx;
-            ty = start.ty + dy;
-            clamp();
-            apply(false);
-            e.preventDefault();
-          } else if (list.length > 1 && Math.abs(dx) > Math.abs(dy)) {
-            /* Гортання вбік — знімок їде за пальцем, щоб було видно,
-               що зараз перегорнеться. */
-            tx = start.tx + dx;
-            ty = start.ty;
-            img.style.transition = 'none';
-            img.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(1)';
-            e.preventDefault();
-          } else if (dy > 0) {
-            /* На звичайному масштабі тягнемо вниз — це закриття. */
-            tx = start.tx;
-            ty = start.ty + dy;
-            img.style.transition = 'none';
-            img.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(1)';
-            view.style.opacity = Math.max(0.25, 1 - dy / 400);
-            e.preventDefault();
+        } else if (dy > 0 && Math.abs(dy) > Math.abs(dx)) {
+          /* Потяг униз на звичайному масштабі — закриття. */
+          var im = currentImg();
+          if (im) {
+            im.style.transition = 'none';
+            im.style.transform = 'translate(0px,' + dy + 'px) scale(1)';
           }
+          view.style.opacity = Math.max(0.25, 1 - dy / 400);
+          e.preventDefault();
         }
       });
 
       function up(e) {
-        delete pointers[e.pointerId];
+        if (e && e.pointerId != null) delete pointers[e.pointerId];
         var p = touches();
-        if (p.length === 0) {
-          if (scale <= 1 && start && start.tx != null) {
-            var sdx = start.dx || 0, sdy = start.dy || 0;
-            var tapped = (start.moved || 0) < 8;
-            var onBackdrop = start.target === view || start.target === stage;
-            view.style.opacity = '';
-            if (list.length > 1 && Math.abs(sdx) > 55 && Math.abs(sdx) > Math.abs(sdy)) {
-              slide(sdx < 0 ? 1 : -1);                 /* гортання вбік */
-            } else if (sdy > 110) {
-              close(); reset(false);
-            } else if (tapped && onBackdrop) {
-              close(); reset(false);                   /* дотик повз знімок */
-            } else {
-              reset(true);
-            }
+        if (p.length < 2) pinch = null;
+        if (p.length) return;
+
+        if (scale <= 1 && start) {
+          var sdy = start.dy || 0, sdx = start.dx || 0;
+          var tapped = (start.moved || 0) < 8;
+          var onBackdrop = start.target === view || start.target === stage ||
+                           (start.target.classList &&
+                            start.target.classList.contains('zoom-slide'));
+          view.style.opacity = '';
+          if (sdy > 110 && Math.abs(sdy) > Math.abs(sdx)) {
+            close(); resetZoom(false);
+          } else if (tapped && onBackdrop) {
+            close(); resetZoom(false);          /* дотик повз знімок */
+          } else {
+            resetZoom(true);                    /* пружинка назад */
           }
-          start = null;
-        } else if (p.length === 1) {
-          /* Один палець прибрали під час щипка — продовжуємо як перетягування */
-          start = { x: p[0].x, y: p[0].y, tx: tx, ty: ty, scale: scale, moved: 99 };
         }
+        start = null;
       }
       view.addEventListener('pointerup', up);
       view.addEventListener('pointercancel', up);
 
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && view.classList.contains('is-open')) close();
-      });
-
       window.addEventListener('resize', function () {
-        if (view.classList.contains('is-open')) reset(false);
+        if (!view.classList.contains('is-open')) return;
+        resetZoom(false);
+        stage.scrollLeft = idx * stage.clientWidth;
       });
     })();
 
