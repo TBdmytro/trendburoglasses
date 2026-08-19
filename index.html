@@ -1463,21 +1463,26 @@
        Показує не одну річ, а розмір вибору. */
     /* Та сама причина, що й у плитках брендів: тло під multiply
        має бути світлим, інакше знімки на темній темі гаснуть. */
+    /* Запасна підкладка банера, коли свого фото ще немає. Було
+       дев'ять клітинок із cover: знімок оправи різався на шматки,
+       і виходило місиво з дужок і скла. Тепер чотири моделі цілком,
+       на спільному світлому полі — видно, що це окуляри. */
     .hero-collage {
       position: absolute;
       inset: 0;
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      grid-template-rows: repeat(3, 1fr);
-      gap: 2px;
-      background: var(--line);
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      gap: 0;
+      background: var(--surface);
+      padding: 6%;
     }
     .hero-collage img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       object-position: center;
-      background: var(--surface);
+      mix-blend-mode: multiply;
     }
     .hero-collage svg {
       width: 100%;
@@ -1493,18 +1498,22 @@
 
     /* Слайд-вітрина: одна модель крупно на акцентному тлі.
        Єдине місце, де акцент займає цілий екран. */
+    /* Слайд-вітрина: одна модель крупно. Синє тло тут було помилкою —
+       знімок оправи знятий на білому, і на синьому він читався як
+       біла картка в рамці, а не як фото на весь банер. */
     .hero-spot {
       position: absolute;
       inset: 0;
-      background: var(--acc);
+      background: var(--surface);
       display: grid;
       place-items: center;
+      padding: 8% 8% 20%;
     }
     .hero-spot img {
-      width: 82%;
-      height: auto;
+      width: 100%;
+      height: 100%;
       object-fit: contain;
-      filter: drop-shadow(0 16px 28px rgba(0, 0, 0, 0.3));
+      mix-blend-mode: multiply;
     }
 
     .hero-dots {
@@ -2962,18 +2971,22 @@
        двадцять разів підряд. */
     /* Знак у нижньому куті кадру, впритул до краю: раніше він висів
        на межі знімка й картки й виглядав як випадковий. */
-    .pdp-ox { position: absolute; left: 12px; bottom: 10px; z-index: 4; width: 28px; height: 28px; border-radius: 999px; background: #12293e; color: #ffffff; display: grid; place-items: center; font-family: var(--font-logo); font-size: 11px; letter-spacing: 0.04em; padding-left: 12px; pointer-events: none; border: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform 0.12s ease; }
+    .pdp-ox { position: absolute; left: 12px; bottom: var(--ox-bottom, 36px); z-index: 4; width: 28px; height: 28px; border-radius: 999px; background: #12293e; color: #ffffff; display: grid; place-items: center; font-family: var(--font-logo); font-size: 11px; letter-spacing: 0.04em; padding: 0; pointer-events: auto; border: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform 0.12s ease; }
     .pdp-ox:active { transform: scale(0.9); }
 
     /* Крапки під знімком, а не поверх нього: на світлій оправі вони
        просто зникали. Заразом дужка для пальця — 22 px, хоч сама
        крапка й 5 px. */
+    /* Шторка наїжджає на кадр на 26 px. Раніше крапки потрапляли
+       рівно під неї — здавалося, що знімок один. Тому додаємо стільки
+       ж запасу знизу: крапки лишаються на видноті. */
     .pdp-gal-dots {
       display: flex;
       gap: 4px;
       justify-content: center;
       align-items: center;
       height: 26px;
+      margin-bottom: 26px;
       background: var(--surface);
       transition: background 0.3s ease;
     }
@@ -3167,7 +3180,7 @@
       margin: 0 -3px;
     }
     .pdp-cols::-webkit-scrollbar { display: none; }
-    .pdp-col { flex: 0 0 84px; border-radius: 10px; overflow: hidden; background: var(--surface); opacity: 0.55; box-shadow: inset 0 0 0 1px var(--line); position: relative; display: block; -webkit-tap-highlight-color: transparent; transition: opacity 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease; }
+    .pdp-col { flex: 0 0 84px; border-radius: 10px; overflow: hidden; background: var(--surface); opacity: 1; box-shadow: inset 0 0 0 1px var(--line); position: relative; display: block; -webkit-tap-highlight-color: transparent; transition: opacity 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease; }
     .pdp-col img {
       width: 100%;
       aspect-ratio: 16 / 9;
@@ -3193,9 +3206,11 @@
        Галочка тут була зайвою — вона перекривала саму оправу, тобто
        ховала те, заради чого людина і дивиться на плитку. Невибрані
        трохи притлумлені, тому вибраний читається сам собою. */
+    /* Усі кольори видно однаково: людина обирає між ними, а не між
+       «яскравим» і «притлумленим». Вибраний позначає тільки обідок. */
     .pdp-col.is-current {
       opacity: 1;
-      box-shadow: inset 0 0 0 1px var(--line), 0 0 0 1.5px var(--fg);
+      box-shadow: inset 0 0 0 1px var(--line), 0 0 0 2px var(--fg);
       transform: translateY(-1px);
     }
     .pdp-col:active { transform: scale(0.96); }
@@ -6480,6 +6495,23 @@
         var gallery = document.getElementById('productGallery');
         var dotsWrap = document.getElementById('productGalleryDots');
 
+        /* Нова картка — перший знімок. Без цього стрічка лишалася
+           там, де її прогорнули для попереднього товару, і знімок
+           стояв криво: половина одного, половина наступного. */
+        if (gallery) {
+          gallery.scrollLeft = 0;
+          requestAnimationFrame(function () { gallery.scrollLeft = 0; });
+        }
+        /* Знак Ox має лежати на самому знімку, а не на шві між
+           знімком і шторкою. Скільки під ним усього — стільки й
+           піднімаємо: крапки з відступом або самий тільки відступ. */
+        (function () {
+          var galHost = gallery && gallery.closest('.pdp-gal');
+          if (!galHost) return;
+          var foot = dotsWrap ? 26 + 26 : 26;
+          galHost.style.setProperty('--ox-bottom', (foot + 10) + 'px');
+        })();
+
         /* Кадр підганяємо під сам знімок, інакше по краях лишаються
            порожні поля і оправа виглядає дрібною. Раніше міряли лише
            один раз: якщо в ту мить розміри ще не були відомі, кадр
@@ -6832,10 +6864,12 @@
         if (e.key === 'ArrowRight') show(idx + 1, false);
         if (e.key === 'Escape')     close();
       });
-      view.addEventListener('click', function (e) {
-        /* Клік повз знімок закриває — звична поведінка перегляду. */
-        if (e.target === view || e.target === stage) close();
-      });
+      /* Раніше тут висів звичайний click: «повз знімок — закрити».
+         Але нижче ми перехоплюємо вказівник через setPointerCapture,
+         і після цього браузер надсилає click уже не в знімок, а в саме
+         вікно. Виходило, що перший же дотик по фото закривав перегляд:
+         ні наблизити, ні погортати. Тепер рішення ухвалюємо в
+         pointerup — за тим, у що людина справді ткнула. */
 
       function dist(a, b) {
         return Math.hypot(a.x - b.x, a.y - b.y);
@@ -6843,15 +6877,20 @@
       function mid(a, b) {
         return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
       }
-      function list() {
+      /* Раніше ця функція звалася list — так само, як масив знімків
+         вище. Оголошення масиву затирало функцію, і будь-який дотик
+         падав з помилкою: не працювали ні щипок, ні гортання. */
+      function touches() {
         return Object.keys(pointers).map(function (k) { return pointers[k]; });
       }
 
       view.addEventListener('pointerdown', function (e) {
         if (e.target === closeBtn || closeBtn.contains(e.target)) return;
-        view.setPointerCapture(e.pointerId);
+        /* Захоплення вказівника не критичне: якщо браузер його не дав,
+           жест має працювати далі, а не валитися з помилкою. */
+        try { view.setPointerCapture(e.pointerId); } catch (err) {}
         pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
-        var p = list();
+        var p = touches();
 
         if (p.length === 1) {
           /* Подвійний дотик: перший раз наближає до 2.5, другий повертає. */
@@ -6873,7 +6912,8 @@
           } else {
             lastTap = now;
           }
-          start = { x: e.clientX, y: e.clientY, tx: tx, ty: ty, scale: scale, moved: 0 };
+          start = { x: e.clientX, y: e.clientY, tx: tx, ty: ty,
+                    scale: scale, moved: 0, target: e.target };
         } else if (p.length === 2) {
           start = {
             d: dist(p[0], p[1]),
@@ -6886,7 +6926,7 @@
       view.addEventListener('pointermove', function (e) {
         if (!pointers[e.pointerId]) return;
         pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
-        var p = list();
+        var p = touches();
         if (!start) return;
 
         if (p.length >= 2 && start.d) {
@@ -6909,11 +6949,20 @@
         } else if (p.length === 1 && start.tx != null) {
           var dx = e.clientX - start.x, dy = e.clientY - start.y;
           start.moved = Math.max(start.moved, Math.hypot(dx, dy));
+          start.dx = dx; start.dy = dy;
           if (scale > 1) {
             tx = start.tx + dx;
             ty = start.ty + dy;
             clamp();
             apply(false);
+            e.preventDefault();
+          } else if (list.length > 1 && Math.abs(dx) > Math.abs(dy)) {
+            /* Гортання вбік — знімок їде за пальцем, щоб було видно,
+               що зараз перегорнеться. */
+            tx = start.tx + dx;
+            ty = start.ty;
+            img.style.transition = 'none';
+            img.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(1)';
             e.preventDefault();
           } else if (dy > 0) {
             /* На звичайному масштабі тягнемо вниз — це закриття. */
@@ -6929,13 +6978,22 @@
 
       function up(e) {
         delete pointers[e.pointerId];
-        var p = list();
+        var p = touches();
         if (p.length === 0) {
           if (scale <= 1 && start && start.tx != null) {
-            var dy = ty - start.ty;
+            var sdx = start.dx || 0, sdy = start.dy || 0;
+            var tapped = (start.moved || 0) < 8;
+            var onBackdrop = start.target === view || start.target === stage;
             view.style.opacity = '';
-            if (dy > 110) { close(); reset(false); }
-            else reset(true);
+            if (list.length > 1 && Math.abs(sdx) > 55 && Math.abs(sdx) > Math.abs(sdy)) {
+              show(idx + (sdx < 0 ? 1 : -1), false);   /* гортання вбік */
+            } else if (sdy > 110) {
+              close(); reset(false);
+            } else if (tapped && onBackdrop) {
+              close(); reset(false);                   /* дотик повз знімок */
+            } else {
+              reset(true);
+            }
           }
           start = null;
         } else if (p.length === 1) {
@@ -8156,7 +8214,7 @@
           byBrand[b].push(p);
         });
         var picked = [], i = 0;
-        while (picked.length < 9 && order.length) {
+        while (picked.length < 4 && order.length) {
           var b = order[i % order.length];
           if (byBrand[b].length) picked.push(byBrand[b].shift());
           else { order.splice(i % order.length, 1); continue; }
