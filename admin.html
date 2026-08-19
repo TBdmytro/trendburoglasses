@@ -2281,7 +2281,7 @@
   }
 
   function loadHome() {
-    sanityQuery('*[_type=="settings" && !(_id in path("drafts.**"))][0]{_id,"heroAsset":heroImage.asset._ref,"b1Asset":b1Image.asset._ref,"b2Asset":b2Image.asset._ref,"b3Asset":b3Image.asset._ref,heroFocus,b1Focus,b2Focus,b3Focus,gAll,gWomen,gMen,gUni,catFootT,catFootCta,searchEmpty1,searchNone,searchNoneHint,navHome,navSearch,navWish,navCart,b1Title,b1Cta,b1Link,b1Off,b2Title,b2Link,b2Off,b3Kicker,b3Title,b3Link,b3Off,heroTitle,heroCta,saleTitle,saleSubtitle,aboutKicker,aboutTitle,aboutWhoTitle,aboutWhoText,aboutQuote,aboutStepsTitle,promoEyebrow,promoTitle,promoText,promoCta,promoOff,b1Kicker,b2Kicker,b2Cta,b3Cta,secBrands,secBrandsLink,secNew,secNewLink,lookKicker,lookTitle,trust1T,trust1S,trust2T,trust2S,trust3T,trust3S,conKicker,conTitle,conText,conCta,aboutLinkT,aboutLinkS,lookOff}')
+    sanityQuery('*[_type=="settings" && !(_id in path("drafts.**"))] | order(_createdAt asc)[0]{_id,"heroAsset":heroImage.asset._ref,"b1Asset":b1Image.asset._ref,"b2Asset":b2Image.asset._ref,"b3Asset":b3Image.asset._ref,heroFocus,b1Focus,b2Focus,b3Focus,gAll,gWomen,gMen,gUni,catFootT,catFootCta,searchEmpty1,searchNone,searchNoneHint,navHome,navSearch,navWish,navCart,b1Title,b1Cta,b1Link,b1Off,b2Title,b2Link,b2Off,b3Kicker,b3Title,b3Link,b3Off,heroTitle,heroCta,saleTitle,saleSubtitle,aboutKicker,aboutTitle,aboutWhoTitle,aboutWhoText,aboutQuote,aboutStepsTitle,promoEyebrow,promoTitle,promoText,promoCta,promoOff,b1Kicker,b2Kicker,b2Cta,b3Cta,secBrands,secBrandsLink,secNew,secNewLink,lookKicker,lookTitle,trust1T,trust1S,trust2T,trust2S,trust3T,trust3S,conKicker,conTitle,conText,conCta,aboutLinkT,aboutLinkS,lookOff}')
       .then(function (s) {
         /* Документа налаштувань ще немає — це нормально для першого
            запуску. Порожні поля теж треба порахувати й зняти знімок,
@@ -2511,7 +2511,7 @@
         /* Перечитуємо опублікований документ і звіряємо фото. Якщо
            знімок не доїхав — краще сказати про це одразу, ніж щоб
            людина побачила порожній банер на сайті. */
-        sanityQuery('*[_type=="settings" && !(_id in path("drafts.**"))][0]' +
+        sanityQuery('*[_type=="settings" && !(_id in path("drafts.**"))] | order(_createdAt asc)[0]' +
                     '{"a1":b1Image.asset._ref,"a2":b2Image.asset._ref,"a3":b3Image.asset._ref}')
           .then(function (r) {
             var miss = [1, 2, 3].filter(function (i) {
@@ -2541,7 +2541,7 @@
   }
 
   function loadSettings() {
-    sanityQuery('*[_type=="settings" && !(_id in path("drafts.**"))][0]{_id,tgUsername,deliveryTime,pair2Discount,pair3Discount,giftBrandsNote,rateUAH,rateUSDT}').then(function(s){
+    sanityQuery('*[_type=="settings" && !(_id in path("drafts.**"))] | order(_createdAt asc)[0]{_id,tgUsername,deliveryTime,pair2Discount,pair3Discount,giftBrandsNote,rateUAH,rateUSDT}').then(function(s){
       if (s) {
         settingsId=s._id;
         document.getElementById('sTg').value=s.tgUsername||'';
@@ -2588,7 +2588,7 @@
 
     Promise.all([
       sanityQuery('*[_type=="product"]{_id,brand,code,price,discount,visible,inStock,"img":images[0].asset->url}'),
-      sanityQuery('*[_type=="settings" && !(_id in path("drafts.**"))][0]{rateUAH,_updatedAt}'),
+      sanityQuery('*[_type=="settings" && !(_id in path("drafts.**"))] | order(_createdAt asc)[0]{rateUAH,_updatedAt}'),
       sanityQuery('*[_type=="promo" && active==true]{name,code,endDate}')
     ]).then(function (res) {
       var prods = res[0] || [], st = res[1] || {}, promos = res[2] || [];
