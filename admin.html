@@ -519,10 +519,24 @@
     user-select: none;
   }
   .crop:active { cursor: grabbing; }
-  .crop img {
+  /* Знімок заповнює рамку по короткій стороні, як object-fit: cover.
+     Раніше стояло width: 100% — вертикальне фото при масштабі 100%
+     не мало куди рухатись, і кадр був жорстко по центру. Тепер зайве
+     звисає за рамку, і його можна витягнути пальцем. */
+  /* Селектор із двома класами навмисно: нижче в файлі стоїть
+     .banner-prev img з жорстким 16:9, і без цього воно перемагало —
+     знімок сам обрізався до 16:9 ще до кадрувальника, тягнути було
+     нічого. Саме через це «перетягування не працює». */
+  .crop img, .banner-prev.crop img {
     position: absolute;
     top: 50%; left: 50%;
-    width: 100%;
+    /* Розмір рахує JS: заповнити рамку по короткій стороні, зайве —
+       за край. Самим CSS так не вийде: min-width/min-height лишають
+       знімок у натуральну величину, а width: 100% ріже його наперед. */
+    max-width: none; max-height: none;
+    aspect-ratio: auto;          /* власна пропорція знімка, не 16:9 */
+    object-fit: fill;
+    border-radius: 0;
     transform-origin: center;
     pointer-events: none;
     display: block;
@@ -869,8 +883,13 @@
         <div class="mp">
           <div class="mp-hd"><b>OPTIX</b></div>
           <div class="mp-b">
-            <div class="z" data-openblk="hero" data-lbl="Головне фото"><div class="m-hero"><i>Оправи, яких немає</i></div></div>
-            <div class="z" data-openblk="banner" data-lbl="Банери"><div class="m-ban"><u class="on"></u><u></u><u></u></div></div>
+            <!-- Велике фото і точки під ним — це один елемент сайту, одна
+                 стрічка з трьох екранів. Двома зонами вони й читались як
+                 дві різні штуки, хоча кермо в них спільне. -->
+            <div class="z" data-openblk="banner" data-lbl="Банери · 3 екрани">
+              <div class="m-hero"><i>Оправи, яких немає</i></div>
+              <div class="m-ban"><u class="on"></u><u></u><u></u></div>
+            </div>
             <div class="z" data-openblk="sects" data-lbl="Заголовки"><div class="m-sec"><b>Бренди</b><div class="m-row"><i></i><i></i><i></i><i></i></div></div></div>
             <div class="lock"><div class="blurred m-sec"><b>Новинки</b><div class="m-row"><i></i><i></i><i></i></div></div></div>
             <div class="z" data-openblk="look" data-lbl="Образ"><div class="m-look">Овальна оправа</div></div>
@@ -914,7 +933,7 @@
     <button type="button" class="map-more" id="mapMore">Показати списком ↓</button>
     <div id="mapList" hidden>
 
-    <div class="sgroup-t">Головна сторінка</div><div class="sgroup"><button type="button" class="srow" data-openblk="hero"><span class="srow-tx"><b>Головне фото</b><span>Знімок на весь екран і заголовок поверх нього</span></span><span class="srow-st" data-st="hero"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="banner"><span class="srow-tx"><b>Банер-карусель</b><span>Три слайди одразу під головним фото</span></span><span class="srow-st" data-st="banner"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="sects"><span class="srow-tx"><b>Заголовки секцій</b><span>Підписи над «Брендами» та «Новинками»</span></span><span class="srow-st" data-st="sects"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="look"><span class="srow-tx"><b>Блок «Образ»</b><span>Живе фото з міткою моделі</span></span><span class="srow-st" data-st="look"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="trust"><span class="srow-tx"><b>Три факти</b><span>Оригінал · відправка · викуп під замовлення</span></span><span class="srow-st" data-st="trust"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="con"><span class="srow-tx"><b>Консьєрж</b><span>Блок «Не знайшли свою модель?»</span></span><span class="srow-st" data-st="con"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="albk"><span class="srow-tx"><b>Рядок «Про OPTIX»</b><span>Посилання в самому низу головної</span></span><span class="srow-st" data-st="albk"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button></div>
+    <div class="sgroup-t">Головна сторінка</div><div class="sgroup"><button type="button" class="srow" data-openblk="banner"><span class="srow-tx"><b>Банери вгорі</b><span>Три екрани, які гортаються: фото, текст, кнопка</span></span><span class="srow-st" data-st="banner"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="sects"><span class="srow-tx"><b>Заголовки секцій</b><span>Підписи над «Брендами» та «Новинками»</span></span><span class="srow-st" data-st="sects"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="look"><span class="srow-tx"><b>Блок «Образ»</b><span>Живе фото з міткою моделі</span></span><span class="srow-st" data-st="look"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="trust"><span class="srow-tx"><b>Три факти</b><span>Оригінал · відправка · викуп під замовлення</span></span><span class="srow-st" data-st="trust"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="con"><span class="srow-tx"><b>Консьєрж</b><span>Блок «Не знайшли свою модель?»</span></span><span class="srow-st" data-st="con"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="albk"><span class="srow-tx"><b>Рядок «Про OPTIX»</b><span>Посилання в самому низу головної</span></span><span class="srow-st" data-st="albk"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button></div>
     <div class="sgroup-t">Каталог</div><div class="sgroup"><button type="button" class="srow" data-openblk="cat"><span class="srow-tx"><b>Банер у каталозі</b><span>Плашка між рядами карток товару</span></span><span class="srow-st" data-st="cat"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="catalog"><span class="srow-tx"><b>Каталог і фільтри</b><span>Підписи фільтрів і блок унизу каталогу</span></span><span class="srow-st" data-st="catalog"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="search"><span class="srow-tx"><b>Екран пошуку</b><span>Що написано, поки нічого не введено</span></span><span class="srow-st" data-st="search"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button></div>
     <div class="sgroup-t">Окремі екрани</div><div class="sgroup"><button type="button" class="srow" data-openblk="about"><span class="srow-tx"><b>Екран «Про нас»</b><span>Окрема сторінка: хто ми і як працює викуп</span></span><span class="srow-st" data-st="about"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="nav"><span class="srow-tx"><b>Нижнє меню</b><span>Підписи п'яти кнопок унизу</span></span><span class="srow-st" data-st="nav"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button></div>
 
@@ -931,25 +950,17 @@
     <p class="screen-sub" id="blkSub"></p>
 
     <div id="blkFields">
-      <div class="blk" data-blkbody="hero" hidden>
-        <p class="screen-sub" style="margin-top:-4px">Горизонтальне, від 1200 px по ширині. Порожньо — лишиться те, що вшите в сайт.</p>
-    <div id="heroPreviewWrap" class="banner-prev"></div>
-    <div class="crop-zoom" id="heroZoomWrap" hidden><span>Масштаб</span><input type="range" id="heroZoom" min="100" max="260" value="100" /><button type="button" class="crop-reset" id="heroReset">Скинути</button></div>
-    <p class="crop-hint" id="heroHint" hidden>Тягни знімок, щоб вибрати, що потрапить у кадр</p>
-    <div class="photo-acts"><label class="add-btn ghost">Вибрати фото<input type="file" id="heroFile" accept="image/*" hidden=""></label><button class="add-btn ghost danger" id="heroClear">Прибрати</button></div>
-    <div class="field"><label class="field-label">Заголовок (Enter — новий рядок)</label><textarea class="input" id="hTitle" rows="2" placeholder="Великий вибір.
-Великі знижки."></textarea></div>
-    <div class="field"><label class="field-label">Напис на кнопці</label><input class="input" id="hCta" placeholder="Переходь та обирай"></div>
-      </div>
       <div class="blk" data-blkbody="banner" hidden>
-        <div class="settings-divider">Банер 1</div>
-        <p class="screen-sub" style="margin-top:-4px">Перший екран, який бачить людина.</p>
+        <p class="screen-sub" style="margin-top:-4px">Це та сама стрічка вгорі головної, яку гортають пальцем.
+          Три банери — три екрани. Точки під ними на сайті показують, який зараз відкритий.</p>
+        <div class="settings-divider">Банер 1 · перший екран</div>
+        <p class="screen-sub" style="margin-top:-4px">Те, що людина бачить, щойно відкрила сайт.</p>
 
         <div class="field">
           <label class="field-label">Фото</label>
           <div id="b1Preview" class="banner-prev"></div>
-          <div class="crop-zoom" id="b1ZoomWrap" hidden><span>Масштаб</span><input type="range" id="b1Zoom" min="100" max="260" value="100" /><button type="button" class="crop-reset" id="b1Reset">Скинути</button></div>
-          <p class="crop-hint" id="b1Hint" hidden>Тягни знімок, щоб вибрати, що потрапить у кадр</p>
+          <div class="crop-zoom" id="b1ZoomWrap" hidden><span>Масштаб</span><input type="range" id="b1Zoom" min="100" max="300" value="100" /><button type="button" class="crop-reset" id="b1Reset">Скинути</button></div>
+          <p class="crop-hint" id="b1Hint" hidden>Тягни знімок пальцем, зводь двома — щоб наблизити</p>
           <div class="photo-acts"><label class="add-btn ghost">Вибрати фото<input type="file" id="b1File" accept="image/*" hidden=""></label><button class="add-btn ghost danger" id="b1Clear">Прибрати</button></div>
         </div>
 
@@ -974,14 +985,14 @@
 
         <label class="checkrow"><input type="checkbox" id="b1Off"><span>Сховати банер 1</span></label>
 
-        <div class="settings-divider">Банер 2</div>
-        <p class="screen-sub" style="margin-top:-4px">Порожнє фото — сайт покаже колаж брендів.</p>
+        <div class="settings-divider">Банер 2 · другий екран</div>
+        <p class="screen-sub" style="margin-top:-4px">Поки свого фото немає, сайт складає його сам із карток товару — виходить строкато. Постав своє.</p>
 
         <div class="field">
           <label class="field-label">Фото</label>
           <div id="b2Preview" class="banner-prev"></div>
-          <div class="crop-zoom" id="b2ZoomWrap" hidden><span>Масштаб</span><input type="range" id="b2Zoom" min="100" max="260" value="100" /><button type="button" class="crop-reset" id="b2Reset">Скинути</button></div>
-          <p class="crop-hint" id="b2Hint" hidden>Тягни знімок, щоб вибрати, що потрапить у кадр</p>
+          <div class="crop-zoom" id="b2ZoomWrap" hidden><span>Масштаб</span><input type="range" id="b2Zoom" min="100" max="300" value="100" /><button type="button" class="crop-reset" id="b2Reset">Скинути</button></div>
+          <p class="crop-hint" id="b2Hint" hidden>Тягни знімок пальцем, зводь двома — щоб наблизити</p>
           <div class="photo-acts"><label class="add-btn ghost">Вибрати фото<input type="file" id="b2File" accept="image/*" hidden=""></label><button class="add-btn ghost danger" id="b2Clear">Прибрати</button></div>
         </div>
 
@@ -1006,14 +1017,14 @@
 
         <label class="checkrow"><input type="checkbox" id="b2Off"><span>Сховати банер 2</span></label>
 
-        <div class="settings-divider">Банер 3</div>
-        <p class="screen-sub" style="margin-top:-4px">Порожнє фото — сайт сам знайде найбільшу знижку.</p>
+        <div class="settings-divider">Банер 3 · третій екран</div>
+        <p class="screen-sub" style="margin-top:-4px">Порожнє фото — сайт сам знайде модель із найбільшою знижкою й покаже її.</p>
 
         <div class="field">
           <label class="field-label">Фото</label>
           <div id="b3Preview" class="banner-prev"></div>
-          <div class="crop-zoom" id="b3ZoomWrap" hidden><span>Масштаб</span><input type="range" id="b3Zoom" min="100" max="260" value="100" /><button type="button" class="crop-reset" id="b3Reset">Скинути</button></div>
-          <p class="crop-hint" id="b3Hint" hidden>Тягни знімок, щоб вибрати, що потрапить у кадр</p>
+          <div class="crop-zoom" id="b3ZoomWrap" hidden><span>Масштаб</span><input type="range" id="b3Zoom" min="100" max="300" value="100" /><button type="button" class="crop-reset" id="b3Reset">Скинути</button></div>
+          <p class="crop-hint" id="b3Hint" hidden>Тягни знімок пальцем, зводь двома — щоб наблизити</p>
           <div class="photo-acts"><label class="add-btn ghost">Вибрати фото<input type="file" id="b3File" accept="image/*" hidden=""></label><button class="add-btn ghost danger" id="b3Clear">Прибрати</button></div>
         </div>
 
@@ -1923,7 +1934,6 @@
   /* ---------- Головна сторінка ----------
      Усе лежить у тому самому документі settings, що й решта
      налаштувань: не треба ні нового типу, ні другого запиту з сайту. */
-  var heroAssetId = null;
 
   /* ---------- фото трьох банерів ---------- */
   var bannerAsset = { 1: null, 2: null, 3: null };
@@ -1938,7 +1948,7 @@
      Сайт застосовує їх той самий чином, тому те, що ти бачиш тут, —
      це буквально те, що побачить покупець.
      ------------------------------------------------------------------ */
-  var focus = { hero: [50, 50, 100], 1: [50, 50, 100], 2: [50, 50, 100], 3: [50, 50, 100] };
+  var focus = { 1: [50, 50, 100], 2: [50, 50, 100], 3: [50, 50, 100] };
 
   function focusStr(k) {
     var f = focus[k];
@@ -1951,41 +1961,109 @@
       : [50, 50, 100];
   }
 
-  /* Межі: не даємо відтягнути знімок так, щоб у кадр потрапила порожнеча. */
+  /* Скільки знімка звисає за рамку — стільки й можна тягнути.
+     Рахуємо окремо по кожній осі: у вертикального фото звисає низ
+     і верх, у панорами — боки. Через це вертикальне фото тепер
+     рухається навіть без наближення. */
+  function cropBox(k) {
+    return document.getElementById('b' + k + 'Preview');
+  }
+  /* Розтягуємо знімок так, щоб він накрив рамку по короткій стороні —
+     те саме, що object-fit: cover, тільки розмір лишається справжнім,
+     і по довшій стороні є що тягнути. */
+  function coverSize(box, img) {
+    var nw = img.naturalWidth, nh = img.naturalHeight;
+    if (!nw || !nh || !box.clientWidth || !box.clientHeight) return false;
+    var s = Math.max(box.clientWidth / nw, box.clientHeight / nh);
+    img.style.width  = (nw * s) + 'px';
+    img.style.height = (nh * s) + 'px';
+    return true;
+  }
+
   function clampFocus(k) {
-    var f = focus[k];
-    var lim = Math.max(0, (f[2] - 100) / 2);      /* при масштабі 100% рухати нікуди */
-    f[0] = Math.min(50 + lim, Math.max(50 - lim, f[0]));
-    f[1] = Math.min(50 + lim, Math.max(50 - lim, f[1]));
+    var f = focus[k], z = f[2] / 100;
+    var box = cropBox(k), img = box && box.querySelector('img');
+    var lx, ly;
+    if (img) coverSize(box, img);
+    if (img && img.offsetWidth && box.clientWidth) {
+      lx = Math.max(0, 50 * (1 - box.clientWidth  / (img.offsetWidth  * z)));
+      ly = Math.max(0, 50 * (1 - box.clientHeight / (img.offsetHeight * z)));
+    } else {
+      lx = ly = Math.max(0, 50 * (1 - 1 / z));    /* знімок ще не виміряний */
+    }
+    f[0] = Math.min(50 + lx, Math.max(50 - lx, f[0]));
+    f[1] = Math.min(50 + ly, Math.max(50 - ly, f[1]));
   }
 
   function applyFocus(k) {
-    var box = document.getElementById(k === 'hero' ? 'heroPreviewWrap' : 'b' + k + 'Preview');
+    var box = cropBox(k);
     if (!box) return;
     var img = box.querySelector('img');
     if (!img) return;
     var f = focus[k];
     var z = f[2] / 100;
+    coverSize(box, img);
     /* Зсув рахуємо у відсотках від власного розміру знімка, тому
        результат однаковий на будь-якій ширині екрана. */
     img.style.transform = 'translate(' + (-f[0]) + '%, ' + (-f[1]) + '%) scale(' + z + ')';
-    img.style.width = '100%';
   }
 
+  /* Ширина екрана змінилась — рамка стала іншою, і кадр треба
+     перерахувати, інакше знімок з'їде. */
+  window.addEventListener('resize', function () {
+    [1, 2, 3].forEach(function (k) { clampFocus(k); applyFocus(k); });
+  });
+
   function wireCrop(k) {
-    var box = document.getElementById(k === 'hero' ? 'heroPreviewWrap' : 'b' + k + 'Preview');
-    var zoom = document.getElementById((k === 'hero' ? 'hero' : 'b' + k) + 'Zoom');
-    var reset = document.getElementById((k === 'hero' ? 'hero' : 'b' + k) + 'Reset');
+    var box = cropBox(k);
+    var zoom = document.getElementById('b' + k + 'Zoom');
+    var reset = document.getElementById('b' + k + 'Reset');
     if (!box) return;
 
-    var drag = null;
+    /* Пальців може бути два: один тягне, два зводяться — як у Телеграмі.
+       Тримаємо їх усі, бо жест визначається саме кількістю. */
+    var pts = {}, drag = null, pinch = null;
+    var ZMIN = 100, ZMAX = 300;
+
+    function live(on) {
+      box.classList.toggle('is-live', on);
+      if (!on) syncDirty();
+    }
+    function dist() {
+      var a = [];
+      for (var id in pts) a.push(pts[id]);
+      if (a.length < 2) return 0;
+      return Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
+    }
+    function setZoom(v) {
+      focus[k][2] = Math.min(ZMAX, Math.max(ZMIN, Math.round(v)));
+      if (zoom) zoom.value = focus[k][2];
+      clampFocus(k);
+      applyFocus(k);
+    }
+
     box.addEventListener('pointerdown', function (e) {
       if (!box.querySelector('img')) return;
       box.setPointerCapture(e.pointerId);
-      box.classList.add('is-live');
-      drag = { x: e.clientX, y: e.clientY, fx: focus[k][0], fy: focus[k][1], w: box.clientWidth, h: box.clientHeight };
+      pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+      live(true);
+      if (Object.keys(pts).length === 2) {
+        drag = null;
+        pinch = { d: dist(), z: focus[k][2] };
+      } else {
+        drag = { x: e.clientX, y: e.clientY, fx: focus[k][0], fy: focus[k][1],
+                 w: box.clientWidth, h: box.clientHeight };
+      }
     });
     box.addEventListener('pointermove', function (e) {
+      if (!(e.pointerId in pts)) return;
+      pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+      if (pinch) {
+        var d = dist();
+        if (pinch.d > 0 && d > 0) setZoom(pinch.z * d / pinch.d);
+        e.preventDefault();
+        return;
+      }
       if (!drag) return;
       /* Палець рухається вправо — знімок їде вправо, отже видима
          частина зміщується вліво. Звідси мінус. */
@@ -1995,19 +2073,26 @@
       applyFocus(k);
       e.preventDefault();
     });
-    function stop() {
-      if (!drag) return;
-      drag = null;
-      box.classList.remove('is-live');
-      syncDirty();
+    function stop(e) {
+      if (e && e.pointerId != null) delete pts[e.pointerId];
+      if (Object.keys(pts).length < 2) pinch = null;
+      if (!Object.keys(pts).length) { drag = null; live(false); }
     }
     box.addEventListener('pointerup', stop);
     box.addEventListener('pointercancel', stop);
 
+    /* Колесо миші — те саме наближення, коли адмінку відкрито на комп'ютері. */
+    box.addEventListener('wheel', function (e) {
+      if (!box.querySelector('img')) return;
+      e.preventDefault();
+      setZoom(focus[k][2] - e.deltaY * 0.25);
+      live(true);
+      clearTimeout(box.__wt);
+      box.__wt = setTimeout(function () { live(false); }, 500);
+    }, { passive: false });
+
     if (zoom) zoom.addEventListener('input', function () {
-      focus[k][2] = parseInt(this.value, 10) || 100;
-      clampFocus(k);
-      applyFocus(k);
+      setZoom(parseInt(this.value, 10) || 100);
       box.classList.add('is-live');
       clearTimeout(zoom.__t);
       zoom.__t = setTimeout(function () { box.classList.remove('is-live'); }, 700);
@@ -2023,20 +2108,31 @@
 
   /* Показуємо керування лише коли є що кадрувати. */
   function syncCropUi(k) {
-    var has = !!(k === 'hero' ? heroAssetId : bannerAsset[k]);
-    var pre = k === 'hero' ? 'hero' : 'b' + k;
+    var has = !!bannerAsset[k];
+    var pre = 'b' + k;
     ['ZoomWrap', 'Hint'].forEach(function (s) {
       var el = document.getElementById(pre + s);
       if (el) el.hidden = !has;
     });
-    var box = document.getElementById(k === 'hero' ? 'heroPreviewWrap' : 'b' + k + 'Preview');
+    var box = cropBox(k);
     if (box) box.classList.toggle('crop', has);
     var z = document.getElementById(pre + 'Zoom');
     if (z) z.value = focus[k][2];
-    if (has) applyFocus(k);
+    if (has) {
+      applyFocus(k);
+      /* Поки знімок не завантажився, його розмірів не існує, а без них
+         межі перетягування рахуються навмання. Тому перерахунок ще раз
+         після завантаження. */
+      var img = box && box.querySelector('img');
+      if (img && !img.complete) {
+        img.addEventListener('load', function () { clampFocus(k); applyFocus(k); }, { once: true });
+      } else {
+        clampFocus(k); applyFocus(k);
+      }
+    }
   }
 
-  ['hero', 1, 2, 3].forEach(wireCrop);
+  [1, 2, 3].forEach(wireCrop);
 
   function renderBanner(i) {
     var box = document.getElementById('b' + i + 'Preview');
@@ -2068,19 +2164,6 @@
     });
   });
 
-  function renderHeroPreview() {
-    var wrap = document.getElementById('heroPreviewWrap');
-    if (!heroAssetId) {
-      wrap.innerHTML = '<div class="none">Фото не вибране<br>сайт покаже вшите</div>';
-      syncCropUi('hero');
-      return;
-    }
-    var url = 'https://cdn.sanity.io/images/' + CFG.projectId + '/' + CFG.dataset + '/' +
-              heroAssetId.replace(/^image-/, '').replace(/-(\w+)$/, '.$1') + '?w=600&fit=max';
-    wrap.innerHTML = '<img src="' + url + '" alt="">';
-    syncCropUi('hero');
-  }
-
   /* Поле може ще не існувати, якщо екран не відкривали — тому пишемо
      тільки коли елемент є. Інакше одна помилка глушить усе завантаження. */
   function setVal(id, v) {
@@ -2099,16 +2182,11 @@
            запуску. Порожні поля теж треба порахувати й зняти знімок,
            інакше лічильники й смужка «незбережено» не працюють. */
         if (!s) {
-          heroAssetId = null;
-          renderHeroPreview();
           Object.keys(LIMITS).forEach(syncCounter);
           takeSnapshot();
           return;
         }
         settingsId = s._id;
-        heroAssetId = s.heroAsset || null;
-        document.getElementById('hTitle').value = s.heroTitle || '';
-        document.getElementById('hCta').value = s.heroCta || '';
         document.getElementById('hSaleTitle').value = s.saleTitle || '';
         document.getElementById('hSaleSub').value = s.saleSubtitle || '';
         document.getElementById('aKicker').value = s.aboutKicker || '';
@@ -2118,7 +2196,6 @@
         document.getElementById('aQuote').value = s.aboutQuote || '';
         document.getElementById('aStepsTitle').value = s.aboutStepsTitle || '';
         /* Три банери: фото, тексти, куди веде, показувати чи ні. */
-        focusParse('hero', s.heroFocus);
         [1, 2, 3].forEach(function (i) {
           bannerAsset[i] = s['b' + i + 'Asset'] || null;
           focusParse(i, s['b' + i + 'Focus']);
@@ -2173,36 +2250,17 @@
         if (po) po.checked = s.promoOff === true;
         var lo = document.getElementById('lookOff');
         if (lo) lo.checked = s.lookOff === true;
-        renderHeroPreview();
         Object.keys(LIMITS).forEach(syncCounter);
         takeSnapshot();
         syncBlkList();
       }).catch(function () {});
   }
 
-  document.getElementById('heroFile').addEventListener('change', function (e) {
-    var file = e.target.files && e.target.files[0];
-    e.target.value = '';
-    if (!file) return;
-    toast('Завантажую…');
-    uploadImage(file)
-      .then(function (id) { heroAssetId = id; renderHeroPreview(); toast('Фото готове — натисни «Зберегти»'); })
-      .catch(function () { toast('Фото не завантажилось'); });
-  });
-
-  document.getElementById('heroClear').addEventListener('click', function () {
-    heroAssetId = null;
-    renderHeroPreview();
-    toast('Прибрано — натисни «Зберегти»');
-  });
-
   /* Екран «Про нас» тепер блок усередині «Сайту», тож окрема кнопка
      не потрібна: усе пише та сама saveHome в один документ settings. */
 
   document.getElementById('saveHome').addEventListener('click', function () {
     var data = {
-      heroTitle: document.getElementById('hTitle').value.trim(),
-      heroCta: document.getElementById('hCta').value.trim(),
       saleTitle: document.getElementById('hSaleTitle').value.trim(),
       saleSubtitle: document.getElementById('hSaleSub').value.trim(),
       aboutKicker: document.getElementById('aKicker').value.trim(),
@@ -2224,7 +2282,6 @@
       navSearch: getVal('navSearch'),
       navWish: getVal('navWish'),
       navCart: getVal('navCart'),
-      heroFocus: focusStr('hero'),
       b1Focus: focusStr(1), b2Focus: focusStr(2), b3Focus: focusStr(3),
       b1Kicker: getVal('b1Kicker'),
       b1Title: getVal('b1Title'), b1Cta: getVal('b1Cta'), b1Link: getVal('b1Link'),
@@ -2267,9 +2324,9 @@
     if (settingsId) {
       var patch = { id: settingsId, set: data };
       var unset = [];
-      if (heroAssetId) {
-        patch.set.heroImage = { _type: 'image', asset: { _type: 'reference', _ref: heroAssetId } };
-      } else { unset.push('heroImage'); }
+      /* heroImage не чіпаємо взагалі: поля в адмінці більше немає,
+         а старе фото ще служить запасом для банера 1. Стерти його
+         звідси означало б знищити те, чим людина не керує. */
       /* Порожнє фото банера треба саме стерти, а не лишити старе:
          інакше кнопка «Прибрати фото» нічого б не робила. */
       [1, 2, 3].forEach(function (i) {
@@ -2281,9 +2338,6 @@
       mut = [{ patch: patch }];
     } else {
       var doc = Object.assign({ _type: 'settings' }, data);
-      if (heroAssetId) {
-        doc.heroImage = { _type: 'image', asset: { _type: 'reference', _ref: heroAssetId } };
-      }
       [1, 2, 3].forEach(function (i) {
         if (bannerAsset[i]) {
           doc['b' + i + 'Image'] = { _type: 'image', asset: { _type: 'reference', _ref: bannerAsset[i] } };
@@ -2631,7 +2685,7 @@
      зняті з живої верстки: заголовок героя — 40 на два рядки,
      заголовок секції — 22, напис на кнопці — 24. */
   var LIMITS = {
-    hTitle: 44, hCta: 24, hSaleTitle: 28, hSaleSub: 44,
+    hSaleTitle: 28, hSaleSub: 44,
     b1Kicker: 22, b2Kicker: 22, b2Cta: 20, b3Cta: 20,
     secBrands: 22, secBrandsLink: 18, secNew: 22, secNewLink: 18,
     lookKicker: 16, lookTitle: 34,
@@ -2675,8 +2729,7 @@
 
   /* ---------- вибір блока: список → окремий екран ---------- */
   var BLK = {
-    hero:   ['Головне фото',      'Знімок на весь екран і заголовок поверх нього'],
-    banner: ['Банер-карусель',    'Три слайди одразу під головним фото'],
+    banner: ['Банери вгорі',     'Три екрани, які гортаються: фото, текст, кнопка'],
     sects:  ['Заголовки секцій',  'Підписи над «Брендами» та «Новинками»'],
     look:   ['Блок «Образ»',      'Живе фото з міткою моделі'],
     trust:  ['Три факти',         'Оригінал · відправка · викуп під замовлення'],
@@ -2690,7 +2743,6 @@
   };
   /* Які поля належать якому блоку — з цього рахуємо стан у списку. */
   var BLK_FIELDS = {
-    hero:   ['hTitle', 'hCta'],
     banner: ['b1Kicker', 'b1Title', 'b1Cta', 'b2Kicker', 'b2Title', 'b2Cta',
              'b3Kicker', 'b3Title', 'b3Cta', 'hSaleTitle', 'hSaleSub'],
     sects:  ['secBrands', 'secBrandsLink', 'secNew', 'secNewLink'],
@@ -2704,7 +2756,7 @@
     search: ['searchEmpty1', 'searchNone', 'searchNoneHint'],
     nav:    ['navHome', 'navSearch', 'navWish', 'navCart']
   };
-  var currentBlk = 'hero';
+  var currentBlk = 'banner';
 
   /* Стан рядка: заповнено / за замовчуванням / приховано. Людина має
      бачити це до того, як відкриє блок, — інакше доводиться заходити
@@ -2713,7 +2765,7 @@
      «За замовчуванням» не казали нічого. Корисніше показати сам
      текст, який зараз стоїть на сайті. */
   var BLK_MAIN = {
-    hero: 'hTitle', banner: 'b1Title', sects: 'secBrands', look: 'lookTitle',
+    banner: 'b1Title', sects: 'secBrands', look: 'lookTitle',
     trust: 'trust1T', con: 'conTitle', cat: 'promoTitle', albk: 'aboutLinkT',
     about: 'aWhoTitle', catalog: 'catFootT', search: 'searchNone', nav: 'navHome'
   };
@@ -2771,7 +2823,7 @@
     var o = {};
     /* Кадр — така сама зміна, як текст: якщо його не врахувати,
        смужка «незбережено» не з'явиться і правку легко втратити. */
-    ['hero', 1, 2, 3].forEach(function (k) { o['focus' + k] = focusStr(k); });
+    [1, 2, 3].forEach(function (k) { o['focus' + k] = focusStr(k); });
     SITE_IDS.forEach(function (id) { var el = document.getElementById(id); if (el) o[id] = el.value; });
     ['lookOff', 'promoOff', 'b1Off', 'b2Off', 'b3Off'].forEach(function (id) {
       var el = document.getElementById(id); if (el) o[id] = el.checked ? '1' : '';
