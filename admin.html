@@ -1979,6 +1979,9 @@
      налаштувань: не треба ні нового типу, ні другого запиту з сайту. */
 
   /* ---------- фото трьох банерів ---------- */
+  /* Окремо тримаємо намір «прибрати фото»: без нього кожне збереження
+     стирало знімок, якщо змінна з ним була порожня. */
+  var bannerCleared = { 1: false, 2: false, 3: false };
   var bannerAsset = { 1: null, 2: null, 3: null };
 
   function assetUrl(id) {
@@ -2257,6 +2260,7 @@
       toast('Завантажую…');
       uploadImage(file).then(function (id) {
         bannerAsset[i] = id;
+        bannerCleared[i] = false;
         focus[i] = [50, 50, 100, 'crop'];  /* нове фото — новий кадр */
         renderBanner(i);
         syncDirty(); toast('Фото готове. Постав кадр і збережи');
@@ -2264,7 +2268,9 @@
     });
     var c = document.getElementById('b' + i + 'Clear');
     if (c) c.addEventListener('click', function () {
-      bannerAsset[i] = null; renderBanner(i);
+      bannerAsset[i] = null;
+      bannerCleared[i] = true;          /* саме це, і тільки це, стирає фото */
+      renderBanner(i);
       syncDirty(); toast('Прибрано — натисни «Зберегти»');
     });
   });
@@ -2303,6 +2309,7 @@
         /* Три банери: фото, тексти, куди веде, показувати чи ні. */
         [1, 2, 3].forEach(function (i) {
           bannerAsset[i] = s['b' + i + 'Asset'] || null;
+          bannerCleared[i] = false;
           focusParse(i, s['b' + i + 'Focus']);
           setVal('b' + i + 'Kicker', s['b' + i + 'Kicker']);
           setVal('b' + i + 'Title',  s['b' + i + 'Title']);
@@ -2474,12 +2481,18 @@
       /* heroImage не чіпаємо взагалі: поля в адмінці більше немає,
          а старе фото ще служить запасом для банера 1. Стерти його
          звідси означало б знищити те, чим людина не керує. */
-      /* Порожнє фото банера треба саме стерти, а не лишити старе:
-         інакше кнопка «Прибрати фото» нічого б не робила. */
+      /* Три стани, а не два. Є знімок — записуємо. Людина натиснула
+         «Прибрати» — стираємо. Ми просто не знаємо, що там (сторінка
+         щойно відкрилась, база не відповіла) — не чіпаємо взагалі.
+         Раніше третій випадок ішов у «стерти»: збережеш текст — і
+         фото зникає з бази, хоча ти його не чіпав. Саме через це на
+         сайті лишались підписи, а знімки пропадали. */
       [1, 2, 3].forEach(function (i) {
         if (bannerAsset[i]) {
           patch.set['b' + i + 'Image'] = { _type: 'image', asset: { _type: 'reference', _ref: bannerAsset[i] } };
-        } else { unset.push('b' + i + 'Image'); }
+        } else if (bannerCleared[i]) {
+          unset.push('b' + i + 'Image');
+        }
       });
       if (unset.length) patch.unset = unset;
       /* createIfNotExists — на випадок, коли опублікованого документа
