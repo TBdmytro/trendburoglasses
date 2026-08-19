@@ -514,6 +514,56 @@
   /* На екрані блока прев'ю показує тільки цей блок — решта прихована,
      щоб нічого не відволікало. */
 
+  /* Кадрувальник. Постачальники й Інстаграм віддають знімки будь-якої
+     пропорції; сайт показує 16:9 і мусить щось відрізати. Питання лише
+     в тому, хто вирішує що саме — програма чи людина. Тут вирішує людина:
+     тягне знімок пальцем і наближає повзунком. */
+  .crop {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--raise);
+    touch-action: none;          /* інакше жест перехоплює прокрутка сторінки */
+    cursor: grab;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .crop:active { cursor: grabbing; }
+  .crop img {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 100%;
+    transform-origin: center;
+    pointer-events: none;
+    display: block;
+  }
+  /* Тонка сітка третин: без орієнтирів кадрувати наосліп незручно. */
+  .crop::after {
+    content: '';
+    position: absolute; inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(to right, transparent 33.2%, rgba(255,255,255,.35) 33.2%, rgba(255,255,255,.35) 33.5%, transparent 33.5%,
+                      transparent 66.4%, rgba(255,255,255,.35) 66.4%, rgba(255,255,255,.35) 66.7%, transparent 66.7%),
+      linear-gradient(to bottom, transparent 33.2%, rgba(255,255,255,.35) 33.2%, rgba(255,255,255,.35) 33.5%, transparent 33.5%,
+                      transparent 66.4%, rgba(255,255,255,.35) 66.4%, rgba(255,255,255,.35) 66.7%, transparent 66.7%);
+    opacity: 0; transition: opacity .2s ease;
+  }
+  .crop.is-live::after { opacity: 1; }
+  .crop-hint {
+    font-size: 11px; color: var(--fg-mute); text-align: center;
+    margin: 6px 0 8px; line-height: 1.4;
+  }
+  .crop-zoom { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .crop-zoom span { font-size: 11px; color: var(--fg-mute); flex: 0 0 auto; }
+  .crop-zoom input { flex: 1; accent-color: var(--acc); height: 28px; }
+  .crop-reset {
+    border: 0; background: transparent; color: var(--acc);
+    font-family: var(--ui); font-size: 11.5px; font-weight: 700;
+    padding: 4px 2px; cursor: pointer; flex: 0 0 auto;
+  }
+
   /* Фото у сталій рамці 16:9. Раніше знімок вставлявся на всю
      ширину в оригінальній пропорції — вертикальне фото займало весь
      екран, і поля під ним ставали недосяжними. */
@@ -758,6 +808,8 @@
       <div class="blk" data-blkbody="hero" hidden>
         <p class="screen-sub" style="margin-top:-4px">Горизонтальне, від 1200 px по ширині. Порожньо — лишиться те, що вшите в сайт.</p>
     <div id="heroPreviewWrap" class="banner-prev"></div>
+    <div class="crop-zoom" id="heroZoomWrap" hidden><span>Масштаб</span><input type="range" id="heroZoom" min="100" max="260" value="100" /><button type="button" class="crop-reset" id="heroReset">Скинути</button></div>
+    <p class="crop-hint" id="heroHint" hidden>Тягни знімок, щоб вибрати, що потрапить у кадр</p>
     <div class="photo-acts"><label class="add-btn ghost">Вибрати фото<input type="file" id="heroFile" accept="image/*" hidden=""></label><button class="add-btn ghost danger" id="heroClear">Прибрати</button></div>
     <div class="field"><label class="field-label">Заголовок (Enter — новий рядок)</label><textarea class="input" id="hTitle" rows="2" placeholder="Великий вибір.
 Великі знижки."></textarea></div>
@@ -770,6 +822,8 @@
         <div class="field">
           <label class="field-label">Фото</label>
           <div id="b1Preview" class="banner-prev"></div>
+          <div class="crop-zoom" id="b1ZoomWrap" hidden><span>Масштаб</span><input type="range" id="b1Zoom" min="100" max="260" value="100" /><button type="button" class="crop-reset" id="b1Reset">Скинути</button></div>
+          <p class="crop-hint" id="b1Hint" hidden>Тягни знімок, щоб вибрати, що потрапить у кадр</p>
           <div class="photo-acts"><label class="add-btn ghost">Вибрати фото<input type="file" id="b1File" accept="image/*" hidden=""></label><button class="add-btn ghost danger" id="b1Clear">Прибрати</button></div>
         </div>
 
@@ -800,6 +854,8 @@
         <div class="field">
           <label class="field-label">Фото</label>
           <div id="b2Preview" class="banner-prev"></div>
+          <div class="crop-zoom" id="b2ZoomWrap" hidden><span>Масштаб</span><input type="range" id="b2Zoom" min="100" max="260" value="100" /><button type="button" class="crop-reset" id="b2Reset">Скинути</button></div>
+          <p class="crop-hint" id="b2Hint" hidden>Тягни знімок, щоб вибрати, що потрапить у кадр</p>
           <div class="photo-acts"><label class="add-btn ghost">Вибрати фото<input type="file" id="b2File" accept="image/*" hidden=""></label><button class="add-btn ghost danger" id="b2Clear">Прибрати</button></div>
         </div>
 
@@ -830,6 +886,8 @@
         <div class="field">
           <label class="field-label">Фото</label>
           <div id="b3Preview" class="banner-prev"></div>
+          <div class="crop-zoom" id="b3ZoomWrap" hidden><span>Масштаб</span><input type="range" id="b3Zoom" min="100" max="260" value="100" /><button type="button" class="crop-reset" id="b3Reset">Скинути</button></div>
+          <p class="crop-hint" id="b3Hint" hidden>Тягни знімок, щоб вибрати, що потрапить у кадр</p>
           <div class="photo-acts"><label class="add-btn ghost">Вибрати фото<input type="file" id="b3File" accept="image/*" hidden=""></label><button class="add-btn ghost danger" id="b3Clear">Прибрати</button></div>
         </div>
 
@@ -1749,12 +1807,118 @@
            id.replace(/^image-/, '').replace(/-(\w+)$/, '.$1') + '?w=600&fit=max';
   }
 
+  /* ---------- кадрувальник знімків ----------
+     Зберігаємо три числа: зсув по горизонталі, по вертикалі і масштаб.
+     Сайт застосовує їх той самий чином, тому те, що ти бачиш тут, —
+     це буквально те, що побачить покупець.
+     ------------------------------------------------------------------ */
+  var focus = { hero: [50, 50, 100], 1: [50, 50, 100], 2: [50, 50, 100], 3: [50, 50, 100] };
+
+  function focusStr(k) {
+    var f = focus[k];
+    return f[0].toFixed(1) + ' ' + f[1].toFixed(1) + ' ' + (f[2] / 100).toFixed(2);
+  }
+  function focusParse(k, s) {
+    var p = String(s || '').trim().split(/\s+/).map(Number);
+    focus[k] = (p.length === 3 && p.every(function (n) { return !isNaN(n); }))
+      ? [p[0], p[1], Math.round(p[2] * 100)]
+      : [50, 50, 100];
+  }
+
+  /* Межі: не даємо відтягнути знімок так, щоб у кадр потрапила порожнеча. */
+  function clampFocus(k) {
+    var f = focus[k];
+    var lim = Math.max(0, (f[2] - 100) / 2);      /* при масштабі 100% рухати нікуди */
+    f[0] = Math.min(50 + lim, Math.max(50 - lim, f[0]));
+    f[1] = Math.min(50 + lim, Math.max(50 - lim, f[1]));
+  }
+
+  function applyFocus(k) {
+    var box = document.getElementById(k === 'hero' ? 'heroPreviewWrap' : 'b' + k + 'Preview');
+    if (!box) return;
+    var img = box.querySelector('img');
+    if (!img) return;
+    var f = focus[k];
+    var z = f[2] / 100;
+    /* Зсув рахуємо у відсотках від власного розміру знімка, тому
+       результат однаковий на будь-якій ширині екрана. */
+    img.style.transform = 'translate(' + (-f[0]) + '%, ' + (-f[1]) + '%) scale(' + z + ')';
+    img.style.width = '100%';
+  }
+
+  function wireCrop(k) {
+    var box = document.getElementById(k === 'hero' ? 'heroPreviewWrap' : 'b' + k + 'Preview');
+    var zoom = document.getElementById((k === 'hero' ? 'hero' : 'b' + k) + 'Zoom');
+    var reset = document.getElementById((k === 'hero' ? 'hero' : 'b' + k) + 'Reset');
+    if (!box) return;
+
+    var drag = null;
+    box.addEventListener('pointerdown', function (e) {
+      if (!box.querySelector('img')) return;
+      box.setPointerCapture(e.pointerId);
+      box.classList.add('is-live');
+      drag = { x: e.clientX, y: e.clientY, fx: focus[k][0], fy: focus[k][1], w: box.clientWidth, h: box.clientHeight };
+    });
+    box.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      /* Палець рухається вправо — знімок їде вправо, отже видима
+         частина зміщується вліво. Звідси мінус. */
+      focus[k][0] = drag.fx - (e.clientX - drag.x) / drag.w * 100;
+      focus[k][1] = drag.fy - (e.clientY - drag.y) / drag.h * 100;
+      clampFocus(k);
+      applyFocus(k);
+      e.preventDefault();
+    });
+    function stop() {
+      if (!drag) return;
+      drag = null;
+      box.classList.remove('is-live');
+      syncDirty();
+    }
+    box.addEventListener('pointerup', stop);
+    box.addEventListener('pointercancel', stop);
+
+    if (zoom) zoom.addEventListener('input', function () {
+      focus[k][2] = parseInt(this.value, 10) || 100;
+      clampFocus(k);
+      applyFocus(k);
+      box.classList.add('is-live');
+      clearTimeout(zoom.__t);
+      zoom.__t = setTimeout(function () { box.classList.remove('is-live'); }, 700);
+      syncDirty();
+    });
+    if (reset) reset.addEventListener('click', function () {
+      focus[k] = [50, 50, 100];
+      if (zoom) zoom.value = 100;
+      applyFocus(k);
+      syncDirty();
+    });
+  }
+
+  /* Показуємо керування лише коли є що кадрувати. */
+  function syncCropUi(k) {
+    var has = !!(k === 'hero' ? heroAssetId : bannerAsset[k]);
+    var pre = k === 'hero' ? 'hero' : 'b' + k;
+    ['ZoomWrap', 'Hint'].forEach(function (s) {
+      var el = document.getElementById(pre + s);
+      if (el) el.hidden = !has;
+    });
+    var box = document.getElementById(k === 'hero' ? 'heroPreviewWrap' : 'b' + k + 'Preview');
+    if (box) box.classList.toggle('crop', has);
+    var z = document.getElementById(pre + 'Zoom');
+    if (z) z.value = focus[k][2];
+    if (has) applyFocus(k);
+  }
+
+  ['hero', 1, 2, 3].forEach(wireCrop);
+
   function renderBanner(i) {
     var box = document.getElementById('b' + i + 'Preview');
     if (!box) return;
     box.innerHTML = bannerAsset[i]
       ? '<img src="' + assetUrl(bannerAsset[i]) + '" alt="">'
-      : '<div class="none">Фото не вибране — сайт покаже своє</div>';
+      : '<div class="none">Фото не вибране<br>сайт покаже своє</div>';
+    syncCropUi(i);
   }
 
   [1, 2, 3].forEach(function (i) {
@@ -1765,8 +1929,10 @@
       if (!file) return;
       toast('Завантажую…');
       uploadImage(file).then(function (id) {
-        bannerAsset[i] = id; renderBanner(i);
-        syncDirty(); toast('Фото готове — натисни «Зберегти»');
+        bannerAsset[i] = id;
+        focus[i] = [50, 50, 100];        /* нове фото — новий кадр */
+        renderBanner(i);
+        syncDirty(); toast('Фото готове. Постав кадр і збережи');
       }).catch(function () { toast('Фото не завантажилось'); });
     });
     var c = document.getElementById('b' + i + 'Clear');
@@ -1780,11 +1946,13 @@
     var wrap = document.getElementById('heroPreviewWrap');
     if (!heroAssetId) {
       wrap.innerHTML = '<div class="none">Фото не вибране<br>сайт покаже вшите</div>';
+      syncCropUi('hero');
       return;
     }
     var url = 'https://cdn.sanity.io/images/' + CFG.projectId + '/' + CFG.dataset + '/' +
               heroAssetId.replace(/^image-/, '').replace(/-(\w+)$/, '.$1') + '?w=600&fit=max';
     wrap.innerHTML = '<img src="' + url + '" alt="">';
+    syncCropUi('hero');
   }
 
   /* Поле може ще не існувати, якщо екран не відкривали — тому пишемо
@@ -1799,7 +1967,7 @@
   }
 
   function loadHome() {
-    sanityQuery('*[_type=="settings"][0]{_id,"heroAsset":heroImage.asset._ref,"b1Asset":b1Image.asset._ref,"b2Asset":b2Image.asset._ref,"b3Asset":b3Image.asset._ref,gAll,gWomen,gMen,gUni,catFootT,catFootCta,searchEmpty1,searchNone,searchNoneHint,navHome,navSearch,navWish,navCart,b1Title,b1Cta,b1Link,b1Off,b2Title,b2Link,b2Off,b3Kicker,b3Title,b3Link,b3Off,heroTitle,heroCta,saleTitle,saleSubtitle,aboutKicker,aboutTitle,aboutWhoTitle,aboutWhoText,aboutQuote,aboutStepsTitle,promoEyebrow,promoTitle,promoText,promoCta,promoOff,b1Kicker,b2Kicker,b2Cta,b3Cta,secBrands,secBrandsLink,secNew,secNewLink,lookKicker,lookTitle,trust1T,trust1S,trust2T,trust2S,trust3T,trust3S,conKicker,conTitle,conText,conCta,aboutLinkT,aboutLinkS,lookOff}')
+    sanityQuery('*[_type=="settings"][0]{_id,"heroAsset":heroImage.asset._ref,"b1Asset":b1Image.asset._ref,"b2Asset":b2Image.asset._ref,"b3Asset":b3Image.asset._ref,heroFocus,b1Focus,b2Focus,b3Focus,gAll,gWomen,gMen,gUni,catFootT,catFootCta,searchEmpty1,searchNone,searchNoneHint,navHome,navSearch,navWish,navCart,b1Title,b1Cta,b1Link,b1Off,b2Title,b2Link,b2Off,b3Kicker,b3Title,b3Link,b3Off,heroTitle,heroCta,saleTitle,saleSubtitle,aboutKicker,aboutTitle,aboutWhoTitle,aboutWhoText,aboutQuote,aboutStepsTitle,promoEyebrow,promoTitle,promoText,promoCta,promoOff,b1Kicker,b2Kicker,b2Cta,b3Cta,secBrands,secBrandsLink,secNew,secNewLink,lookKicker,lookTitle,trust1T,trust1S,trust2T,trust2S,trust3T,trust3S,conKicker,conTitle,conText,conCta,aboutLinkT,aboutLinkS,lookOff}')
       .then(function (s) {
         /* Документа налаштувань ще немає — це нормально для першого
            запуску. Порожні поля теж треба порахувати й зняти знімок,
@@ -1824,8 +1992,10 @@
         document.getElementById('aQuote').value = s.aboutQuote || '';
         document.getElementById('aStepsTitle').value = s.aboutStepsTitle || '';
         /* Три банери: фото, тексти, куди веде, показувати чи ні. */
+        focusParse('hero', s.heroFocus);
         [1, 2, 3].forEach(function (i) {
           bannerAsset[i] = s['b' + i + 'Asset'] || null;
+          focusParse(i, s['b' + i + 'Focus']);
           setVal('b' + i + 'Kicker', s['b' + i + 'Kicker']);
           setVal('b' + i + 'Title',  s['b' + i + 'Title']);
           setVal('b' + i + 'Cta',    s['b' + i + 'Cta']);
@@ -1928,6 +2098,8 @@
       navSearch: getVal('navSearch'),
       navWish: getVal('navWish'),
       navCart: getVal('navCart'),
+      heroFocus: focusStr('hero'),
+      b1Focus: focusStr(1), b2Focus: focusStr(2), b3Focus: focusStr(3),
       b1Kicker: getVal('b1Kicker'),
       b1Title: getVal('b1Title'), b1Cta: getVal('b1Cta'), b1Link: getVal('b1Link'),
       b2Title: getVal('b2Title'), b2Link: getVal('b2Link'),
@@ -2471,6 +2643,9 @@
 
   function currentState() {
     var o = {};
+    /* Кадр — така сама зміна, як текст: якщо його не врахувати,
+       смужка «незбережено» не з'явиться і правку легко втратити. */
+    ['hero', 1, 2, 3].forEach(function (k) { o['focus' + k] = focusStr(k); });
     SITE_IDS.forEach(function (id) { var el = document.getElementById(id); if (el) o[id] = el.value; });
     ['lookOff', 'promoOff', 'b1Off', 'b2Off', 'b3Off'].forEach(function (id) {
       var el = document.getElementById(id); if (el) o[id] = el.checked ? '1' : '';
