@@ -26,7 +26,11 @@
     --green: #2f7a4a;
     --red: #b23b30;
     --shadow: 0 1px 2px rgba(18,41,62,.05), 0 8px 24px rgba(18,41,62,.07);
-    --display: 'Prata', Georgia, serif;
+    /* Антиква лишається тільки в логотипі. Усе інше — Manrope:
+       один шрифт, ієрархія кеглем і жирністю. Два різні шрифти на
+       цифрах і підписах і робили екран схожим на склейку. */
+    --logo: 'Prata', Georgia, serif;
+    --display: 'Manrope', system-ui, -apple-system, sans-serif;
     --ui: 'Manrope', system-ui, -apple-system, sans-serif;
     /* Заповнює JS з Телеграма. Поза Телеграмом лишається 0, і тоді
        працює env() — тому скрізь беремо max() з обох. */
@@ -86,20 +90,12 @@
   }
 
   .topbar-mid { flex: 1; min-width: 0; }
-  .topbar-title {
-    font-family: var(--display);
-    font-size: 17px;
-    line-height: 1.2;
-    opacity: 0;
-    transform: translateY(6px);
-    transition: opacity .18s ease, transform .18s ease;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
+  .topbar-title { font-family: var(--ui); font-weight: 700; letter-spacing: -0.01em; font-size: 17px; line-height: 1.2; opacity: 0; transform: translateY(6px); transition: opacity .18s ease, transform .18s ease; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
   .topbar.is-stuck .topbar-title { opacity: 1; transform: none; }
   .topbar.is-stuck .logo { opacity: 0; height: 0; overflow: hidden; }
   .logo { transition: opacity .18s ease; }
 
-  .topbar .logo { font-family: var(--display); font-size: 21px; font-weight:400; }
+  .topbar .logo { font-family: var(--logo); font-size: 21px; font-weight:400; }
   .topbar .logo small { display:block; font-family:var(--ui); font-size:7px; letter-spacing:.3em; color:var(--fg-soft); margin-top:-2px; }
   .topbar .badge { font-size: 11px; color: var(--fg-soft); background: var(--surface); border:1px solid var(--line); padding: 5px 10px; border-radius: 999px; }
 
@@ -129,14 +125,7 @@
   .screen::-webkit-scrollbar { display: none; }
   .screen[hidden] { display: none; }
 
-  .screen-title {
-    font-family: var(--display);
-    font-size: 30px;
-    font-weight: 400;
-    line-height: 1.15;
-    letter-spacing: -0.01em;
-    margin: 6px 0 3px;
-  }
+  .screen-title { font-family: var(--ui); font-weight: 800; letter-spacing: -0.02em; font-size: 30px; line-height: 1.15; margin: 6px 0 3px;}
   .screen-sub { font-size: 12px; color: var(--fg-soft); margin-bottom: 16px; }
 
   .add-btn {
@@ -169,7 +158,7 @@
   .pcard.is-oos .pcard-img img { opacity:.45; }
   .pcard-hidden-badge { position:absolute; bottom:7px; left:7px; font-size:9px; font-weight:600; background:rgba(27,45,64,.8); color:#fff; padding:2px 7px; border-radius:5px; }
   .pcard-body { padding:9px 11px 4px; flex:1; }
-  .pcard-brand { font-family:var(--display); font-size:17px; font-weight:400; line-height:1.1; }
+  .pcard-brand { font-family: var(--ui); font-weight: 700; letter-spacing: -0.01em; font-size:17px; line-height:1.1;}
   .pcard-code { font-size:10.5px; color:var(--fg-soft); margin:2px 0 4px; }
   .pcard-price { font-size:13px; font-weight:600; }
   .pcard-price .old { font-size:10.5px; color:var(--fg-soft); text-decoration:line-through; margin-left:5px; font-weight:400; }
@@ -316,7 +305,7 @@
   /* token gate */
   .gate { position:absolute; inset:0; background:var(--bg); z-index:100; display:flex; flex-direction:column; justify-content:center; padding:30px 22px; }
   .gate[hidden] { display:none; }
-  .gate h2 { font-family:var(--display); font-size:28px; font-weight:400; margin-bottom:10px; }
+  .gate h2 { font-family: var(--ui); font-weight: 800; letter-spacing: -0.02em; font-size:28px; margin-bottom:10px;}
   .gate p { font-size:13px; color:var(--fg-soft); line-height:1.55; margin-bottom:14px; }
   .gate ol { font-size:12.5px; color:var(--fg-soft); line-height:1.7; padding-left:20px; margin-bottom:16px; }
   .gate .input { margin-bottom:12px; }
@@ -326,7 +315,7 @@
   /* ============ СТАРТОВИЙ ЕКРАН ============ */
   .kpis { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
   .kpi { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:11px 12px; }
-  .kpi .n { font-family:var(--display); font-size:23px; line-height:1.1; }
+  .kpi .n { font-family: var(--ui); font-weight: 800; letter-spacing: -0.02em; font-size:23px; line-height:1.1;}
   .kpi .l { font-size:11px; color:var(--fg-soft); margin-top:2px; }
   .kpi.warn { background:#fdf4f2; border-color:#f0d4ce; }
   .kpi.warn .n { color:var(--red); }
@@ -388,7 +377,7 @@
   .modal[hidden] { display:none; }
   .modal-card { background:var(--bg); width:100%; max-width:520px; border-radius:20px 20px 0 0;
                 padding:18px 18px calc(18px + max(env(safe-area-inset-bottom,0px), var(--tg-bottom))); max-height:88vh; overflow-y:auto; }
-  .modal-title { font-family:var(--display); font-size:20px; font-weight:400; margin-bottom:3px; }
+  .modal-title { font-family: var(--ui); font-weight: 800; letter-spacing: -0.01em; font-size:20px; margin-bottom:3px;}
   .modal-sub { font-size:12px; color:var(--fg-soft); margin-bottom:14px; }
   .sumbox { background:var(--surface); border:1px solid var(--line); border-radius:11px;
             padding:11px 12px; font-size:12.5px; margin-top:14px; }
@@ -596,21 +585,28 @@
   .mapscr { flex: 0 0 76%; scroll-snap-align: center; }
   .mapscr-t { font-size: 10px; font-weight: 700; letter-spacing: .16em;
               text-transform: uppercase; color: var(--fg-mute); margin-bottom: 7px; }
-  .mp { background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
-        overflow: hidden; font-size: 9px; color: var(--fg); }
+  .mp { position: relative; background: var(--surface); border: 1px solid var(--line);
+        border-radius: 14px; overflow: hidden; font-size: 9px; color: var(--fg); }
+  /* Оформлення «підсвітка»: увесь екран притлумлений серпанком,
+     а зони, які можна редагувати, підняті над ним і лишаються світлими.
+     Дірок у CSS не буває, тому серпанок — шар z-index:1, а .z — z-index:2. */
+  .mp::after { content: ''; position: absolute; inset: 0; z-index: 1;
+               pointer-events: none; background: rgba(18, 41, 62, .52); }
   .mp-hd { display: flex; align-items: center; justify-content: center; height: 30px;
            border-bottom: 1px solid var(--line); }
-  .mp-hd b { font-family: var(--display); font-size: 12px; font-weight: 400; letter-spacing: .12em; }
+  .mp-hd b { font-family: var(--logo); font-size: 12px;}
   .mp-b { padding: 8px; display: flex; flex-direction: column; gap: 7px; }
 
   /* Зона, яку можна змінити */
-  .z { position: relative; border-radius: 9px; overflow: hidden; cursor: pointer;
-       border: 1.5px solid transparent; transition: border-color .15s ease, transform .1s ease; }
+  .z { position: relative; z-index: 2; background: var(--surface);
+       border-radius: 9px; overflow: hidden; cursor: pointer;
+       border: 1.5px solid transparent;
+       transition: border-color .15s ease, transform .1s ease, box-shadow .15s ease; }
   .z:active { transform: scale(.985); }
-  .z::after { content: attr(data-lbl); position: absolute; left: 5px; top: 5px; z-index: 2;
+  .z::after { content: attr(data-lbl); position: absolute; right: 4px; top: 4px; z-index: 2;
               background: var(--acc); color: #fff; font-size: 7.5px; font-weight: 700;
               letter-spacing: .06em; padding: 2px 6px; border-radius: 5px; white-space: nowrap; }
-  .z:hover { border-color: var(--acc); }
+  .z:hover { border-color: var(--acc); box-shadow: 0 0 0 4px rgba(255, 255, 255, .22); }
 
   /* Товари — не редагуються, тому розмиті */
   .lock { position: relative; border-radius: 9px; overflow: hidden; }
@@ -620,31 +616,36 @@
                  letter-spacing: .06em; color: var(--fg-soft);
                  background: color-mix(in srgb, var(--surface) 55%, transparent); }
 
-  .m-hero { height: 66px; background: linear-gradient(155deg,#c9bfae,#8b8272);
+  /* Заглушки фото — нейтральний сіро-синій. Пісочний тягнув на себе увагу
+     і читався як «жовтий банер», хоча це просто місце під картинку. */
+  .m-hero { height: 66px; background: linear-gradient(155deg,#8d9ba7,#5e6f7e);
             display: flex; align-items: flex-end; padding: 7px; }
-  .m-hero i { font-family: var(--display); font-style: normal; color: #fff; font-size: 11px; }
+  .m-hero i { font-family: var(--ui); font-weight: 600; font-style: normal; color: #fff; font-size: 11px;}
   .m-ban { height: 34px; background: var(--raise); display: flex; align-items: center;
            justify-content: center; gap: 4px; }
   .m-ban u { width: 12px; height: 3px; border-radius: 9px; background: #c9c6c0; text-decoration: none; }
   .m-ban u.on { width: 20px; background: var(--fg); }
   .m-sec { padding: 6px 7px; }
-  .m-sec b { font-family: var(--display); font-size: 11px; font-weight: 400; }
+  .m-sec b { font-family: var(--ui); font-weight: 700; font-size: 11px;}
   .m-row { display: flex; gap: 4px; margin-top: 5px; }
   .m-row i { flex: 1; height: 26px; border-radius: 5px; background: var(--raise); }
-  .m-look { height: 40px; background: linear-gradient(120deg,#b9b0a2,#7f7768);
+  .m-look { height: 40px; background: linear-gradient(120deg,#7d8b98,#556674);
             display: flex; align-items: flex-end; padding: 6px; color: #fff; }
-  .m-trust { display: flex; gap: 5px; padding: 7px; }
+  /* Там, де вміст іде в один ряд на всю ширину, підпис зверху справа
+     накрив би його. Тому таким зонам додано місце під підпис. */
+  .m-trust { display: flex; gap: 5px; padding: 18px 7px 7px; }
   .m-trust i { flex: 1; height: 20px; border-radius: 4px; background: var(--raise); }
-  .m-con { padding: 8px 7px; }
-  .m-albk { padding: 7px; display: flex; justify-content: space-between; }
-  .m-pills { display: flex; gap: 4px; padding: 6px 7px 0; }
+  .m-con { padding: 8px 7px; padding-right: 66px; }
+  .m-albk { padding: 7px; padding-right: 66px; display: flex; justify-content: space-between; }
+  .m-pills { display: flex; gap: 4px; padding: 18px 7px 2px; }
   .m-pills i { flex: 1; height: 15px; border-radius: 9px; background: var(--raise); }
   .m-pills i.on { background: var(--fg); }
   .m-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; padding: 6px 7px; }
   .m-grid i { height: 40px; border-radius: 5px; background: var(--raise); }
   .m-catban { margin: 0 7px; height: 30px; border-radius: 7px; background: var(--fg); }
-  .m-foot { padding: 8px 7px; text-align: center; }
+  .m-foot { padding: 19px 7px 9px; text-align: center; }
   .m-nav { display: flex; border-top: 1px solid var(--line); padding: 5px 0; }
+  .z .m-nav { border-top: 0; padding: 17px 0 6px; }
   .m-nav i { flex: 1; text-align: center; font-size: 6.5px; color: var(--fg-mute); font-style: normal; }
 
   .map-hint { font-size: 11.5px; color: var(--fg-soft); line-height: 1.5; margin-bottom: 10px; }
@@ -858,8 +859,9 @@
       Натисни його, щоб відкрити тільки його поля з прев'ю і поясненнями. Нічого зайвого на екрані
       не буде.</div><button type="button" class="tip-x" data-tipx="tipSite">×</button></div>
 
-    <p class="map-hint"><b>Натисни будь-яку підписану ділянку</b> — відкриються її поля.
-      Розмиті картки — це товари з каталогу, вони підставляються самі.</p>
+    <p class="map-hint"><b>Світле — те, що ти змінюєш.</b> Натисни будь-яку світлу ділянку —
+      відкриються її поля. Притлумлене міняти не треба: товари й ціни підставляються
+      з каталогу самі.</p>
 
     <div class="map">
       <div class="mapscr">
@@ -874,7 +876,7 @@
             <div class="z" data-openblk="look" data-lbl="Образ"><div class="m-look">Овальна оправа</div></div>
             <div class="z" data-openblk="trust" data-lbl="Три факти"><div class="m-trust"><i></i><i></i><i></i></div></div>
             <div class="z" data-openblk="con" data-lbl="Консьєрж"><div class="m-con">Не знайшли модель?</div></div>
-            <div class="z" data-openblk="albk" data-lbl="Про OPTIX"><div class="m-albk"><span>Про OPTIX</span><span>›</span></div></div>
+            <div class="z" data-openblk="albk" data-lbl="Про нас"><div class="m-albk"><span>Про OPTIX</span></div></div>
           </div>
           <div class="m-nav"><i>Головна</i><i>Пошук</i><i>Ox</i><i>Обране</i><i>Кошик</i></div>
         </div>
