@@ -1368,6 +1368,23 @@
       background: var(--raise);
     }
     .hero-slide[hidden] { display: none; }
+    /* Режим «показати фото цілком»: знімок влазить повністю, а поля з
+       боків закриває він сам — розмитий. Чорні смуги читались би як
+       поламана вёрстка, розмиття — як задум. Клас ставить адмінка
+       через кадр, окремого поля для цього не треба. */
+    .is-wholephoto::before {
+      content: '';
+      position: absolute;
+      inset: -14%;
+      z-index: 0;
+      background-image: var(--fitbg);
+      background-size: cover;
+      background-position: center;
+      filter: blur(22px) saturate(1.06);
+    }
+    .is-wholephoto > .hero-c-img { z-index: 1; }
+    .is-wholephoto > .hero-c-shade,
+    .is-wholephoto > .hero-c-text { z-index: 2; }
     .hero-c-img {
       position: absolute;
       inset: 0;
@@ -4460,10 +4477,17 @@
         /* Головна сторінка з адмінки. Кожне поле необов'язкове:
            не заповнене — лишається те, що вшите у сайт, тому
            порожня адмінка нічого не ламає. */
-        if (s.heroUrl) {
-          var heroUrl = s.heroUrl + '?w=1200&q=85&auto=format&fit=max';
-          var heroImg = document.querySelector('.hero-c-img');
-          if (heroImg) heroImg.src = heroUrl;
+        /* Перший слайд каруселі має рівно одного господаря — «Банер 1».
+           Старе поле heroImage лишається лише як запас для тих, хто
+           встиг зберегти фото туди: два керма на одне колесо — і
+           неможливо зрозуміти, що саме ти зараз міняєш. */
+        var firstUrl = s.b1Url || s.heroUrl;
+        if (firstUrl) {
+          var heroUrl = firstUrl + '?w=1200&q=85&auto=format&fit=max';
+          if (!s.b1Url) {
+            var heroImg = document.querySelector('.hero-c-img');
+            if (heroImg) heroImg.src = heroUrl;
+          }
           /* Те саме фото підхоплює «Про нас» і блок «Образ». */
           window.__OPTIX_HERO_URL = heroUrl;
           var lookImg = document.querySelector('.look-img');
@@ -4475,7 +4499,7 @@
            і не треба тримати список селекторів у двох місцях. */
         (function () {
           var map = {
-            b1Kicker: s.b1Kicker, b1Title: s.heroTitle, b1Cta: s.heroCta,
+            b1Kicker: s.b1Kicker, b1Title: s.b1Title || s.heroTitle, b1Cta: s.b1Cta || s.heroCta,
             b2Kicker: s.b2Kicker, b2Cta: s.b2Cta,
             b3Kicker: s.saleSubtitle, b3Cta: s.b3Cta,
             secBrands: s.secBrands, secBrandsLink: s.secBrandsLink,
@@ -4499,9 +4523,11 @@
               el.textContent = v;
             }
           });
-          /* Головне фото теж має свій кадр. */
-          var heroImg = document.querySelector('.hero-bg img, #heroImg1');
-          if (heroImg && s.heroFocus) window.OPTIX_applyFocus(heroImg, s.heroFocus);
+          /* Кадр старого поля — тільки якщо банер 1 не має свого фото. */
+          if (!s.b1Url && s.heroFocus) {
+            var heroImg = document.querySelector('.hero-bg img, #heroImg1');
+            if (heroImg) window.OPTIX_applyFocus(heroImg, s.heroFocus);
+          }
 
           /* ---------- Три банери: фото, тексти й куди ведуть ----------
              Кожен слайд повністю керується з адмінки. Порожні поля не
@@ -4561,18 +4587,10 @@
           quote:      s.aboutQuote,
           stepsTitle: s.aboutStepsTitle
         };
-        if (s.heroTitle) {
-          var heroTitleEl = document.querySelector('.hero-c-title');
-          if (heroTitleEl) {
-            heroTitleEl.innerHTML = s.heroTitle.split(/\r?\n/)
-              .map(function (line) { return window.OPTIX_esc(line); })
-              .join('<br />');
-          }
-        }
-        if (s.heroCta) {
-          var heroCtaEl = document.querySelector('.hero-c-cta');
-          if (heroCtaEl) heroCtaEl.textContent = s.heroCta;
-        }
+        /* Заголовок і кнопку першого слайда ставить загальний цикл по
+           data-t вище. Окремий код тут не лише дублював його, а й писав
+           текст у всю кнопку — разом зі значком Ox, який після цього
+           зникав. */
         window.__OPTIX_SALE_TITLE = s.saleTitle || '';
         window.__OPTIX_SALE_SUB = s.saleSubtitle || '';
         if (window.OPTIX_saleRefresh) window.OPTIX_saleRefresh();
@@ -6943,7 +6961,11 @@
        збігалося б із тим, що бачить покупець. */
     window.OPTIX_applyFocus = function (img, val) {
       if (!img) return;
-      var p = String(val || '').trim().split(/\s+/).map(Number);
+      /* Четверте слово — режим: 'fit' означає «показати знімок цілком».
+         Старі записи з трьох чисел читаються як раніше. */
+      var t = String(val || '').trim().split(/\s+/);
+      var p = t.slice(0, 3).map(Number);
+      var whole = t[3] === 'fit';
       if (p.length !== 3 || p.some(function (n) { return isNaN(n); })) {
         img.style.transform = '';
         img.style.objectPosition = '';
@@ -6955,9 +6977,50 @@
       img.style.position = 'absolute';
       img.style.top = '50%';
       img.style.left = '50%';
-      img.style.width = '100%';
+      img.style.maxWidth = 'none';
+      img.style.maxHeight = 'none';
       img.style.transformOrigin = 'center';
-      img.style.transform = 'translate(' + (-p[0]) + '%, ' + (-p[1]) + '%) scale(' + p[2] + ')';
+
+      /* Знімок має накрити рамку по короткій стороні — рівно так само,
+         як кадрувальник в адмінці. Інакше те, що людина там вибрала,
+         на сайті виглядало б інакше. Розміри знімка відомі лише після
+         завантаження, тому рахуємо ще й по load та при зміні ширини. */
+      function fit() {
+        var nw = img.naturalWidth, nh = img.naturalHeight;
+        var bw = host ? host.clientWidth : 0, bh = host ? host.clientHeight : 0;
+        if (nw && nh && bw && bh) {
+          /* cover — накрити рамку, contain — влізти цілком. */
+          var s = whole ? Math.min(bw / nw, bh / nh) : Math.max(bw / nw, bh / nh);
+          img.style.width  = (nw * s) + 'px';
+          img.style.height = (nh * s) + 'px';
+        }
+        if (whole) {
+          img.style.transform = 'translate(-50%, -50%) scale(1)';
+          if (host) {
+            host.classList.add('is-wholephoto');
+            host.style.setProperty('--fitbg', 'url("' + img.currentSrc + '")');
+          }
+        } else {
+          if (host) {
+            host.classList.remove('is-wholephoto');
+            host.style.removeProperty('--fitbg');
+          }
+          img.style.transform = 'translate(' + (-p[0]) + '%, ' + (-p[1]) + '%) scale(' + p[2] + ')';
+        }
+      }
+      fit();
+      /* Якщо кадр перезадали до того, як знімок довантажився, старий
+         обробник спрацював би пізніше й повернув попередній кадр.
+         Тому попередній прибираємо. */
+      if (img.__optixOnLoad) img.removeEventListener('load', img.__optixOnLoad);
+      img.__optixOnLoad = fit;
+      img.addEventListener('load', fit, { once: true });
+      if (!img.__optixFit) {
+        img.__optixFit = fit;
+        window.addEventListener('resize', function () { img.__optixFit(); });
+      } else {
+        img.__optixFit = fit;
+      }
     };
 
     /* Куди ведуть кнопки банерів. Один обробник на всі три: адреса
