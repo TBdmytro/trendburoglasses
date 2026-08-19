@@ -425,7 +425,15 @@
   .qa, .al, .pcard-pick, .prod-schip, .add-btn { transition: transform .1s ease; }
   /* Мінімум 44 px висоти для всього, у що треба влучити пальцем. */
   .prod-schip { min-height: 34px; }
-  .add-btn { min-height: 52px; }
+  .add-btn { min-height: 52px; transition: transform .08s ease, opacity .15s ease; }
+  /* Натиснуто — видно одразу, ще до того, як прийде відповідь сервера.
+     Без цього кнопка здається несправною: тицяєш, а нічого не блимає. */
+  .add-btn:active { transform: scale(0.985); opacity: .9; }
+  .add-btn[disabled] { opacity: .65; pointer-events: none; }
+  /* Кнопка «Зберегти» окремо: вона довго чекає на мережу, тому
+     проговорює свій стан словами. */
+  #saveHome.is-busy { opacity: .8; }
+  #saveHome.is-done { background: var(--green) !important; }
 
   .brandpick {
     width:100%; display:flex; align-items:center; gap:8px;
@@ -2356,7 +2364,43 @@
   /* Екран «Про нас» тепер блок усередині «Сайту», тож окрема кнопка
      не потрібна: усе пише та сама saveHome в один документ settings. */
 
+  /* Кнопка мусить відповідати на дотик миттєво. Раніше вона мовчала
+     весь час, поки лист летів у базу, — виглядало так, ніби натискання
+     не спрацювало, і людина тицяла ще раз, відправляючи те саме двічі. */
+  var saving = false;
+  function saveState(mode, text) {
+    var b = document.getElementById('saveHome');
+    if (!b) return;
+    b.classList.toggle('is-busy', mode === 'busy');
+    b.classList.toggle('is-done', mode === 'done');
+    b.disabled = mode === 'busy';
+    b.textContent = text;
+  }
+
   document.getElementById('saveHome').addEventListener('click', function () {
+    if (saving) return;
+    saving = true;
+    saveState('busy', 'Зберігаю…');
+
+    /* Якщо десь бракує поля, збірка даних падає з помилкою — і раніше
+       вона гинула мовчки. Тепер помилку видно. */
+    try { doSave(); }
+    catch (err) {
+      saving = false;
+      saveState('', 'Зберегти');
+      toast('Не вдалося зібрати дані: ' + (err && err.message ? err.message : err));
+    }
+  });
+
+  function doSave() {
+    /* Нічого не міняли — і сказати про це чесніше, ніж мовчки
+       з'їздити в базу і повернутись з тим самим. */
+    if (snapshot && dirtyCount() === 0) {
+      saving = false;
+      saveState('', 'Зберегти');
+      toast('Нічого не змінилось');
+      return;
+    }
     var data = {
       saleTitle: document.getElementById('hSaleTitle').value.trim(),
       saleSubtitle: document.getElementById('hSaleSub').value.trim(),
@@ -2443,9 +2487,29 @@
       mut = [{ create: doc }];
     }
     sanityMutate(mut)
-      .then(function () { toast('Збережено ✓'); loadHome(); })
-      .catch(function () { toast('Помилка'); });
-  });
+      .then(function () {
+        saving = false;
+        saveState('done', 'Збережено ✓');
+        toast('Збережено ✓');
+        loadHome();
+        setTimeout(function () { saveState('', 'Зберегти'); }, 1600);
+      })
+      .catch(function (err) {
+        saving = false;
+        saveState('', 'Зберегти');
+        /* Раніше тут було просто «Помилка». Причина буває різна —
+           немає прав у ключа, впав інтернет, база відмовила — і без
+           тексту зрозуміти, що робити, неможливо. */
+        var m = String((err && err.message) || err || '');
+        if (/401|403|permission|Unauthorized/i.test(m)) {
+          toast('Ключ доступу не має права на запис');
+        } else if (/Failed to fetch|NetworkError/i.test(m)) {
+          toast('Немає зв\'язку з базою — перевір інтернет');
+        } else {
+          toast('Не збереглося: ' + m.slice(0, 120));
+        }
+      });
+  }
 
   function loadSettings() {
     sanityQuery('*[_type=="settings"][0]{_id,tgUsername,deliveryTime,pair2Discount,pair3Discount,giftBrandsNote,rateUAH,rateUSDT}').then(function(s){
@@ -2921,6 +2985,10 @@
     /* Кадр — така сама зміна, як текст: якщо його не врахувати,
        смужка «незбережено» не з'явиться і правку легко втратити. */
     [1, 2, 3].forEach(function (k) { o['focus' + k] = focusStr(k); });
+    /* Саме фото — теж зміна. Без цього людина завантажувала знімок,
+       смужка «незбережено» не з'являлась, і виглядало, ніби нічого
+       не сталося. */
+    [1, 2, 3].forEach(function (k) { o['photo' + k] = bannerAsset[k] || ''; });
     SITE_IDS.forEach(function (id) { var el = document.getElementById(id); if (el) o[id] = el.value; });
     ['lookOff', 'promoOff', 'b1Off', 'b2Off', 'b3Off'].forEach(function (id) {
       var el = document.getElementById(id); if (el) o[id] = el.checked ? '1' : '';
