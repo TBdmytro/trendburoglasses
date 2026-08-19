@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <!-- Мітка збірки: видно ззовні, тому завжди зрозуміло,
        яка саме версія зараз залита. -->
-  <meta name="optix-build" content="2026-08-19-banners-fix" />
+  <meta name="optix-build" content="2026-08-19-hidden-fix" />
   <title>optix — by Trend Büro</title>
 
   <!-- Знак «ox» просто у розмітці: окремий файл вантажити не треба,
@@ -172,6 +172,14 @@
     /* Друга кнопка — «назад». Стоїть поруч із темою, а не навпроти:
        обидві службові, і разом вони читаються як одна група. */
     .header-btn--back { left: 50px; }
+    /* Атрибут hidden — це «сховати», і крапка. Будь-яке правило з
+       display у стилях його мовчки скасовує: елемент лишається на
+       екрані, хоч у коді написано hidden. Саме через це білий шар
+       автоколажу висів поверх фото банера, а знімок був під ним —
+       завантажений, на місці і невидимий. Одне правило на весь сайт
+       закриває цю діру назавжди. */
+    [hidden] { display: none !important; }
+
     .header-btn--back[hidden] { display: none; }
     .header-btn svg {
       grid-area: 1 / 1;
