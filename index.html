@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <!-- Мітка збірки: видно ззовні, тому завжди зрозуміло,
+       яка саме версія зараз залита. -->
+  <meta name="optix-build" content="2026-08-19-banners-fix" />
   <title>optix — by Trend Büro</title>
 
   <!-- Знак «ox» просто у розмітці: окремий файл вантажити не треба,
@@ -4386,7 +4389,7 @@
 
       var PROMO_QUERY = '*[_type == "promo" && active == true] { name, type, discount, brand, scope, startDate, endDate, code }';
 
-      var SETTINGS_QUERY = '*[_type == "settings"][0] { tgUsername, deliveryTime, pair2Discount, pair3Discount, giftBrandsNote, rateUAH, rateUSDT, "heroUrl": heroImage.asset->url, heroTitle, heroCta, saleTitle, saleSubtitle, aboutKicker, aboutTitle, aboutWhoTitle, aboutWhoText, aboutQuote, aboutStepsTitle, "b1Url": b1Image.asset->url, heroFocus, b1Focus, b2Focus, b3Focus, gAll, gWomen, gMen, gUni, navHome, navSearch, navWish, navCart, catFootT, catFootCta, searchEmpty1, searchNone, searchNoneHint, b1Kicker, b1Title, b1Cta, b1Link, b1Off, "b2Url": b2Image.asset->url, b2Kicker, b2Title, b2Cta, b2Link, b2Off, "b3Url": b3Image.asset->url, b3Kicker, b3Title, b3Cta, b3Link, b3Off, secBrands, secBrandsLink, secNew, secNewLink, lookKicker, lookTitle, lookOff, trust1T, trust1S, trust2T, trust2S, trust3T, trust3S, conKicker, conTitle, conText, conCta, aboutLinkT, aboutLinkS, promoEyebrow, promoTitle, promoText, promoCta, promoOff }';
+      var SETTINGS_QUERY = '*[_type == "settings" && !(_id in path("drafts.**"))] | order(_createdAt asc)[0] { tgUsername, deliveryTime, pair2Discount, pair3Discount, giftBrandsNote, rateUAH, rateUSDT, "heroUrl": heroImage.asset->url, heroTitle, heroCta, saleTitle, saleSubtitle, aboutKicker, aboutTitle, aboutWhoTitle, aboutWhoText, aboutQuote, aboutStepsTitle, "b1Url": b1Image.asset->url, heroFocus, b1Focus, b2Focus, b3Focus, gAll, gWomen, gMen, gUni, navHome, navSearch, navWish, navCart, catFootT, catFootCta, searchEmpty1, searchNone, searchNoneHint, b1Kicker, b1Title, b1Cta, b1Link, b1Off, "b2Url": b2Image.asset->url, b2Kicker, b2Title, b2Cta, b2Link, b2Off, "b3Url": b3Image.asset->url, b3Kicker, b3Title, b3Cta, b3Link, b3Off, secBrands, secBrandsLink, secNew, secNewLink, lookKicker, lookTitle, lookOff, trust1T, trust1S, trust2T, trust2S, trust3T, trust3S, conKicker, conTitle, conText, conCta, aboutLinkT, aboutLinkS, promoEyebrow, promoTitle, promoText, promoCta, promoOff }';
 
       /* Products */
       /* Показові товари з коду потрібні у двох місцях: щоб сторінку
@@ -4518,8 +4521,13 @@
         (function () {
           var map = {
             b1Kicker: s.b1Kicker, b1Title: s.b1Title || s.heroTitle, b1Cta: s.b1Cta || s.heroCta,
-            b2Kicker: s.b2Kicker, b2Cta: s.b2Cta,
-            b3Kicker: s.saleSubtitle, b3Cta: s.b3Cta,
+            /* Заголовки другого й третього банерів раніше сюди не
+               потрапляли зовсім: їх писали автопідбори — «N моделей»
+               і «найбільша знижка». Через це поле «Заголовок» в
+               адмінці для цих двох банерів не робило нічого. */
+            b2Kicker: s.b2Kicker, b2Title: s.b2Title, b2Cta: s.b2Cta,
+            b3Kicker: s.b3Kicker || s.saleSubtitle,
+            b3Title: s.b3Title, b3Cta: s.b3Cta,
             secBrands: s.secBrands, secBrandsLink: s.secBrandsLink,
             secNew: s.secNew, secNewLink: s.secNewLink,
             lookKicker: s.lookKicker, lookTitle: s.lookTitle,
@@ -4573,8 +4581,15 @@
               window.OPTIX_applyFocus(img, s['b' + i + 'Focus']);
               /* автоматичну підкладку ховаємо, інакше вона проступає */
               var auto = slide.querySelector('.hero-collage, .hero-spot');
-              if (auto) auto.hidden = true;
+              if (auto) { auto.hidden = true; auto.innerHTML = ''; }
+              /* Мітка для автопідбору: сюди більше не лізти. Товари
+                 приходять пізніше за налаштування, і автозаповнювачі
+                 малювали свій колаж і свою знижку поверх фото, яке
+                 людина щойно поставила з адмінки. */
+              slide.dataset.custom = '1';
               if (i === 3) slide.hidden = false;   /* фото задано — показуємо */
+            } else {
+              slide.dataset.custom = '';
             }
 
             /* Куди веде кнопка */
@@ -4582,6 +4597,11 @@
             var btn = slide.querySelector('.hero-c-cta');
             if (dest && btn) btn.setAttribute('data-hero-go', dest);
           });
+
+          /* Автопідбори нижче мусять знати, що підпис уже задано. */
+          window.__OPTIX_B2_TITLE = s.b2Title || '';
+          window.__OPTIX_B3_TITLE = s.b3Title || '';
+          window.__OPTIX_B3_KICKER = s.b3Kicker || '';
 
           /* Блок «Образ» можна взагалі прибрати з головної. */
           if (s.lookOff === true) {
@@ -8244,6 +8264,8 @@
       function fillCollage() {
         var box = document.getElementById('heroCollage');
         if (!box) return;
+        var own = document.getElementById('heroSlide2');
+        if (own && own.dataset.custom === '1') return;   /* тут своє фото */
         var list = (window.OPTIX_PRODUCTS || []).filter(function (p) {
           return p.inStock !== false;
         });
@@ -8269,6 +8291,7 @@
         }).join('');
 
         var title = document.getElementById('heroCountTitle');
+        if (title && window.__OPTIX_B2_TITLE) title = null;   /* свій текст */
         if (title) {
           /* Рахуємо моделі, а не товари: 1344 позиції — це 448 моделей
              у різних кольорах, і чесніше показати друге число. */
@@ -8292,6 +8315,9 @@
            працює пізніше за налаштування, і без цієї перевірки він
            повертав на екран банер, який щойно сховали. */
         if (slide.dataset.off === '1') { slide.hidden = true; return; }
+        /* Своє фото з адмінки має пріоритет: автопідбір лише
+           показує слайд і не чіпає ні картинку, ні підписи. */
+        if (slide.dataset.custom === '1') { slide.hidden = false; buildDots(); return; }
         var parse = window.OPTIX_parsePrice;
         var best = null, bestPct = 0;
         (window.OPTIX_PRODUCTS || []).forEach(function (p) {
@@ -8308,8 +8334,11 @@
            Окремого sale-банера більше немає, тому поля адмінки
            керують саме цим слайдом. */
         var k = document.getElementById('heroSpotKicker');
-        if (k) k.textContent = window.__OPTIX_SALE_SUB || 'Знижка тижня';
+        if (k && !window.__OPTIX_B3_KICKER) {
+          k.textContent = window.__OPTIX_SALE_SUB || 'Знижка тижня';
+        }
         var t = document.getElementById('heroSpotTitle');
+        if (t && window.__OPTIX_B3_TITLE) t = null;           /* свій текст */
         if (t) {
           t.innerHTML = window.__OPTIX_SALE_TITLE
             ? window.OPTIX_esc(window.__OPTIX_SALE_TITLE)
