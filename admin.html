@@ -2281,7 +2281,7 @@
   }
 
   function loadHome() {
-    sanityQuery('*[_type=="settings"][0]{_id,"heroAsset":heroImage.asset._ref,"b1Asset":b1Image.asset._ref,"b2Asset":b2Image.asset._ref,"b3Asset":b3Image.asset._ref,heroFocus,b1Focus,b2Focus,b3Focus,gAll,gWomen,gMen,gUni,catFootT,catFootCta,searchEmpty1,searchNone,searchNoneHint,navHome,navSearch,navWish,navCart,b1Title,b1Cta,b1Link,b1Off,b2Title,b2Link,b2Off,b3Kicker,b3Title,b3Link,b3Off,heroTitle,heroCta,saleTitle,saleSubtitle,aboutKicker,aboutTitle,aboutWhoTitle,aboutWhoText,aboutQuote,aboutStepsTitle,promoEyebrow,promoTitle,promoText,promoCta,promoOff,b1Kicker,b2Kicker,b2Cta,b3Cta,secBrands,secBrandsLink,secNew,secNewLink,lookKicker,lookTitle,trust1T,trust1S,trust2T,trust2S,trust3T,trust3S,conKicker,conTitle,conText,conCta,aboutLinkT,aboutLinkS,lookOff}')
+    sanityQuery('*[_type=="settings" && !(_id in path("drafts.**"))][0]{_id,"heroAsset":heroImage.asset._ref,"b1Asset":b1Image.asset._ref,"b2Asset":b2Image.asset._ref,"b3Asset":b3Image.asset._ref,heroFocus,b1Focus,b2Focus,b3Focus,gAll,gWomen,gMen,gUni,catFootT,catFootCta,searchEmpty1,searchNone,searchNoneHint,navHome,navSearch,navWish,navCart,b1Title,b1Cta,b1Link,b1Off,b2Title,b2Link,b2Off,b3Kicker,b3Title,b3Link,b3Off,heroTitle,heroCta,saleTitle,saleSubtitle,aboutKicker,aboutTitle,aboutWhoTitle,aboutWhoText,aboutQuote,aboutStepsTitle,promoEyebrow,promoTitle,promoText,promoCta,promoOff,b1Kicker,b2Kicker,b2Cta,b3Cta,secBrands,secBrandsLink,secNew,secNewLink,lookKicker,lookTitle,trust1T,trust1S,trust2T,trust2S,trust3T,trust3S,conKicker,conTitle,conText,conCta,aboutLinkT,aboutLinkS,lookOff}')
       .then(function (s) {
         /* Документа налаштувань ще немає — це нормально для першого
            запуску. Порожні поля теж треба порахувати й зняти знімок,
@@ -2461,9 +2461,15 @@
     };
     /* Порожнє поле треба саме стерти, а не лишити старе значення —
        інакше «прибрати фото» не спрацює. */
+    /* Пишемо тільки в опублікований документ. Адмінка ходить у базу
+       з ключем і тому бачить ще й чернетки (drafts.*), а сайт — ні.
+       Якщо запис випадково потрапляв у чернетку, в адмінці все
+       виглядало збереженим, а на сайті нічого не мінялось. */
+    var pubId = String(settingsId || '').replace(/^drafts\./, '');
+
     var mut;
-    if (settingsId) {
-      var patch = { id: settingsId, set: data };
+    if (pubId) {
+      var patch = { id: pubId, set: data };
       var unset = [];
       /* heroImage не чіпаємо взагалі: поля в адмінці більше немає,
          а старе фото ще служить запасом для банера 1. Стерти його
@@ -2476,7 +2482,10 @@
         } else { unset.push('b' + i + 'Image'); }
       });
       if (unset.length) patch.unset = unset;
-      mut = [{ patch: patch }];
+      /* createIfNotExists — на випадок, коли опублікованого документа
+         ще немає, а є лише чернетка: інакше правка полетіла б у
+         порожнечу з помилкою «документ не знайдено». */
+      mut = [{ createIfNotExists: { _id: pubId, _type: 'settings' } }, { patch: patch }];
     } else {
       var doc = Object.assign({ _type: 'settings' }, data);
       [1, 2, 3].forEach(function (i) {
@@ -2486,6 +2495,11 @@
       });
       mut = [{ create: doc }];
     }
+    /* Що саме ми зараз відправили — щоб потім перевірити, чи справді
+       воно лягло в базу. Раніше «Збережено ✓» показувалось за фактом
+       відповіді сервера, а не за фактом записаного фото. */
+    var want = { 1: bannerAsset[1] || '', 2: bannerAsset[2] || '', 3: bannerAsset[3] || '' };
+
     sanityMutate(mut)
       .then(function () {
         saving = false;
@@ -2493,6 +2507,21 @@
         toast('Збережено ✓');
         loadHome();
         setTimeout(function () { saveState('', 'Зберегти'); }, 1600);
+
+        /* Перечитуємо опублікований документ і звіряємо фото. Якщо
+           знімок не доїхав — краще сказати про це одразу, ніж щоб
+           людина побачила порожній банер на сайті. */
+        sanityQuery('*[_type=="settings" && !(_id in path("drafts.**"))][0]' +
+                    '{"a1":b1Image.asset._ref,"a2":b2Image.asset._ref,"a3":b3Image.asset._ref}')
+          .then(function (r) {
+            var miss = [1, 2, 3].filter(function (i) {
+              return want[i] !== ((r && r['a' + i]) || '');
+            });
+            if (miss.length) {
+              toast('Фото банера ' + miss.join(', ') + ' не записалось. Спробуй ще раз');
+            }
+          })
+          .catch(function () {});
       })
       .catch(function (err) {
         saving = false;
@@ -2512,7 +2541,7 @@
   }
 
   function loadSettings() {
-    sanityQuery('*[_type=="settings"][0]{_id,tgUsername,deliveryTime,pair2Discount,pair3Discount,giftBrandsNote,rateUAH,rateUSDT}').then(function(s){
+    sanityQuery('*[_type=="settings" && !(_id in path("drafts.**"))][0]{_id,tgUsername,deliveryTime,pair2Discount,pair3Discount,giftBrandsNote,rateUAH,rateUSDT}').then(function(s){
       if (s) {
         settingsId=s._id;
         document.getElementById('sTg').value=s.tgUsername||'';
@@ -2559,7 +2588,7 @@
 
     Promise.all([
       sanityQuery('*[_type=="product"]{_id,brand,code,price,discount,visible,inStock,"img":images[0].asset->url}'),
-      sanityQuery('*[_type=="settings"][0]{rateUAH,_updatedAt}'),
+      sanityQuery('*[_type=="settings" && !(_id in path("drafts.**"))][0]{rateUAH,_updatedAt}'),
       sanityQuery('*[_type=="promo" && active==true]{name,code,endDate}')
     ]).then(function (res) {
       var prods = res[0] || [], st = res[1] || {}, promos = res[2] || [];
