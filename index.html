@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <!-- Мітка збірки: видно ззовні, тому завжди зрозуміло,
        яка саме версія зараз залита. -->
-  <meta name="optix-build" content="2026-08-19-swipe" />
+  <meta name="optix-build" content="2026-08-20-no-flash" />
   <title>optix — by Trend Büro</title>
 
   <!-- Знак «ox» просто у розмітці: окремий файл вантажити не треба,
@@ -3014,6 +3014,19 @@
     /* Шторка наїжджає на кадр на 26 px. Раніше крапки потрапляли
        рівно під неї — здавалося, що знімок один. Тому додаємо стільки
        ж запасу знизу: крапки лишаються на видноті. */
+    /* Застиглий кадр на час підміни картки: те саме фото, той самий
+       розмір і те саме вписування, що й у плитці. Живе поверх неї
+       кілька кадрів — рівно доти, доки нове фото не намалюється. */
+    .pdp-freeze {
+      position: fixed;
+      z-index: 1;
+      pointer-events: none;
+      background-color: var(--surface);
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: contain;
+    }
+
     .pdp-gal-dots {
       display: flex;
       gap: 4px;
@@ -6548,22 +6561,63 @@
           }
         }
 
-        /* Картка перемальовується цілком, тож новий знімок починає
-           вантажитись з нуля — і на мить лишалась порожня плитка.
-           Тому спершу тихо тягнемо знімок у кеш, а міняємо вміст уже
-           тоді, коли малювати є що. Довго чекати не станемо: якщо за
-           400 мс не приїхало — міняємо як є, зависла картка гірша за
-           блимання. */
+        /* Картка перемальовується цілком: увесь її вміст замінюється
+           разом зі знімком. Скільки б ми не готували нове фото
+           заздалегідь, сам елемент народжується порожнім — і саме цей
+           один кадр читається як біле блимання.
+           Тому на час підміни кладемо поверх плитки застиглий кадр із
+           уже готовим знімком. Він живе на самій шторці, а не всередині
+           картки, тому перемальовування його не зачіпає. Знімає його
+           нове фото, коли справді намалювалось. */
         var next = findProduct(code);
         var src = next && next.images && next.images[0];
         if (!src) { swap(); return; }
+
+        var track = bodyEl.querySelector('.pdp-gal-track');
+        var freeze = null;
+        if (track) {
+          var r = track.getBoundingClientRect();
+          freeze = document.createElement('div');
+          freeze.className = 'pdp-freeze';
+          freeze.style.left = r.left + 'px';
+          freeze.style.top = r.top + 'px';
+          freeze.style.width = r.width + 'px';
+          freeze.style.height = r.height + 'px';
+          freeze.style.backgroundImage = 'url("' + src + '")';
+          sheet.appendChild(freeze);
+        }
+        function unfreeze() {
+          if (!freeze) return;
+          var f = freeze; freeze = null;
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () { if (f.parentNode) f.parentNode.removeChild(f); });
+          });
+        }
+
         var done = false;
-        var go = function () { if (done) return; done = true; swap(); };
+        var go = function () {
+          if (done) return;
+          done = true;
+          swap();
+          /* Знімаємо застиглий кадр лише коли новий уже намальований. */
+          var ni = bodyEl.querySelector('.pdp-gal-track img');
+          if (!ni) { unfreeze(); return; }
+          if (ni.complete && ni.naturalWidth) unfreeze();
+          else {
+            ni.addEventListener('load', unfreeze, { once: true });
+            ni.addEventListener('error', unfreeze, { once: true });
+            setTimeout(unfreeze, 1200);          /* страховка */
+          }
+        };
+
         var pre = new Image();
         pre.onload = go;
         pre.onerror = go;
         pre.src = src;
-        if (pre.complete) go(); else setTimeout(go, 400);
+        /* decode() дає готовий до малювання кадр, а не просто
+           завантажений файл — саме цього бракувало. */
+        if (pre.decode) { pre.decode().then(go).catch(go); }
+        if (pre.complete) go(); else setTimeout(go, 600);
       });
 
       window.OPTIX_openProduct = function (code, silent) {
