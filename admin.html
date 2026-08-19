@@ -584,6 +584,75 @@
   .add-btn.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); }
   .add-btn.ghost.danger { color: var(--red); }
 
+
+  /* ============ КАРТА САЙТУ ============
+     Зменшена копія справжніх екранів. Усе, що можна змінити, —
+     натискається і підписане. Товари намальовані розмито: вони
+     беруться з каталогу, і чіпати їх звідси не треба. Так видно,
+     що саме правиш, ще до того, як відкриєш поля. */
+  .map { display: flex; gap: 12px; overflow-x: auto; padding: 2px 2px 12px;
+         scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .map::-webkit-scrollbar { display: none; }
+  .mapscr { flex: 0 0 76%; scroll-snap-align: center; }
+  .mapscr-t { font-size: 10px; font-weight: 700; letter-spacing: .16em;
+              text-transform: uppercase; color: var(--fg-mute); margin-bottom: 7px; }
+  .mp { background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+        overflow: hidden; font-size: 9px; color: var(--fg); }
+  .mp-hd { display: flex; align-items: center; justify-content: center; height: 30px;
+           border-bottom: 1px solid var(--line); }
+  .mp-hd b { font-family: var(--display); font-size: 12px; font-weight: 400; letter-spacing: .12em; }
+  .mp-b { padding: 8px; display: flex; flex-direction: column; gap: 7px; }
+
+  /* Зона, яку можна змінити */
+  .z { position: relative; border-radius: 9px; overflow: hidden; cursor: pointer;
+       border: 1.5px solid transparent; transition: border-color .15s ease, transform .1s ease; }
+  .z:active { transform: scale(.985); }
+  .z::after { content: attr(data-lbl); position: absolute; left: 5px; top: 5px; z-index: 2;
+              background: var(--acc); color: #fff; font-size: 7.5px; font-weight: 700;
+              letter-spacing: .06em; padding: 2px 6px; border-radius: 5px; white-space: nowrap; }
+  .z:hover { border-color: var(--acc); }
+
+  /* Товари — не редагуються, тому розмиті */
+  .lock { position: relative; border-radius: 9px; overflow: hidden; }
+  .lock .blurred { filter: blur(3px); opacity: .5; }
+  .lock::after { content: 'Товари з каталогу'; position: absolute; inset: 0; z-index: 2;
+                 display: grid; place-items: center; font-size: 8.5px; font-weight: 700;
+                 letter-spacing: .06em; color: var(--fg-soft);
+                 background: color-mix(in srgb, var(--surface) 55%, transparent); }
+
+  .m-hero { height: 66px; background: linear-gradient(155deg,#c9bfae,#8b8272);
+            display: flex; align-items: flex-end; padding: 7px; }
+  .m-hero i { font-family: var(--display); font-style: normal; color: #fff; font-size: 11px; }
+  .m-ban { height: 34px; background: var(--raise); display: flex; align-items: center;
+           justify-content: center; gap: 4px; }
+  .m-ban u { width: 12px; height: 3px; border-radius: 9px; background: #c9c6c0; text-decoration: none; }
+  .m-ban u.on { width: 20px; background: var(--fg); }
+  .m-sec { padding: 6px 7px; }
+  .m-sec b { font-family: var(--display); font-size: 11px; font-weight: 400; }
+  .m-row { display: flex; gap: 4px; margin-top: 5px; }
+  .m-row i { flex: 1; height: 26px; border-radius: 5px; background: var(--raise); }
+  .m-look { height: 40px; background: linear-gradient(120deg,#b9b0a2,#7f7768);
+            display: flex; align-items: flex-end; padding: 6px; color: #fff; }
+  .m-trust { display: flex; gap: 5px; padding: 7px; }
+  .m-trust i { flex: 1; height: 20px; border-radius: 4px; background: var(--raise); }
+  .m-con { padding: 8px 7px; }
+  .m-albk { padding: 7px; display: flex; justify-content: space-between; }
+  .m-pills { display: flex; gap: 4px; padding: 6px 7px 0; }
+  .m-pills i { flex: 1; height: 15px; border-radius: 9px; background: var(--raise); }
+  .m-pills i.on { background: var(--fg); }
+  .m-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; padding: 6px 7px; }
+  .m-grid i { height: 40px; border-radius: 5px; background: var(--raise); }
+  .m-catban { margin: 0 7px; height: 30px; border-radius: 7px; background: var(--fg); }
+  .m-foot { padding: 8px 7px; text-align: center; }
+  .m-nav { display: flex; border-top: 1px solid var(--line); padding: 5px 0; }
+  .m-nav i { flex: 1; text-align: center; font-size: 6.5px; color: var(--fg-mute); font-style: normal; }
+
+  .map-hint { font-size: 11.5px; color: var(--fg-soft); line-height: 1.5; margin-bottom: 10px; }
+  .map-hint b { color: var(--fg); }
+  .map-more { width: 100%; border: 0; background: transparent; color: var(--acc);
+              font-family: var(--ui); font-size: 12px; font-weight: 700;
+              padding: 12px; cursor: pointer; }
+
   /* toast */
   .toast { position:fixed; left:50%; bottom:calc(76px + max(env(safe-area-inset-bottom,0px), var(--tg-bottom))); transform:translateX(-50%) translateY(20px); background:var(--accent); color:var(--bg); font-size:13px; padding:11px 18px; border-radius:999px; opacity:0; transition:.25s; pointer-events:none; z-index:200; max-width:88%; text-align:center; }
   .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
@@ -789,12 +858,67 @@
       Натисни його, щоб відкрити тільки його поля з прев'ю і поясненнями. Нічого зайвого на екрані
       не буде.</div><button type="button" class="tip-x" data-tipx="tipSite">×</button></div>
 
+    <p class="map-hint"><b>Натисни будь-яку підписану ділянку</b> — відкриються її поля.
+      Розмиті картки — це товари з каталогу, вони підставляються самі.</p>
+
+    <div class="map">
+      <div class="mapscr">
+        <div class="mapscr-t">Головна</div>
+        <div class="mp">
+          <div class="mp-hd"><b>OPTIX</b></div>
+          <div class="mp-b">
+            <div class="z" data-openblk="hero" data-lbl="Головне фото"><div class="m-hero"><i>Оправи, яких немає</i></div></div>
+            <div class="z" data-openblk="banner" data-lbl="Банери"><div class="m-ban"><u class="on"></u><u></u><u></u></div></div>
+            <div class="z" data-openblk="sects" data-lbl="Заголовки"><div class="m-sec"><b>Бренди</b><div class="m-row"><i></i><i></i><i></i><i></i></div></div></div>
+            <div class="lock"><div class="blurred m-sec"><b>Новинки</b><div class="m-row"><i></i><i></i><i></i></div></div></div>
+            <div class="z" data-openblk="look" data-lbl="Образ"><div class="m-look">Овальна оправа</div></div>
+            <div class="z" data-openblk="trust" data-lbl="Три факти"><div class="m-trust"><i></i><i></i><i></i></div></div>
+            <div class="z" data-openblk="con" data-lbl="Консьєрж"><div class="m-con">Не знайшли модель?</div></div>
+            <div class="z" data-openblk="albk" data-lbl="Про OPTIX"><div class="m-albk"><span>Про OPTIX</span><span>›</span></div></div>
+          </div>
+          <div class="m-nav"><i>Головна</i><i>Пошук</i><i>Ox</i><i>Обране</i><i>Кошик</i></div>
+        </div>
+      </div>
+
+      <div class="mapscr">
+        <div class="mapscr-t">Каталог</div>
+        <div class="mp">
+          <div class="mp-hd"><b>OPTIX</b></div>
+          <div class="z" data-openblk="catalog" data-lbl="Фільтри"><div class="m-pills"><i class="on"></i><i></i><i></i><i></i></div></div>
+          <div class="lock"><div class="blurred m-grid"><i></i><i></i><i></i><i></i></div></div>
+          <div class="z" data-openblk="cat" data-lbl="Банер у каталозі"><div class="m-catban"></div></div>
+          <div class="lock"><div class="blurred m-grid"><i></i><i></i></div></div>
+          <div class="z" data-openblk="catalog" data-lbl="Блок унизу"><div class="m-foot">Шукаєте свою модель?</div></div>
+          <div class="m-nav"><i>Головна</i><i>Пошук</i><i>Ox</i><i>Обране</i><i>Кошик</i></div>
+        </div>
+      </div>
+
+      <div class="mapscr">
+        <div class="mapscr-t">Пошук і меню</div>
+        <div class="mp">
+          <div class="mp-hd"><b>Пошук</b></div>
+          <div class="mp-b">
+            <div class="z" data-openblk="search" data-lbl="Тексти пошуку"><div class="m-con">Введіть назву бренду<br>Нічого не знайдено</div></div>
+            <div class="lock"><div class="blurred m-grid"><i></i><i></i></div></div>
+            <div class="z" data-openblk="about" data-lbl="Екран «Про нас»"><div class="m-con">Хто ми і як працює викуп</div></div>
+          </div>
+          <div class="z" data-openblk="nav" data-lbl="Підписи меню">
+            <div class="m-nav"><i>Головна</i><i>Пошук</i><i>Ox</i><i>Обране</i><i>Кошик</i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button type="button" class="map-more" id="mapMore">Показати списком ↓</button>
+    <div id="mapList" hidden>
+
     <div class="sgroup-t">Головна сторінка</div><div class="sgroup"><button type="button" class="srow" data-openblk="hero"><span class="srow-tx"><b>Головне фото</b><span>Знімок на весь екран і заголовок поверх нього</span></span><span class="srow-st" data-st="hero"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="banner"><span class="srow-tx"><b>Банер-карусель</b><span>Три слайди одразу під головним фото</span></span><span class="srow-st" data-st="banner"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="sects"><span class="srow-tx"><b>Заголовки секцій</b><span>Підписи над «Брендами» та «Новинками»</span></span><span class="srow-st" data-st="sects"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="look"><span class="srow-tx"><b>Блок «Образ»</b><span>Живе фото з міткою моделі</span></span><span class="srow-st" data-st="look"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="trust"><span class="srow-tx"><b>Три факти</b><span>Оригінал · відправка · викуп під замовлення</span></span><span class="srow-st" data-st="trust"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="con"><span class="srow-tx"><b>Консьєрж</b><span>Блок «Не знайшли свою модель?»</span></span><span class="srow-st" data-st="con"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="albk"><span class="srow-tx"><b>Рядок «Про OPTIX»</b><span>Посилання в самому низу головної</span></span><span class="srow-st" data-st="albk"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button></div>
     <div class="sgroup-t">Каталог</div><div class="sgroup"><button type="button" class="srow" data-openblk="cat"><span class="srow-tx"><b>Банер у каталозі</b><span>Плашка між рядами карток товару</span></span><span class="srow-st" data-st="cat"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="catalog"><span class="srow-tx"><b>Каталог і фільтри</b><span>Підписи фільтрів і блок унизу каталогу</span></span><span class="srow-st" data-st="catalog"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="search"><span class="srow-tx"><b>Екран пошуку</b><span>Що написано, поки нічого не введено</span></span><span class="srow-st" data-st="search"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button></div>
     <div class="sgroup-t">Окремі екрани</div><div class="sgroup"><button type="button" class="srow" data-openblk="about"><span class="srow-tx"><b>Екран «Про нас»</b><span>Окрема сторінка: хто ми і як працює викуп</span></span><span class="srow-st" data-st="about"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button type="button" class="srow" data-openblk="nav"><span class="srow-tx"><b>Нижнє меню</b><span>Підписи п'яти кнопок унизу</span></span><span class="srow-st" data-st="nav"></span><svg class="srow-ch" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button></div>
 
     <p class="screen-sub" style="margin-top:18px">Порожнє поле — не помилка: сайт підставить
       власний текст. У списку такі блоки позначені як «за замовчуванням».</p>
+    </div>
   </div>
 
   <!-- Один блок — один екран. Саме через це в Apple налаштування
@@ -2693,6 +2817,18 @@
 
   document.getElementById('topBack').addEventListener('click', goBack);
   try { if (twa && twa.BackButton) twa.BackButton.onClick(goBack); } catch (e) {}
+
+  /* Список лишається як запасний шлях: карта — головний. */
+  (function () {
+    var more = document.getElementById('mapMore');
+    var list = document.getElementById('mapList');
+    if (!more || !list) return;
+    more.addEventListener('click', function () {
+      list.hidden = !list.hidden;
+      more.textContent = list.hidden ? 'Показати списком ↓' : 'Сховати список ↑';
+      if (!list.hidden) syncBlkList();
+    });
+  })();
 
   /* ---------- підказки ---------- */
   var TIP_KEY = 'tb_tips_seen';
