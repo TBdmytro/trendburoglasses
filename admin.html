@@ -537,6 +537,9 @@
     aspect-ratio: auto;          /* власна пропорція знімка, не 16:9 */
     object-fit: fill;
     border-radius: 0;
+    /* Поки JS не порахував кадр, знімок має бути хоча б по центру,
+       а не кутом у середину рамки. */
+    transform: translate(-50%, -50%);
     transform-origin: center;
     pointer-events: none;
     display: block;
@@ -554,6 +557,35 @@
     opacity: 0; transition: opacity .2s ease;
   }
   .crop.is-live::after { opacity: 1; }
+  .crop img { z-index: 1; }
+  .crop::after { z-index: 2; }
+
+  /* Режим «показати цілком»: знімок вписується весь, а порожнечу з боків
+     закриває він же сам — розмитий і розтягнутий. Чорні поля виглядали б
+     як помилка вёрстки, розмиття читається як задум. */
+  .crop.is-fit::before {
+    content: '';
+    position: absolute; inset: -14%;
+    z-index: 0;
+    background-image: var(--fitbg);
+    background-size: cover;
+    background-position: center;
+    filter: blur(16px) saturate(1.08);
+  }
+  .crop.is-fit::after { display: none; }   /* сітку кадру різати нічого */
+
+  /* Перемикач: ціле фото чи свій кадр. */
+  .fitseg { display: flex; gap: 4px; background: var(--raise);
+            border-radius: 11px; padding: 3px; margin-bottom: 10px; }
+  .fitseg button {
+    flex: 1; border: 0; background: transparent; color: var(--fg-soft);
+    font-family: var(--ui); font-size: 12px; font-weight: 700;
+    padding: 9px 6px; border-radius: 9px; cursor: pointer; min-height: 40px;
+  }
+  .fitseg button.is-on {
+    background: var(--surface); color: var(--fg);
+    box-shadow: 0 1px 3px rgba(18, 41, 62, .13);
+  }
   .crop-hint {
     font-size: 11px; color: var(--fg-mute); text-align: center;
     margin: 6px 0 8px; line-height: 1.4;
@@ -959,6 +991,7 @@
         <div class="field">
           <label class="field-label">Фото</label>
           <div id="b1Preview" class="banner-prev"></div>
+          <div class="fitseg" id="b1Seg" hidden><button type="button" data-seg="1" data-fit="crop" class="is-on">Обрізати під банер</button><button type="button" data-seg="1" data-fit="fit">Показати цілком</button></div>
           <div class="crop-zoom" id="b1ZoomWrap" hidden><span>Масштаб</span><input type="range" id="b1Zoom" min="100" max="300" value="100" /><button type="button" class="crop-reset" id="b1Reset">Скинути</button></div>
           <p class="crop-hint" id="b1Hint" hidden>Тягни знімок пальцем, зводь двома — щоб наблизити</p>
           <div class="photo-acts"><label class="add-btn ghost">Вибрати фото<input type="file" id="b1File" accept="image/*" hidden=""></label><button class="add-btn ghost danger" id="b1Clear">Прибрати</button></div>
@@ -991,6 +1024,7 @@
         <div class="field">
           <label class="field-label">Фото</label>
           <div id="b2Preview" class="banner-prev"></div>
+          <div class="fitseg" id="b2Seg" hidden><button type="button" data-seg="2" data-fit="crop" class="is-on">Обрізати під банер</button><button type="button" data-seg="2" data-fit="fit">Показати цілком</button></div>
           <div class="crop-zoom" id="b2ZoomWrap" hidden><span>Масштаб</span><input type="range" id="b2Zoom" min="100" max="300" value="100" /><button type="button" class="crop-reset" id="b2Reset">Скинути</button></div>
           <p class="crop-hint" id="b2Hint" hidden>Тягни знімок пальцем, зводь двома — щоб наблизити</p>
           <div class="photo-acts"><label class="add-btn ghost">Вибрати фото<input type="file" id="b2File" accept="image/*" hidden=""></label><button class="add-btn ghost danger" id="b2Clear">Прибрати</button></div>
@@ -1023,6 +1057,7 @@
         <div class="field">
           <label class="field-label">Фото</label>
           <div id="b3Preview" class="banner-prev"></div>
+          <div class="fitseg" id="b3Seg" hidden><button type="button" data-seg="3" data-fit="crop" class="is-on">Обрізати під банер</button><button type="button" data-seg="3" data-fit="fit">Показати цілком</button></div>
           <div class="crop-zoom" id="b3ZoomWrap" hidden><span>Масштаб</span><input type="range" id="b3Zoom" min="100" max="300" value="100" /><button type="button" class="crop-reset" id="b3Reset">Скинути</button></div>
           <p class="crop-hint" id="b3Hint" hidden>Тягни знімок пальцем, зводь двома — щоб наблизити</p>
           <div class="photo-acts"><label class="add-btn ghost">Вибрати фото<input type="file" id="b3File" accept="image/*" hidden=""></label><button class="add-btn ghost danger" id="b3Clear">Прибрати</button></div>
@@ -1948,18 +1983,25 @@
      Сайт застосовує їх той самий чином, тому те, що ти бачиш тут, —
      це буквально те, що побачить покупець.
      ------------------------------------------------------------------ */
-  var focus = { 1: [50, 50, 100], 2: [50, 50, 100], 3: [50, 50, 100] };
+  /* Четверте значення — режим. Порожньо або 'crop' — знімок обрізається
+     під банер, 'fit' — влазить цілком. Старі записи з трьох чисел
+     читаються як раніше, тому нічого перезберігати не треба. */
+  var focus = { 1: [50, 50, 100, 'crop'], 2: [50, 50, 100, 'crop'], 3: [50, 50, 100, 'crop'] };
 
   function focusStr(k) {
     var f = focus[k];
-    return f[0].toFixed(1) + ' ' + f[1].toFixed(1) + ' ' + (f[2] / 100).toFixed(2);
+    return f[0].toFixed(1) + ' ' + f[1].toFixed(1) + ' ' + (f[2] / 100).toFixed(2) +
+           (f[3] === 'fit' ? ' fit' : '');
   }
   function focusParse(k, s) {
-    var p = String(s || '').trim().split(/\s+/).map(Number);
+    var t = String(s || '').trim().split(/\s+/);
+    var p = t.slice(0, 3).map(Number);
+    var mode = t[3] === 'fit' ? 'fit' : 'crop';
     focus[k] = (p.length === 3 && p.every(function (n) { return !isNaN(n); }))
-      ? [p[0], p[1], Math.round(p[2] * 100)]
-      : [50, 50, 100];
+      ? [p[0], p[1], Math.round(p[2] * 100), mode]
+      : [50, 50, 100, mode];
   }
+  function isFit(k) { return focus[k][3] === 'fit'; }
 
   /* Скільки знімка звисає за рамку — стільки й можна тягнути.
      Рахуємо окремо по кожній осі: у вертикального фото звисає низ
@@ -1980,7 +2022,19 @@
     return true;
   }
 
+  /* Режим «цілком»: знімок вписується весь, обрізати нема чого,
+     тому зсув і масштаб не потрібні. */
+  function containSize(box, img) {
+    var nw = img.naturalWidth, nh = img.naturalHeight;
+    if (!nw || !nh || !box.clientWidth || !box.clientHeight) return false;
+    var s = Math.min(box.clientWidth / nw, box.clientHeight / nh);
+    img.style.width  = (nw * s) + 'px';
+    img.style.height = (nh * s) + 'px';
+    return true;
+  }
+
   function clampFocus(k) {
+    if (isFit(k)) { focus[k][0] = 50; focus[k][1] = 50; focus[k][2] = 100; return; }
     var f = focus[k], z = f[2] / 100;
     var box = cropBox(k), img = box && box.querySelector('img');
     var lx, ly;
@@ -2002,10 +2056,45 @@
     if (!img) return;
     var f = focus[k];
     var z = f[2] / 100;
+
+    if (isFit(k)) {
+      containSize(box, img);
+      img.style.transform = 'translate(-50%, -50%) scale(1)';
+      box.classList.add('is-fit');
+      /* Порожнечу з боків закриває той самий знімок, розмитий. */
+      box.style.setProperty('--fitbg', 'url("' + img.src + '")');
+      return;
+    }
+    box.classList.remove('is-fit');
+    box.style.removeProperty('--fitbg');
     coverSize(box, img);
     /* Зсув рахуємо у відсотках від власного розміру знімка, тому
        результат однаковий на будь-якій ширині екрана. */
     img.style.transform = 'translate(' + (-f[0]) + '%, ' + (-f[1]) + '%) scale(' + z + ')';
+  }
+
+  /* Перемикач «обрізати / цілком» під кожним знімком. */
+  function wireSeg(k) {
+    var seg = document.getElementById('b' + k + 'Seg');
+    if (!seg) return;
+    seg.addEventListener('click', function (e) {
+      var btn = e.target.closest('button[data-fit]');
+      if (!btn) return;
+      focus[k][3] = btn.dataset.fit;
+      if (focus[k][3] === 'fit') focus[k] = [50, 50, 100, 'fit'];
+      syncSeg(k);
+      syncCropUi(k);
+      clampFocus(k);
+      applyFocus(k);
+      syncDirty();
+    });
+  }
+  function syncSeg(k) {
+    var seg = document.getElementById('b' + k + 'Seg');
+    if (!seg) return;
+    [].forEach.call(seg.querySelectorAll('button[data-fit]'), function (b) {
+      b.classList.toggle('is-on', b.dataset.fit === focus[k][3]);
+    });
   }
 
   /* Ширина екрана змінилась — рамка стала іншою, і кадр треба
@@ -2043,7 +2132,7 @@
     }
 
     box.addEventListener('pointerdown', function (e) {
-      if (!box.querySelector('img')) return;
+      if (!box.querySelector('img') || isFit(k)) return;   /* цілком — рухати нічого */
       box.setPointerCapture(e.pointerId);
       pts[e.pointerId] = { x: e.clientX, y: e.clientY };
       live(true);
@@ -2083,7 +2172,7 @@
 
     /* Колесо миші — те саме наближення, коли адмінку відкрито на комп'ютері. */
     box.addEventListener('wheel', function (e) {
-      if (!box.querySelector('img')) return;
+      if (!box.querySelector('img') || isFit(k)) return;
       e.preventDefault();
       setZoom(focus[k][2] - e.deltaY * 0.25);
       live(true);
@@ -2099,21 +2188,28 @@
       syncDirty();
     });
     if (reset) reset.addEventListener('click', function () {
-      focus[k] = [50, 50, 100];
+      focus[k] = [50, 50, 100, focus[k][3]];
       if (zoom) zoom.value = 100;
       applyFocus(k);
       syncDirty();
     });
   }
 
-  /* Показуємо керування лише коли є що кадрувати. */
+  /* Показуємо керування лише коли є що кадрувати. У режимі «цілком»
+     повзунок і підказка зайві: там нічого не рухається. */
   function syncCropUi(k) {
-    var has = !!bannerAsset[k];
+    /* Орієнтуємось на те, що справді є в рамці, а не лише на змінну:
+       знімок міг з'явитися і в обхід завантаження. */
+    var hostBox = cropBox(k);
+    var has = !!(bannerAsset[k] || (hostBox && hostBox.querySelector('img')));
     var pre = 'b' + k;
     ['ZoomWrap', 'Hint'].forEach(function (s) {
       var el = document.getElementById(pre + s);
-      if (el) el.hidden = !has;
+      if (el) el.hidden = !has || isFit(k);
     });
+    var seg = document.getElementById(pre + 'Seg');
+    if (seg) seg.hidden = !has;
+    syncSeg(k);
     var box = cropBox(k);
     if (box) box.classList.toggle('crop', has);
     var z = document.getElementById(pre + 'Zoom');
@@ -2133,6 +2229,7 @@
   }
 
   [1, 2, 3].forEach(wireCrop);
+  [1, 2, 3].forEach(wireSeg);
 
   function renderBanner(i) {
     var box = document.getElementById('b' + i + 'Preview');
@@ -2152,7 +2249,7 @@
       toast('Завантажую…');
       uploadImage(file).then(function (id) {
         bannerAsset[i] = id;
-        focus[i] = [50, 50, 100];        /* нове фото — новий кадр */
+        focus[i] = [50, 50, 100, 'crop'];  /* нове фото — новий кадр */
         renderBanner(i);
         syncDirty(); toast('Фото готове. Постав кадр і збережи');
       }).catch(function () { toast('Фото не завантажилось'); });
