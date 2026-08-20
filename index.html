@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <!-- Мітка збірки: видно ззовні, тому завжди зрозуміло,
        яка саме версія зараз залита. -->
-  <meta name="optix-build" content="2026-08-20-carousel" />
+  <meta name="optix-build" content="2026-08-20-lists" />
   <title>optix — by Trend Büro</title>
 
   <!-- Знак «ox» просто у розмітці: окремий файл вантажити не треба,
@@ -4429,7 +4429,7 @@
 
       var PROMO_QUERY = '*[_type == "promo" && active == true] { name, type, discount, brand, scope, startDate, endDate, code }';
 
-      var SETTINGS_QUERY = '*[_type == "settings" && !(_id in path("drafts.**"))] | order(_createdAt asc)[0] { tgUsername, deliveryTime, pair2Discount, pair3Discount, giftBrandsNote, rateUAH, rateUSDT, "heroUrl": heroImage.asset->url, heroTitle, heroCta, saleTitle, saleSubtitle, aboutKicker, aboutTitle, aboutWhoTitle, aboutWhoText, aboutQuote, aboutStepsTitle, "b1Url": b1Image.asset->url, heroFocus, b1Focus, b2Focus, b3Focus, gAll, gWomen, gMen, gUni, navHome, navSearch, navWish, navCart, catFootT, catFootCta, searchEmpty1, searchNone, searchNoneHint, b1Kicker, b1Title, b1Cta, b1Link, b1Off, "b2Url": b2Image.asset->url, b2Kicker, b2Title, b2Cta, b2Link, b2Off, "b3Url": b3Image.asset->url, b3Kicker, b3Title, b3Cta, b3Link, b3Off, secBrands, secBrandsLink, secNew, secNewLink, lookKicker, lookTitle, lookOff, trust1T, trust1S, trust2T, trust2S, trust3T, trust3S, conKicker, conTitle, conText, conCta, aboutLinkT, aboutLinkS, promoEyebrow, promoTitle, promoText, promoCta, promoOff }';
+      var SETTINGS_QUERY = '*[_type == "settings" && !(_id in path("drafts.**"))] | order(_createdAt asc)[0] { tgUsername, deliveryTime, pair2Discount, pair3Discount, giftBrandsNote, rateUAH, rateUSDT, "heroUrl": heroImage.asset->url, heroTitle, heroCta, saleTitle, saleSubtitle, aboutKicker, aboutTitle, aboutWhoTitle, aboutWhoText, aboutQuote, aboutStepsTitle, "b1Url": b1Image.asset->url, heroFocus, b1Focus, b2Focus, b3Focus, bundleMin, bundleOff, gAll, gWomen, gMen, gUni, navHome, navSearch, navWish, navCart, catFootT, catFootCta, searchEmpty1, searchNone, searchNoneHint, b1Kicker, b1Title, b1Cta, b1Link, b1Off, "b2Url": b2Image.asset->url, b2Kicker, b2Title, b2Cta, b2Link, b2Off, "b3Url": b3Image.asset->url, b3Kicker, b3Title, b3Cta, b3Link, b3Off, secBrands, secBrandsLink, secNew, secNewLink, lookKicker, lookTitle, lookOff, trust1T, trust1S, trust2T, trust2S, trust3T, trust3S, conKicker, conTitle, conText, conCta, aboutLinkT, aboutLinkS, promoEyebrow, promoTitle, promoText, promoCta, promoOff }';
 
       /* Products */
       /* Показові товари з коду потрібні у двох місцях: щоб сторінку
@@ -4673,6 +4673,14 @@
         window.__OPTIX_SALE_SUB = s.saleSubtitle || '';
         if (window.OPTIX_saleRefresh) window.OPTIX_saleRefresh();
         if (window.OPTIX_heroRefresh) window.OPTIX_heroRefresh();
+        /* Фіксована знижка від N пар. Якщо задана — працює вона, а не
+           відсотки: людині зрозуміліше «−€60», ніж «−8% від чогось». */
+        var bMin = parseInt(s.bundleMin, 10);
+        var bOff = parseFloat(s.bundleOff);
+        if (!isNaN(bOff) && bOff > 0) {
+          window.__OPTIX_BUNDLE = { min: (isNaN(bMin) || bMin < 2) ? 2 : bMin, off: bOff };
+          if (window.OPTIX_cartRefresh) window.OPTIX_cartRefresh();
+        }
         var p2 = parseFloat(s.pair2Discount);
         var p3 = parseFloat(s.pair3Discount);
         if (!isNaN(p2) || !isNaN(p3)) {
@@ -7444,15 +7452,16 @@
                       '<path d="M6 6 L18 18" /><path d="M18 6 L6 18" />' +
                     '</svg>' +
                   '</button>' +
-                  '<button type="button" class="list-move-to-cart" data-action="to-cart">В кошик</button>' +
+                  '<button type="button" class="list-move-to-cart" data-action="to-cart">Додати в кошик</button>' +
                 '</div>' +
               '</li>';
             }).join('') +
           '</ul>';
 
         footerEl.innerHTML =
-          '<button type="button" class="checkout-btn" data-tg-checkout="wishlist">' +
-          'Замовити в Telegram (' + items.length + ' ' + pluralize(items.length) + ')</button>';
+          '<button type="button" class="checkout-btn" data-action="all-to-cart">' +
+            'Додати всі ' + items.length + ' ' + pluralize(items.length) + ' у кошик' +
+          '</button>';
       }
 
       openBtn.addEventListener('click', function () {
@@ -7464,12 +7473,63 @@
       backBtn.addEventListener('click', function () { window.OPTIX_sheetClose(sheet); });
 
       footerEl.addEventListener('click', function (e) {
-        var btn = e.target.closest('[data-tg-checkout]');
+        var btn = e.target.closest('[data-action="all-to-cart"]');
         if (!btn) return;
-        var codes = window.OPTIX_wishlistGet();
-        var items = codes.map(findProduct).filter(Boolean);
-        if (items.length) window.OPTIX_openTgChat(buildOrderMessage(items));
+        var codes = window.OPTIX_wishlistGet().slice();
+        if (!codes.length) return;
+        codes.forEach(function (c) {
+          window.OPTIX_cartAdd(c);
+          window.OPTIX_wishlistRemove(c);
+        });
+        /* Рядки прибираємо по черзі, з невеликим зсувом — видно, що
+           саме сталося, а не «список раптом став порожнім». */
+        var rows = [].slice.call(bodyEl.querySelectorAll('.list-row'));
+        rows.forEach(function (r, i) {
+          setTimeout(function () {
+            dropRow(r, i === rows.length - 1 ? syncCounts : null);
+          }, i * 70);
+        });
+        window.OPTIX_sheetClose(sheet);
+        setTimeout(function () {
+          var cartBtn = document.getElementById('cartNavBtn') ||
+                        document.getElementById('cartOpenBtn');
+          if (cartBtn) cartBtn.click();
+        }, 260);
       });
+
+      /* Прибрати рядок так, як це виглядає в житті: він з'їжджається
+         і зникає. Раніше на будь-яку дію перемальовувався ВЕСЬ список —
+         тому сусідні позиції моргали, хоч їх ніхто не чіпав. */
+      function dropRow(row, done) {
+        if (!row) { if (done) done(); return; }
+        row.style.height = row.offsetHeight + 'px';
+        row.style.overflow = 'hidden';
+        /* Наступний кадр — щоб браузер зафіксував висоту до анімації. */
+        requestAnimationFrame(function () {
+          row.style.transition = 'height .22s ease, opacity .18s ease, padding .22s ease';
+          row.style.height = '0px';
+          row.style.paddingTop = '0px';
+          row.style.paddingBottom = '0px';
+          row.style.opacity = '0';
+          setTimeout(function () {
+            if (row.parentNode) row.parentNode.removeChild(row);
+            if (done) done();
+          }, 240);
+        });
+      }
+
+      /* Заголовок і нижня кнопка залежать від кількості — оновлюємо
+         їх точково, не чіпаючи самі рядки. */
+      function syncCounts() {
+        var n = bodyEl.querySelectorAll('.list-row').length;
+        titleEl.textContent = n ? 'Обране (' + n + ')' : 'Обране';
+        if (!n) { render(); return; }          /* спорожніло — показуємо заглушку */
+        footerEl.hidden = false;
+        var btn = footerEl.querySelector('[data-action="all-to-cart"]');
+        if (btn) {
+          btn.textContent = 'Додати всі ' + n + ' ' + pluralize(n) + ' у кошик';
+        }
+      }
 
       bodyEl.addEventListener('click', function (e) {
         var row = e.target.closest('.list-row');
@@ -7483,11 +7543,11 @@
         var code = row.dataset.code;
         if (action === 'remove') {
           window.OPTIX_wishlistRemove(code);
-          render();
+          dropRow(row, syncCounts);
         } else if (action === 'to-cart') {
           window.OPTIX_cartAdd(code);
           window.OPTIX_wishlistRemove(code);
-          render();
+          dropRow(row, syncCounts);
         } else if (action === 'open') {
           window.OPTIX_sheetClose(sheet);
           setTimeout(function () { window.OPTIX_openProduct(code); }, 200);
@@ -7570,7 +7630,14 @@
           return s + (parsePrice(it.product.price) || 0) * it.qty;
         }, 0);
       }
+      /* Фіксована сума має пріоритет над відсотками. */
+      function bundle() {
+        var b = window.__OPTIX_BUNDLE;
+        return (b && b.off > 0) ? b : null;
+      }
       function currentTier(pairs) {
+        var b = bundle();
+        if (b) return pairs >= b.min ? { pairs: b.min, flat: b.off } : null;
         var tiers = pairTiers();
         for (var i = 0; i < tiers.length; i++) {
           if (pairs >= tiers[i].pairs) return tiers[i];
@@ -7578,6 +7645,8 @@
         return null;
       }
       function nextTier(pairs) {
+        var b = bundle();
+        if (b) return pairs < b.min ? { pairs: b.min, flat: b.off } : null;
         var best = null;
         pairTiers().forEach(function (t) {
           if (t.pairs > pairs) { if (!best || t.pairs < best.pairs) best = t; }
@@ -7587,7 +7656,13 @@
       function multipairDiscount(entries) {
         var t = currentTier(eligiblePairs(entries));
         if (!t) return 0;
+        /* Знижка не може бути більшою за саме замовлення. */
+        if (t.flat) return Math.min(t.flat, eligibleSubtotal(entries));
         return Math.round(eligibleSubtotal(entries) * (t.pct / 100));
+      }
+      /* Як назвати знижку в рядку підсумку. */
+      function tierLabel(t) {
+        return t.flat ? '−' + window.OPTIX_money(t.flat) : '−' + t.pct + '%';
       }
       function cartHasExcluded(entries) {
         return entries.some(function (it) { return isExcluded(it.product.brand); });
@@ -7646,7 +7721,7 @@
 
         msg.push('');
         if (mTier && mCut > 0) {
-          msg.push('Знижка за ' + window.OPTIX_pluralModels(eligiblePairs(items)) + ' (−' + mTier.pct + '%): −' + fmtPrice(mCut));
+          msg.push('Знижка за ' + window.OPTIX_pluralModels(eligiblePairs(items)) + ': −' + fmtPrice(mCut));
         }
         if (promo && cut > 0) {
           msg.push('Промокод: ' + promo.code + ' (−' + fmtPrice(cut) + ')');
@@ -7733,9 +7808,40 @@
                 '</div>' +
               '</li>';
             }).join('') +
-          '</ul>';
+          '</ul>' +
+          /* Підсумок живе в окремому контейнері. Раніше він доклеювався
+             до тіла через innerHTML += — а це перебирає всю розмітку
+             заново, тобто знищує і створює кожен рядок. Через це при
+             будь-якому «+» або «−» блимав увесь список. */
+          '<div id="cartSummary"></div>';
 
+        renderSummary();
+      }
 
+      /* Скільки позицій у шапці — теж без перемальовування. */
+      function syncTitle() {
+        var entries = window.OPTIX_cartGet();
+        var n = entries.reduce(function (s2, it) { return s2 + (it.qty || 0); }, 0);
+        titleEl.textContent = n ? 'Кошик (' + n + ')' : 'Кошик';
+      }
+
+      /* Перерахувати тільки підсумок — рядки не чіпаємо. */
+      function renderSummary() {
+        var host = document.getElementById('cartSummary');
+        if (!host) return;
+        var entries = window.OPTIX_cartGet().map(function (it) {
+          return { product: findProduct(it.code), qty: it.qty };
+        }).filter(function (it) { return it.product; });
+        if (!entries.length) { host.innerHTML = ''; return; }
+
+        var totalSum = entries.reduce(function (sum, it) {
+          return sum + (parsePrice(it.product.price) || 0) * it.qty;
+        }, 0);
+        var oldSum = entries.reduce(function (sum, it) {
+          var p = it.product;
+          var base = parsePrice(p.oldPrice) || parsePrice(p.price) || 0;
+          return sum + base * it.qty;
+        }, 0);
 
         /* promo recalculation */
         var promoCut = appliedPromo ? promoDiscountForEntries(appliedPromo, entries) : 0;
@@ -7756,7 +7862,7 @@
 
         var multiRowHTML = '';
         if (tier && multiCut > 0) {
-          multiRowHTML = '<p class="cart-summary-row cart-summary-row--cut"><span>Знижка за ' + pairs + ' ' + window.OPTIX_pluralModels(pairs) + ' (−' + tier.pct + '%)</span><span>−' + window.OPTIX_money(multiCut) + '</span></p>';
+          multiRowHTML = '<p class="cart-summary-row cart-summary-row--cut"><span>Знижка за ' + pairs + ' ' + window.OPTIX_pluralModels(pairs) + '</span><span>−' + window.OPTIX_money(multiCut) + '</span></p>';
         }
 
         /* item-level discount (sum of per-item sale discounts) */
@@ -7771,13 +7877,14 @@
         var nt = nextTier(pairs);
         if (nt) {
           var need = nt.pairs - pairs;
+          var gain = tierLabel(nt);
           var addText = (pairs === 0)
-            ? 'Замовте ' + nt.pairs + ' ' + window.OPTIX_pluralModels(nt.pairs) + ' — отримайте додатково −' + nt.pct + '%'
-            : (tier ? '−' + tier.pct + '% вже діє ✓ Додайте ще ' + need + ' — буде −' + nt.pct + '%'
-                    : 'Додайте ще ' + need + ' ' + window.OPTIX_pluralModels(need) + ' — отримайте −' + nt.pct + '%');
+            ? 'Замовте ' + nt.pairs + ' ' + window.OPTIX_pluralModels(nt.pairs) + ' — і знижка ' + gain
+            : (tier ? tierLabel(tier) + ' вже діє ✓ Додайте ще ' + need + ' — буде ' + gain
+                    : 'Додайте ще ' + need + ' ' + window.OPTIX_pluralModels(need) + ' — і знижка ' + gain);
           nudgeHTML = '<div class="multipair-nudge"><span class="multipair-nudge-icon">%</span><span>' + addText + '</span></div>';
         } else if (tier) {
-          nudgeHTML = '<div class="multipair-nudge multipair-nudge--max"><span class="multipair-nudge-icon">✓</span><span>−' + tier.pct + '% застосовано — максимальна вигода</span></div>';
+          nudgeHTML = '<div class="multipair-nudge multipair-nudge--max"><span class="multipair-nudge-icon">✓</span><span>' + tierLabel(tier) + ' застосовано — максимальна вигода</span></div>';
         }
 
         /* The hero savings banner — shows the WHOLE economy */
@@ -7793,7 +7900,7 @@
             '</div>';
         }
 
-        bodyEl.innerHTML +=
+        host.innerHTML =
           '<div class="cart-summary">' +
             nudgeHTML +
             '<div class="promo-box">' +
@@ -7889,13 +7996,43 @@
         var cur  = window.OPTIX_cartGet().filter(function (it) { return it.code === code; })[0];
         if (action === 'remove') {
           window.OPTIX_cartRemove(code);
-          render();
-        } else if (action === 'inc' && cur) {
-          window.OPTIX_cartSetQty(code, cur.qty + 1);
-          render();
-        } else if (action === 'dec' && cur) {
-          window.OPTIX_cartSetQty(code, cur.qty - 1);
-          render();
+          /* Прибираємо один рядок, а не перемальовуємо список. */
+          row.style.height = row.offsetHeight + 'px';
+          row.style.overflow = 'hidden';
+          requestAnimationFrame(function () {
+            row.style.transition = 'height .22s ease, opacity .18s ease, padding .22s ease';
+            row.style.height = '0px';
+            row.style.paddingTop = '0px';
+            row.style.paddingBottom = '0px';
+            row.style.opacity = '0';
+            setTimeout(function () {
+              if (row.parentNode) row.parentNode.removeChild(row);
+              if (!bodyEl.querySelectorAll('.list-row').length) render();
+              else { syncTitle(); renderSummary(); }
+            }, 240);
+          });
+        } else if ((action === 'inc' || action === 'dec') && cur) {
+          /* Змінюємо тільки число і підсумок. Сам рядок, його фото
+             і сусіди лишаються на місці — нічого не блимає. */
+          var q = action === 'inc' ? cur.qty + 1 : cur.qty - 1;
+          if (q <= 0) {
+            window.OPTIX_cartSetQty(code, q);
+            render();
+            return;
+          }
+          window.OPTIX_cartSetQty(code, q);
+          var val = row.querySelector('.qty-value');
+          if (val) val.textContent = q;
+          var dec = row.querySelector('[data-action="dec"]');
+          if (dec) dec.disabled = q <= 1;
+          var pr = row.querySelector('.list-row-price');
+          var prod = findProduct(code);
+          if (pr && prod) {
+            var each = parsePrice(prod.price) || 0;
+            pr.textContent = window.OPTIX_money(each * q);
+          }
+          syncTitle();
+          renderSummary();
         } else if (action === 'open') {
           window.OPTIX_sheetClose(sheet);
           setTimeout(function () { window.OPTIX_openProduct(code); }, 200);
