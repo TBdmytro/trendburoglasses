@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <!-- Мітка збірки: видно ззовні, тому завжди зрозуміло,
        яка саме версія зараз залита. -->
-  <meta name="optix-build" content="2026-08-20-no-flash" />
+  <meta name="optix-build" content="2026-08-20-ghost" />
   <title>optix — by Trend Büro</title>
 
   <!-- Знак «ox» просто у розмітці: окремий файл вантажити не треба,
@@ -3014,17 +3014,14 @@
     /* Шторка наїжджає на кадр на 26 px. Раніше крапки потрапляли
        рівно під неї — здавалося, що знімок один. Тому додаємо стільки
        ж запасу знизу: крапки лишаються на видноті. */
-    /* Застиглий кадр на час підміни картки: те саме фото, той самий
-       розмір і те саме вписування, що й у плитці. Живе поверх неї
-       кілька кадрів — рівно доти, доки нове фото не намалюється. */
-    .pdp-freeze {
-      position: fixed;
-      z-index: 1;
+    /* Копія картки на час підміни: ті самі вузли, ті самі вже
+       намальовані знімки. Живе поверх, доки нова картка не готова. */
+    .pdp-ghost {
+      position: absolute;
+      z-index: 4;
+      overflow: hidden;
       pointer-events: none;
-      background-color: var(--surface);
-      background-repeat: no-repeat;
-      background-position: center;
-      background-size: contain;
+      background: var(--bg);
     }
 
     .pdp-gal-dots {
@@ -6573,24 +6570,45 @@
         var src = next && next.images && next.images[0];
         if (!src) { swap(); return; }
 
-        var track = bodyEl.querySelector('.pdp-gal-track');
-        var freeze = null;
-        if (track) {
-          var r = track.getBoundingClientRect();
-          freeze = document.createElement('div');
-          freeze.className = 'pdp-freeze';
-          freeze.style.left = r.left + 'px';
-          freeze.style.top = r.top + 'px';
-          freeze.style.width = r.width + 'px';
-          freeze.style.height = r.height + 'px';
-          freeze.style.backgroundImage = 'url("' + src + '")';
-          sheet.appendChild(freeze);
-        }
+        /* Ховаємо не плитку, а всю картку. Раніше я підстеляв знімок
+           під фото — і помилявся: біле, яке видно, це не порожня
+           плитка, а порожня картка. bodyEl.innerHTML стирає весь її
+           вміст, і поки нова розмітка не намалювалась, крізь неї
+           світиться тло шторки.
+           Тому кладемо поверх точну копію того, що зараз на екрані.
+           Вона переживає перемальовування — живе на шторці, а не
+           всередині картки, — і в ній ті самі знімки, вже намальовані.
+           Копію знімаємо, коли нова картка готова. */
+        var ghost = bodyEl.cloneNode(true);
+        ghost.removeAttribute('id');
+        /* Знімаємо всі id: поки копія на екрані, getElementById не має
+           знаходити її замість справжньої картки. */
+        [].forEach.call(ghost.querySelectorAll('[id]'), function (n) {
+          n.removeAttribute('id');
+        });
+        /* Координати рахуємо ВІД ШТОРКИ, а не від краю екрана.
+           У шторки є transform — а він робить її системою відліку для
+           всього, що всередині. Абсолютні координати вікна тут дали б
+           зсув, і копія лягла б мимо. */
+        var gr = bodyEl.getBoundingClientRect();
+        var sr = sheet.getBoundingClientRect();
+        ghost.className = 'pdp-ghost';
+        ghost.style.left = (gr.left - sr.left) + 'px';
+        ghost.style.top = (gr.top - sr.top) + 'px';
+        ghost.style.width = gr.width + 'px';
+        ghost.style.height = gr.height + 'px';
+        sheet.appendChild(ghost);
+        ghost.scrollTop = bodyEl.scrollTop;
+
         function unfreeze() {
-          if (!freeze) return;
-          var f = freeze; freeze = null;
+          if (!ghost) return;
+          var g = ghost; ghost = null;
+          /* Два кадри: перший — щоб нова картка потрапила в малювання,
+             другий — щоб вона встигла намалюватись. */
           requestAnimationFrame(function () {
-            requestAnimationFrame(function () { if (f.parentNode) f.parentNode.removeChild(f); });
+            requestAnimationFrame(function () {
+              if (g.parentNode) g.parentNode.removeChild(g);
+            });
           });
         }
 
@@ -6599,7 +6617,6 @@
           if (done) return;
           done = true;
           swap();
-          /* Знімаємо застиглий кадр лише коли новий уже намальований. */
           var ni = bodyEl.querySelector('.pdp-gal-track img');
           if (!ni) { unfreeze(); return; }
           if (ni.complete && ni.naturalWidth) unfreeze();
