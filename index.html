@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <!-- Мітка збірки: видно ззовні, тому завжди зрозуміло,
        яка саме версія зараз залита. -->
-  <meta name="optix-build" content="2026-08-20-ghost" />
+  <meta name="optix-build" content="2026-08-20-carousel" />
   <title>optix — by Trend Büro</title>
 
   <!-- Знак «ox» просто у розмітці: окремий файл вантажити не треба,
@@ -8452,6 +8452,67 @@
           });
         }, { passive: true });
       }
+
+      /* --- сама себе гортає ---
+         Банер має показати всі три екрани тому, хто просто дивиться.
+         Правила прості й неписані, але порушувати їх не можна:
+         людина торкнулась — зупиняємось і більше не лізем; вкладка
+         в фоні — не крутимо; у системі вимкнено анімації — не крутимо;
+         банер не на екрані — теж не крутимо. */
+      (function autoplay() {
+        if (!track) return;
+        var STEP = 5200;                 /* стільки читається один екран */
+        var timer = null, stopped = false, seen = false;
+
+        var slow = window.matchMedia &&
+                   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (slow) return;
+
+        function count() { return slides().length; }
+        function at() {
+          var w = track.clientWidth || 1;
+          return Math.round(track.scrollLeft / w);
+        }
+        function next() {
+          var n = count();
+          if (stopped || n < 2 || document.hidden || !seen) return;
+          var w = track.clientWidth || 1;
+          var i = (at() + 1) % n;
+          if (typeof track.scrollTo === 'function') {
+            track.scrollTo({ left: i * w, behavior: 'smooth' });
+          } else {
+            track.scrollLeft = i * w;
+          }
+        }
+        function start() {
+          if (timer || stopped) return;
+          timer = setInterval(next, STEP);
+        }
+        function pause() { clearInterval(timer); timer = null; }
+        /* Торкнувся — далі гортає тільки людина. Нав'язувати рух
+           тому, хто вже сам обрав екран, — неввічливо. */
+        function stopForever() { stopped = true; pause(); }
+
+        ['pointerdown', 'touchstart', 'wheel'].forEach(function (ev) {
+          track.addEventListener(ev, stopForever, { passive: true });
+        });
+        document.addEventListener('visibilitychange', function () {
+          if (document.hidden) pause(); else start();
+        });
+
+        /* Поки банер не на екрані — крутити нема для кого. */
+        if (window.IntersectionObserver) {
+          new IntersectionObserver(function (es) {
+            es.forEach(function (e) {
+              seen = e.isIntersecting;
+              if (seen) start(); else pause();
+            });
+          }, { threshold: 0.4 }).observe(track);
+        } else {
+          seen = true;
+          start();
+        }
+      })();
 
       /* --- кнопки на слайдах --- */
       document.addEventListener('click', function (e) {
