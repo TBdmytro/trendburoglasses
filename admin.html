@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <!-- Мітка збірки: видно ззовні, тому завжди зрозуміло,
+       яка саме версія зараз залита. -->
+  <meta name="optix-build" content="2026-08-20-lists" />
 <title>OPTIX — Адмінка</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1184,11 +1187,13 @@
     <div class="field"><label class="field-label">Термін доставки</label><input class="input" id="sDelivery" placeholder="5-10 днів" /></div>
 
     <div class="settings-divider">Знижка за кілька пар</div>
-    <p class="screen-sub" style="margin-top:-4px">Діє на всі бренди, крім Cartier і Chanel. Залиш 0 щоб вимкнути.</p>
+    <p class="screen-sub" style="margin-top:-4px">Фіксована сума, а не відсоток: «−€60» людина розуміє одразу,
+      «−8%» треба рахувати. Діє на всі бренди, крім Cartier і Chanel. Знижка 0 — вимкнено.</p>
     <div class="row2">
-      <div class="field"><label class="field-label">За 2 пари, %</label><input class="input" id="sPair2" inputmode="numeric" placeholder="5" /></div>
-      <div class="field"><label class="field-label">За 3+ пари, %</label><input class="input" id="sPair3" inputmode="numeric" placeholder="8" /></div>
+      <div class="field"><label class="field-label">Від скількох пар</label><input class="input" id="sBundleMin" inputmode="numeric" placeholder="2" /></div>
+      <div class="field"><label class="field-label">Знижка, €</label><input class="input" id="sBundleOff" inputmode="numeric" placeholder="60" /></div>
     </div>
+    <p class="screen-sub" style="margin-top:-2px;font-size:12px">Приклад: «від 2 пар» і «60» — беруть дві оправи, з підсумку йде €60.</p>
     <div class="field"><label class="field-label">Подарунок для Cartier/Chanel</label><input class="input" id="sGift" placeholder="фірмовий кейс у подарунок" /></div>
 
     <div class="settings-divider">Курс валют</div>
@@ -2554,13 +2559,13 @@
   }
 
   function loadSettings() {
-    sanityQuery('*[_type=="settings" && !(_id in path("drafts.**"))] | order(_createdAt asc)[0]{_id,tgUsername,deliveryTime,pair2Discount,pair3Discount,giftBrandsNote,rateUAH,rateUSDT}').then(function(s){
+    sanityQuery('*[_type=="settings" && !(_id in path("drafts.**"))] | order(_createdAt asc)[0]{_id,tgUsername,deliveryTime,bundleMin,bundleOff,giftBrandsNote,rateUAH,rateUSDT}').then(function(s){
       if (s) {
         settingsId=s._id;
         document.getElementById('sTg').value=s.tgUsername||'';
         document.getElementById('sDelivery').value=s.deliveryTime||'';
-        document.getElementById('sPair2').value=(s.pair2Discount!=null?s.pair2Discount:'');
-        document.getElementById('sPair3').value=(s.pair3Discount!=null?s.pair3Discount:'');
+        document.getElementById('sBundleMin').value=(s.bundleMin!=null?s.bundleMin:'');
+        document.getElementById('sBundleOff').value=(s.bundleOff!=null?s.bundleOff:'');
         document.getElementById('sGift').value=s.giftBrandsNote||'';
         document.getElementById('sRateUAH').value=(s.rateUAH!=null?s.rateUAH:'');
         document.getElementById('sRateUSDT').value=(s.rateUSDT!=null?s.rateUSDT:'');
@@ -2570,14 +2575,19 @@
   document.getElementById('saveSettings').addEventListener('click', function(){
     var tg = document.getElementById('sTg').value.trim().replace(/^@/,'');
     var dl = document.getElementById('sDelivery').value.trim();
-    var p2 = parseFloat(document.getElementById('sPair2').value) || 0;
-    var p3 = parseFloat(document.getElementById('sPair3').value) || 0;
+    var bMin = parseInt(document.getElementById('sBundleMin').value, 10) || 2;
+    var bOff = parseFloat(document.getElementById('sBundleOff').value) || 0;
     var gift = document.getElementById('sGift').value.trim();
     var rUAH = parseFloat(document.getElementById('sRateUAH').value) || 0;
     var rUSDT = parseFloat(document.getElementById('sRateUSDT').value) || 0;
-    var data = { tgUsername:tg, deliveryTime:dl, pair2Discount:p2, pair3Discount:p3, giftBrandsNote:gift, rateUAH:rUAH, rateUSDT:rUSDT };
-    var mut = settingsId
-      ? [{ patch:{ id:settingsId, set:data } }]
+    /* Старі відсоткові поля обнуляємо: інакше сайт побачить обидва
+       правила і застосує не те, що ти щойно ввів. */
+    var data = { tgUsername:tg, deliveryTime:dl, bundleMin:bMin, bundleOff:bOff,
+                 pair2Discount:0, pair3Discount:0,
+                 giftBrandsNote:gift, rateUAH:rUAH, rateUSDT:rUSDT };
+    var sid = String(settingsId || '').replace(/^drafts\./, '');
+    var mut = sid
+      ? [{ createIfNotExists:{ _id:sid, _type:'settings' } }, { patch:{ id:sid, set:data } }]
       : [{ create:Object.assign({ _type:'settings' }, data) }];
     sanityMutate(mut).then(function(){ toast('Збережено ✓'); loadSettings(); }).catch(function(){ toast('Помилка'); });
   });
