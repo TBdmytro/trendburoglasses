@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <!-- Мітка збірки: видно ззовні, тому завжди зрозуміло,
        яка саме версія зараз залита. -->
-  <meta name="optix-build" content="2026-08-20-lists" />
+  <meta name="optix-build" content="2026-08-20-lang" />
   <title>optix — by Trend Büro</title>
 
   <!-- Знак «ox» просто у розмітці: окремий файл вантажити не треба,
@@ -234,6 +234,98 @@
       margin-top: 5px;
       opacity: 0.72;
     }
+
+    /* ---------- Перемикач мови ----------
+       Стоїть абсолютом праворуч — так само, як кнопка теми зліва.
+       Логотип лишається рівно по центру екрана незалежно від того,
+       які дві літери зараз у кнопці. */
+    .lang {
+      position: absolute;
+      right: 10px;
+      top: calc(50% + var(--tg-top) / 2);
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      border: 0;
+      background: none;
+      color: var(--fg);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      padding: 7px 8px 7px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .lang:active { background: var(--raise); }
+    .lang svg {
+      width: 14px;
+      height: 14px;
+      margin-top: 1px;
+      opacity: 0.6;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: transform 0.22s ease;
+    }
+    .lang[aria-expanded='true'] svg { transform: rotate(180deg); }
+
+    /* Список стоїть у шапці, а не в потоці сторінки: шапка липка,
+       і меню має їхати разом із нею. */
+    .lang-drop {
+      position: absolute;
+      right: 8px;
+      top: calc(100% - 2px);
+      min-width: 158px;
+      padding: 5px;
+      /* Не --surface: плитка під фото в темній темі навмисно лишається
+         світлою, і меню на ній стало б світлою плямою зі світлим
+         текстом. --bg темніє разом з усім екраном. */
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(18, 41, 62, 0.12);
+      z-index: 12;
+    }
+    [data-theme='dark'] .lang-drop { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45); }
+    .lang-drop button {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      width: 100%;
+      padding: 9px 10px;
+      border: 0;
+      background: none;
+      border-radius: 8px;
+      font-family: var(--font-ui);
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--fg-2);
+      text-align: left;
+      cursor: pointer;
+    }
+    .lang-drop button[aria-current='true'] {
+      background: var(--raise);
+      color: var(--fg);
+      font-weight: 700;
+    }
+    .lang-drop button svg {
+      width: 15px;
+      height: 15px;
+      flex: 0 0 auto;
+      stroke: var(--acc);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0;
+    }
+    .lang-drop button[aria-current='true'] svg { opacity: 1; }
 
     .actions {
       display: flex;
@@ -3262,6 +3354,8 @@
        що варіант існує, і може про нього спитати — це заявка, не втрата. */
     .pdp-col.is-oos img { opacity: 0.4; }
     .pdp-col.is-oos::after {
+      /* Єдиний напис на сайті, який малює не розмітка, а стиль. Обхід
+         DOM його не бачить, тому переклад тут окремим правилом нижче. */
       content: 'Немає';
       position: absolute;
       left: 0;
@@ -3275,6 +3369,7 @@
       text-align: center;
       padding: 2px 0;
     }
+    html[data-lang='en'] .pdp-col.is-oos::after { content: 'Sold out'; }
 
     .pdp-desc { font-size: 13px; line-height: 1.6; color: var(--fg-2); }
     .pdp-art { margin-top: 10px; font-size: 11.5px; color: var(--fg-3); }
@@ -3985,6 +4080,43 @@
         if (dark) document.documentElement.setAttribute('data-theme', 'dark');
       } catch (e) {}
     })();
+
+    /* ======================= РУБИЛЬНИК МОВИ =======================
+       Поставити true — і англійської на сайті немає взагалі: кнопка
+       в шапці зникає, перекладач не запускається, все лишається рівно
+       таким, яким було до цієї роботи. Правити один раз тут, більше
+       ніде нічого чіпати не треба.
+       Зроблено навмисно окремим прапорцем: відкотити одне слово
+       безпечніше й швидше, ніж перезаливати весь файл. */
+    window.OPTIX_LANG_OFF = false;
+
+    /* Мова так само вирішується до першого малювання: далі за цим
+       атрибутом працює і напис «Немає» на розпроданому кольорі, і
+       сам перекладач. Правило одне: вибір людини сильніший за
+       мову Телеграма, а мова Телеграма — сильніша за замовчування. */
+    (function () {
+      var lang = 'uk';
+      try {
+        var saved = window.OPTIX_LANG_OFF ? 'uk' : localStorage.getItem('optix-lang');
+        if (window.OPTIX_LANG_OFF) {
+          lang = 'uk';
+        } else if (saved === 'uk' || saved === 'en') {
+          lang = saved;
+        } else {
+          /* Мову вгадуємо тільки за Телеграмом — там вона справді
+             про людину. Мова браузера бреше: український покупець
+             частіше сидить із англійською системою, і сайт відкрився
+             б йому англійською без жодної на те причини. Поза
+             Телеграмом лишається українська, перемикач поруч. */
+          var tg = window.Telegram && window.Telegram.WebApp;
+          var code = tg && tg.initDataUnsafe && tg.initDataUnsafe.user &&
+                     tg.initDataUnsafe.user.language_code;
+          if (code) lang = /^uk/i.test(code) ? 'uk' : 'en';
+        }
+      } catch (e) {}
+      document.documentElement.setAttribute('data-lang', lang);
+      document.documentElement.lang = lang;
+    })();
   </script>
 </head>
 <body>
@@ -3999,6 +4131,21 @@
     <div class="logo">
       <span class="logo-main">OPTIX</span>
       <span class="logo-sub">By Trend Büro</span>
+    </div>
+    <!-- Перемикач мови. Позначений data-noi18n — перекладач обходить
+         його стороною: назви мов пишуться своєю мовою завжди. -->
+    <button class="lang" id="langBtn" type="button" data-noi18n
+            aria-haspopup="true" aria-expanded="false" aria-label="Мова / Language">
+      <span id="langNow">UA</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9.5 L12 15 L18 9.5"/></svg>
+    </button>
+    <div class="lang-drop" id="langDrop" data-noi18n role="menu" hidden>
+      <button type="button" role="menuitem" data-lang="uk" aria-current="true">Українська
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 L9.5 17 L19 7.5"/></svg>
+      </button>
+      <button type="button" role="menuitem" data-lang="en" aria-current="false">English
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 L9.5 17 L19 7.5"/></svg>
+      </button>
     </div>
   </header>
 
@@ -4971,6 +5118,7 @@
 
     /* build Telegram chat link with prefilled message */
     window.OPTIX_tgLink = function (message) {
+      if (window.OPTIX_i18nText) message = window.OPTIX_i18nText(message);
       return 'https://t.me/' + window.OPTIX_TG_USERNAME + '?text=' + encodeURIComponent(message);
     };
 
@@ -4984,6 +5132,8 @@
           So on desktop we copy the text to clipboard, show a hint and
           open a clean chat — user pastes with Cmd/Ctrl+V. 100% reliable. */
     window.OPTIX_openTgChat = function (message) {
+      /* Лист менеджеру йде мовою покупця: він його й писав. */
+      if (window.OPTIX_i18nText) message = window.OPTIX_i18nText(message);
       var user = window.OPTIX_TG_USERNAME;
       var base = 'https://t.me/' + user;
       var twa  = window.Telegram && window.Telegram.WebApp;
@@ -6175,13 +6325,17 @@
 
       var currentCode = null;
 
+      /* Форми — усі вісім, як у схемі. Раніше тут було шість, і дві
+         останні падали в опис службовим словом латиницею. */
       var SHAPE_LABELS = {
         'rectangular': 'Прямокутні',
         'aviator':     'Авіатори',
         'round':       'Круглі',
         'cat-eye':     'Кет-ай',
         'oval':        'Овальні',
-        'geometric':   'Геометричні'
+        'geometric':   'Геометричні',
+        'butterfly':   'Метелик',
+        'square':      'Квадратні'
       };
       var GENDER_LABELS = {
         'women':  'Жіночі',
@@ -6193,6 +6347,14 @@
         'acetate':  'Ацетат',
         'titanium': 'Титан',
         'mixed':    'Комбінований'
+      };
+      /* Той самий матеріал, але в тій формі, якої вимагає речення
+         «оправа з …». Називний відмінок там читається як помилка. */
+      var MATERIAL_OF = {
+        'metal':    'оправа з металу',
+        'acetate':  'оправа з ацетату',
+        'titanium': 'оправа з титану',
+        'mixed':    'комбінована оправа'
       };
 
       function renderBody(p) {
@@ -6313,14 +6475,22 @@
         }
 
         /* --- короткий опис і артикул --- */
+        /* Свій опис завжди сильніший. Якщо його немає, збираємо з форми
+           й матеріалу — але українськими словами, а не службовими
+           ключами бази: до цього в картці стояло «Aviator, оправа з
+           metal», тобто дві латинки посеред українського речення. */
         var descText = (p.description || '').trim();
         if (!descText) {
           var bits = [];
-          if (p.shape)    bits.push(p.shape);
-          if (p.material) bits.push('оправа з ' + String(p.material).toLowerCase());
-          descText = bits.length
-            ? (bits.join(', ').charAt(0).toUpperCase() + bits.join(', ').slice(1) + '. Лінзи з захистом UV400.')
-            : 'Лінзи з захистом UV400.';
+          if (p.shape)    bits.push(SHAPE_LABELS[p.shape] || p.shape);
+          if (p.material) bits.push(MATERIAL_OF[p.material] ||
+                                    ('оправа з ' + String(p.material).toLowerCase()));
+          var line = bits.join(', ');
+          /* Форми немає — речення починається з матеріалу, і його
+             треба підняти у велику літеру. */
+          if (line) line = line.charAt(0).toUpperCase() + line.slice(1);
+          descText = line ? (line + '. Лінзи з захистом UV400.')
+                          : 'Лінзи з захистом UV400.';
         }
         var about =
           '<div class="pdp-sec">' +
@@ -8768,6 +8938,558 @@
 
       buildChips();
       window.OPTIX_homeBrandsRefresh = buildChips;
+    })();
+  </script>
+  <!-- ================== МОВА: УКРАЇНСЬКА / АНГЛІЙСЬКА ==================
+       Переклад накладається на готову розмітку, а не вплітається в неї.
+       Причина проста: інтерфейс зібраний у двох сотнях місць — у HTML,
+       у рядках JS, у підказках і в aria. Розставити там ключі означало б
+       переписати весь файл і зламати те, що працює. Тут інакше: сайт
+       лишається українським, а зверху лягає словник.
+
+       Три правила, на яких усе тримається:
+       1. Оригінал запам'ятовується на самому вузлі (__uk). Переклад
+          завжди рахується від оригіналу, а не від того, що зараз на
+          екрані. Тому повторний прогін нічого не псує, а повернення
+          на українську віддає рівно те, що було.
+       2. Цифри в ключі замінені на #. Так «3 моделі» і «17 моделей»
+          — це один рядок словника, а не двадцять.
+       3. Спостерігач ловить тільки той шматок, що змінився. Каталог
+          на тисячу карток не перемальовується цілком через одне
+          натискання.
+       Українською механізм спить: жодного обходу, жодних витрат. -->
+  <script>
+    (function () {
+      var HTML = document.documentElement;
+
+      /* Рубильник з шапки. Вимкнено — прибираємо кнопку й виходимо
+         до того, як щось встигне запуститись: ні словника, ні обходу,
+         ні спостерігача. Сайт лишається таким, яким був. */
+      if (window.OPTIX_LANG_OFF) {
+        HTML.setAttribute('data-lang', 'uk');
+        HTML.lang = 'uk';
+        ['langBtn', 'langDrop'].forEach(function (id) {
+          var n = document.getElementById(id);
+          if (n) n.hidden = true;
+        });
+        window.OPTIX_i18nText = function (s) { return s; };
+        window.OPTIX_setLang = function () {};
+        return;
+      }
+
+      /* ---------- Словник ----------
+         Ключ — український рядок: пробіли стиснуті, цифри → #.
+         Значення — англійський із тими самими # у тому ж порядку. */
+      var EN = {
+        /* — навігація й службове — */
+        'Головна': 'Home',
+        'Головне': 'Home',
+        'Головна навігація': 'Main navigation',
+        'Каталог': 'Catalog',
+        'До каталогу': 'To catalog',
+        'У каталог': 'To catalog',
+        'Пошук': 'Search',
+        'Обране': 'Wishlist',
+        'Кошик': 'Cart',
+        'Назад': 'Back',
+        'Закрити': 'Close',
+        'Нагору': 'To top',
+        'Змінити тему': 'Switch theme',
+        'Очистити': 'Clear',
+        'Видалити': 'Remove',
+        'Прибрати': 'Remove',
+        'Застосувати': 'Apply',
+        'Деталі': 'Details',
+        'Деталі товару': 'Product details',
+        'Фото товару': 'Product photo',
+        'Фото #': 'Photo #',
+        'Наступне фото': 'Next photo',
+        'Попереднє фото': 'Previous photo',
+        'Плиткою': 'Grid',
+        'Списком': 'List',
+        'Фільтри': 'Filters',
+        'Акції': 'Offers',
+        'Гарантії': 'Guarantees',
+        'Концьерж-сервіс': 'Concierge service',
+        'Менеджер': 'Manager',
+
+        /* — головна: розділи й банери — */
+        'Новинки': 'New in',
+        'Бренди': 'Brands',
+        'Всі бренди': 'All brands',
+        'Дивитись усі': 'See all',
+        'Дивитись усі →': 'See all →',
+        'Усі →': 'All →',
+        'Образ': 'The look',
+        'Весна #': 'Spring #',
+        'Нова колекція': 'New collection',
+        'Знижка тижня': 'Deal of the week',
+        'Овальна оправа з золотом': 'Oval frame in gold',
+        'Чотири бренди': 'Four houses',
+        'Оправи чотирьох марок,': 'Frames from four houses,',
+        'які привозимо під замовлення': 'brought in to order',
+        'Привеземо з Європи →': 'We bring it from Europe →',
+        'Привеземо модель, якої немає в каталозі':
+          'We bring in models that are not in the catalog',
+        'Не знайшли свою модель?': 'Not finding your model?',
+        'Шукаєте конкретну модель якої тут немає?':
+          'Looking for a specific model that is not here?',
+        'Напишіть артикул або надішліть фото — знайдемо і привеземо під замовлення.':
+          'Send us the reference or a photo — we will find it and bring it in to order.',
+        'Немає потрібної моделі — надішліть артикул або фото. Знайдемо у партнерів і привеземо.':
+          'Model not here? Send the reference or a photo. We will find it with our partners and bring it in.',
+        'Можемо привезти будь-яку модель з Європи на замовлення':
+          'We can bring any model from Europe to order',
+        'Замовити консьєрж': 'Ask the concierge',
+        'Написати менеджеру': 'Message the manager',
+        'Уточнити наявність': 'Check availability',
+
+        /* — довіра й строки — */
+        'Викуп': 'Sourcing',
+        'Викуп під замовлення': 'Sourced to order',
+        'Викуп поза каталогом': 'Off-catalog sourcing',
+        'Байер-сервіс, а не склад': 'A buying service, not a warehouse',
+        'Викуповуємо оправу в партнера в ЄС':
+          'We buy the frame from a partner in the EU',
+        'Викуповуємо оправу під ваше замовлення. Строк залежить від партнера — від двох робочих днів.':
+          'We buy the frame for your order. Timing depends on the partner — from two working days.',
+        'Від # робочих днів, залежно від партнера':
+          'From # working days, depending on the partner',
+        'Відправка': 'Shipping',
+        'Відправка щосуботи': 'Shipping every Saturday',
+        'Відправка в Україну щосуботи': 'Shipping to Ukraine every Saturday',
+        'Відправка в Україну — щосуботи': 'Shipping to Ukraine — every Saturday',
+        'Одна відправка на тиждень': 'One shipment a week',
+        'Відправка щосуботи, без винятків. Ви знаєте день ще до замовлення.':
+          'Shipping every Saturday, no exceptions. You know the day before you order.',
+        'Відправка в Україну щосуботи. Одна на тиждень, тому строк передбачуваний.':
+          'Shipping to Ukraine every Saturday. One a week, so the timing is predictable.',
+        'Передбачувані строки': 'Predictable timing',
+        'Зазвичай #–# днів до відділення НП':
+          'Usually #–# days to your Nova Poshta branch',
+        'Зазвичай #–# днів до відділення Нової Пошти':
+          'Usually #–# days to your Nova Poshta branch',
+        'Разом зазвичай #–# днів': 'Usually #–# days in total',
+        'Нова Пошта': 'Nova Poshta',
+        'Нова Пошта — #–# дні': 'Nova Poshta — #–# days',
+        'Нова Пошта — #–# днів': 'Nova Poshta — #–# days',
+        'Через #–# дні оправа у вашому відділенні. Разом зазвичай #–# днів.':
+          'In #–# days the frame is at your branch. Usually #–# days in total.',
+        'Через #–# днів оправа у вашому відділенні. Разом зазвичай #–# днів.':
+          'In #–# days the frame is at your branch. Usually #–# days in total.',
+        'до відділення': 'to your branch',
+        'Оправа приїжджає до нас': 'The frame arrives to us',
+        'Артикул виробника на кожній моделі': 'Manufacturer reference on every model',
+        'Артикул виробника на кожній моделі — той самий код, що на дужці. Його можна звірити на сайті бренду.':
+          'The manufacturer reference on every model — the same code as on the temple. You can check it on the brand site.',
+        'Обираєте модель і колір. Ми підтверджуємо наявність у партнера.':
+          'You choose the model and color. We confirm availability with the partner.',
+        'Замовлення': 'Order',
+        'Шлях замовлення': 'How an order goes',
+        'Шлях від вибору': 'From your choice',
+        'Як це працює': 'How it works',
+        'Що ви отримуєте': 'What you get',
+
+        /* — про нас — */
+        'Про нас': 'About',
+        'Про OPTIX': 'About OPTIX',
+        'Хто ми': 'Who we are',
+        'Хто ми, як працює викуп, строки і гарантії':
+          'Who we are, how sourcing works, timing and guarantees',
+        'Ми не тримаємо товар на полиці. Ви обираєте модель і колір — ми викуповуємо саме цю оправу у партнера в Європі та привозимо її в Україну.':
+          'We do not keep stock on a shelf. You choose the model and color — we buy that exact frame from a partner in Europe and bring it to Ukraine.',
+        'Тому в каталозі не вітрина одного магазину, а те, що є у партнерів прямо зараз: чотири марки і понад три тисячі колірних варіантів.':
+          'So the catalog is not one shop window — it is what our partners have right now: four houses and over three thousand color variants.',
+        'моделей у наявності': 'models in stock',
+        'колірних варіантів': 'color variants',
+        'брендів у каталозі': 'brands in the catalog',
+        'бренди в каталозі': 'brands in the catalog',
+        'бренд у каталозі': 'brand in the catalog',
+
+        /* — каталог — */
+        'Бренд': 'Brand',
+        'Бренд або код моделі…': 'Brand or model code…',
+        'або код моделі': 'or model code',
+        'Введіть назву бренду': 'Enter a brand name',
+        'Всі': 'All',
+        'Жіночі': 'Women',
+        'Чоловічі': 'Men',
+        'Унісекс': 'Unisex',
+        'Ціна': 'Price',
+        'Колір': 'Color',
+        'Тільки хіти': 'Bestsellers only',
+        'Популярні': 'Popular',
+        'За замовч.': 'Default',
+        'Сортування: за замовч. ↓': 'Sort: default ↓',
+        'Сортування: спочатку дешевше ↓': 'Sort: price low to high ↓',
+        'Сортування: спочатку дорожче ↓': 'Sort: price high to low ↓',
+        'Сортування: спочатку новинки ↓': 'Sort: newest first ↓',
+        'Нічого не знайдено': 'Nothing found',
+        'Спробуйте інший фільтр або зв\'яжіться з консьєржем.':
+          'Try another filter or contact the concierge.',
+        'У цій категорії поки нічого немає.': 'Nothing in this category yet.',
+        'Каталог тимчасово недоступний.': 'The catalog is temporarily unavailable.',
+        'Оновіть сторінку або напишіть нам — підберемо модель вручну.':
+          'Refresh the page or message us — we will pick a model by hand.',
+        'в наявності': 'in stock',
+        'Немає': 'Sold out',
+        '# з # моделей в наявності': '# of # models in stock',
+        '# з # моделі в наявності': '# of # models in stock',
+        '# з # модель в наявності': '# of # models in stock',
+        '# моделей в наявності': '# models in stock',
+        '# моделі в наявності': '# models in stock',
+        '# модель в наявності': '# model in stock',
+        '# моделей знайдено': '# models found',
+        '# моделі знайдено': '# models found',
+        '# модель знайдено': '# model found',
+        '# моделей': '# models',
+        '# моделі': '# models',
+        '# модель': '# model',
+        '# моделей · від €#': '# models · from €#',
+        '# моделі · від €#': '# models · from €#',
+        '# модель · від €#': '# model · from €#',
+        '# кольорів': '# colors',
+        '# кольори': '# colors',
+        '# колір': '# color',
+
+        /* — картка товару — */
+        'Опис': 'Description',
+        'Артикул:': 'Reference:',
+        'Код:': 'Code:',
+        'Схожі моделі': 'Similar models',
+        'Лінзи з захистом UV#.': 'Lenses with UV# protection.',
+        '#% оригінал': '#% authentic',
+        'Подвійний дотик або щипок — збільшити - стрілки гортають':
+          'Double-tap or pinch to zoom — arrows to browse',
+        'Прямокутні': 'Rectangular',
+        'Авіатори': 'Aviator',
+        'Круглі': 'Round',
+        'Кет-ай': 'Cat-eye',
+        'Овальні': 'Oval',
+        'Геометричні': 'Geometric',
+        'Метелик': 'Butterfly',
+        'Квадратні': 'Square',
+        'Метал': 'Metal',
+        'Ацетат': 'Acetate',
+        'Титан': 'Titanium',
+        'Комбінований': 'Mixed',
+        'оправа з металу': 'metal frame',
+        'оправа з ацетату': 'acetate frame',
+        'оправа з титану': 'titanium frame',
+        'комбінована оправа': 'mixed-material frame',
+        'Оправа з металу': 'Metal frame',
+        'Оправа з ацетату': 'Acetate frame',
+        'Оправа з титану': 'Titanium frame',
+        'Комбінована оправа': 'Mixed-material frame',
+
+        /* — обране й кошик — */
+        'Обране (#)': 'Wishlist (#)',
+        'Кошик (#)': 'Cart (#)',
+        'Список обраного порожній': 'Your wishlist is empty',
+        'Кошик порожній': 'Your cart is empty',
+        'Додавайте моделі що сподобались — повернетесь до них пізніше':
+          'Save the models you like — come back to them later',
+        'Додавайте моделі — після цього зможете оформити замовлення в один тап':
+          'Add models — then you can place the order in one tap',
+        'Додати в кошик': 'Add to cart',
+        'Додати в обране': 'Add to wishlist',
+        'У кошику ✓': 'In cart ✓',
+        'Додано в кошик': 'Added to cart',
+        'Прибрано з кошика': 'Removed from cart',
+        'Додати всі # моделей у кошик': 'Add all # to cart',
+        'Додати всі # моделі у кошик': 'Add all # to cart',
+        'Додати всі # модель у кошик': 'Add all # to cart',
+        'До сплати': 'Total',
+        'Початкова вартість': 'Original price',
+        'початкова ціна': 'original price',
+        'До акції': 'Before the offer',
+        'Ваша вигода': 'You save',
+        'Ваша економія': 'You save',
+        '#% від початкової вартості': '#% off the original price',
+        'Знижка на моделі': 'Frames discount',
+        'Знижка за # моделей': 'Discount for # frames',
+        'Знижка за # моделі': 'Discount for # frames',
+        'Знижка за # модель': 'Discount for # frame',
+        '−€# застосовано — максимальна вигода': '−€# applied — best value',
+        'Замовте # моделей — і знижка €#': 'Order # frames — €# off',
+        'Замовте # моделі — і знижка €#': 'Order # frames — €# off',
+        'Замовте # модель — і знижка €#': 'Order # frame — €# off',
+        'Додайте ще # моделей — і знижка €#': 'Add # more — €# off',
+        'Додайте ще # моделі — і знижка €#': 'Add # more — €# off',
+        'Додайте ще # модель — і знижка €#': 'Add # more — €# off',
+        '−€# вже діє ✓ Додайте ще # — буде €#':
+          '−€# already applied ✓ Add # more — it becomes €#',
+        '−#% вже діє ✓ Додайте ще # — буде −#%':
+          '−#% already applied ✓ Add # more — it becomes −#%',
+        'Дві оправи — знижка ще #%': 'Two frames — another #% off',
+        'Друга пара': 'Second pair',
+        'Рахується в кошику автоматично. Моделі можна брати з різних брендів.':
+          'Applied automatically in the cart. The frames can be from different brands.',
+        'фірмовий кейс у подарунок': 'branded case as a gift',
+        'Ви оформлюєте замовлення': 'You are placing an order',
+        'Замовити в Telegram': 'Order via Telegram',
+
+        /* — промокод — */
+        'Промокод': 'Promo code',
+        'Промокод:': 'Promo code:',
+        'Введіть промокод': 'Enter a promo code',
+        'Промокод не знайдено': 'Promo code not found',
+        'Промокод неактивний': 'Promo code is not active',
+        'Промокод ще не діє': 'Promo code is not valid yet',
+        'Термін промокоду минув': 'Promo code has expired',
+        'Промокод не діє на бренди у вашому кошику':
+          'This promo code does not apply to the brands in your cart',
+
+        /* — листування з менеджером — */
+        'Доброго дня!': 'Hello!',
+        'Вітаю! Питання щодо оправ.': 'Hello! A question about frames.',
+        'Доброго дня! Можете допомогти з вибором окулярів?':
+          'Hello! Could you help me choose a pair?',
+        'Доброго дня! Цікавить знижка на дві оправи.':
+          'Hello! I am interested in the two-frame discount.',
+        'Цікавить модель:': 'Interested in:',
+        'Підкажіть, чи можемо їх замовити?': 'Could you tell me if we can order them?',
+        'Підкажіть, чи можемо її замовити?': 'Could you tell me if we can order it?',
+        'Сума:': 'Total:',
+        'Сума зі знижкою:': 'Total with discount:',
+        'Текст замовлення скопійовано — вставте у чат (Ctrl/Cmd+V)':
+          'Order text copied — paste it into the chat (Ctrl/Cmd+V)',
+        'Хотів би замовити # моделей:': 'I would like to order # frames:',
+        'Хотів би замовити # моделі:': 'I would like to order # frames:',
+        'Хотів би замовити # модель:': 'I would like to order # frame:'
+      };
+
+      /* Рядки, куди сайт підставляє чужі слова — назву бренду, код
+         промокоду. Словник тут безсилий, бо ключ щоразу інший. */
+      var RULES = [
+        [/^Промокод ([A-Z0-9][A-Z0-9._\-]*)$/, 'Promo code $1'],
+        [/^Промокод діє лише на бренд (.+) — у кошику немає таких моделей$/,
+         'This promo code applies only to $1 — there are no such models in your cart'],
+        [/^(.+) — фото (\d+)$/, '$1 — photo $2'],
+        /* Опис, який картка складає сама, коли свого немає. Форму
+           проганяємо через словник окремо — матеріал уже стоїть у
+           готовому звороті й перекладається цілим шматком. */
+        [/^(.+), (оправа з .+|комбінована оправа)\. Лінзи з захистом UV(\d+)\.$/,
+         function (m, shape, mat, uv) {
+           return (tr(shape) || shape) + ', ' + (tr(mat) || mat) +
+                  '. Lenses with UV' + uv + ' protection.';
+         }],
+        [/^(.+)\. Лінзи з захистом UV(\d+)\.$/,
+         function (m, head, uv) {
+           return (tr(head) || head) + '. Lenses with UV' + uv + ' protection.';
+         }]
+      ];
+
+      /* ---------- Двигун ---------- */
+      var WS = /\s+/g;
+      var DIG = /\d+/g;
+
+      function key(s) { return s.replace(WS, ' ').trim().replace(DIG, '#'); }
+
+      /* Повертає англійський рядок або null, якщо перекладу немає. */
+      function tr(raw) {
+        var s = String(raw).replace(WS, ' ').trim();
+        if (!s) return null;
+        var v = EN[s.replace(DIG, '#')];
+        if (v != null) {
+          var nums = s.match(DIG);
+          if (nums) {
+            var i = 0;
+            v = v.replace(/#/g, function () {
+              return i < nums.length ? nums[i++] : '#';
+            });
+          }
+          return v;
+        }
+        for (var r = 0; r < RULES.length; r++) {
+          if (RULES[r][0].test(s)) return s.replace(RULES[r][0], RULES[r][1]);
+        }
+        return null;
+      }
+      window.OPTIX_trLine = tr;
+
+      /* Багаторядковий текст для Телеграма: кожен рядок окремо. */
+      window.OPTIX_i18nText = function (msg) {
+        if (HTML.getAttribute('data-lang') !== 'en' || !msg) return msg;
+        return String(msg).split('\n').map(function (line) {
+          return tr(line) || line;
+        }).join('\n');
+      };
+
+      var SKIP = { SCRIPT: 1, STYLE: 1, NOSCRIPT: 1, TEXTAREA: 1 };
+      var ATTRS = ['placeholder', 'aria-label', 'title', 'alt'];
+
+      function offLimits(el) {
+        return !!(el && el.closest && el.closest('[data-noi18n]'));
+      }
+
+      /* Один текстовий вузол. Оригінал запам'ятовуємо один раз —
+         далі рахуємо тільки від нього. */
+      function doText(node, en) {
+        var p = node.parentNode;
+        if (!p || SKIP[p.nodeName]) return;
+        if (node.__uk === undefined) {
+          if (!en) return;                       /* нічого не чіпали — нічого й вертати */
+          if (offLimits(p)) { node.__uk = null; return; }
+          node.__uk = node.nodeValue;
+        }
+        if (node.__uk === null) return;          /* позначений «не чіпати» */
+        var want = en ? tr(node.__uk) : null;
+        if (want == null) want = node.__uk;
+        if (node.nodeValue !== want) node.nodeValue = want;
+      }
+
+      function doAttrs(el, en) {
+        for (var i = 0; i < ATTRS.length; i++) {
+          var a = ATTRS[i];
+          if (!el.hasAttribute(a)) continue;
+          var box = el.__ukAttr || (el.__ukAttr = {});
+          if (box[a] === undefined) {
+            if (!en) continue;
+            box[a] = el.getAttribute(a);
+          }
+          var want = en ? tr(box[a]) : null;
+          if (want == null) want = box[a];
+          if (el.getAttribute(a) !== want) el.setAttribute(a, want);
+        }
+      }
+
+      /* Гілки, позначені data-noi18n, відсікаються цілком: FILTER_REJECT
+         пропускає не сам вузол, а все піддерево під ним. Так назви мов
+         у перемикачі лишаються своїми мовами. */
+      var FILTER = {
+        acceptNode: function (n) {
+          if (n.nodeType === 1 &&
+              (SKIP[n.nodeName] || n.hasAttribute('data-noi18n'))) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      };
+
+      /* Обхід піддерева. Саме піддерева, а не всього документа:
+         інакше одне натискання в каталозі коштувало б тисячу карток. */
+      function walk(root, en) {
+        if (!root) return;
+        if (root.nodeType === 3) { doText(root, en); return; }
+        if (root.nodeType !== 1) return;
+        if (SKIP[root.nodeName] || offLimits(root)) return;
+        doAttrs(root, en);
+        var w = document.createTreeWalker(
+          root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, FILTER);
+        var n;
+        while ((n = w.nextNode())) {
+          if (n.nodeType === 3) doText(n, en);
+          else doAttrs(n, en);
+        }
+      }
+
+      var TITLE_UK = document.title;
+      var touched = false;             /* чи перекладали ми хоч раз */
+
+      function applyAll() {
+        var en = HTML.getAttribute('data-lang') === 'en';
+        if (!en && !touched) return;   /* українська з самого початку — робити нічого */
+        touched = touched || en;
+        walk(document.body, en);
+        var t = en ? tr(TITLE_UK) : null;
+        document.title = t || TITLE_UK;
+      }
+
+      /* ---------- Спостерігач ----------
+         Списки й картки домальовуються після завантаження, і жоден
+         одноразовий обхід їх не застане. Черга збирається в мікрозадачі:
+         переклад лягає до того, як браузер намалює кадр, тому підміни
+         тексту людина не бачить. */
+      var queue = [], planned = false;
+
+      function flush() {
+        planned = false;
+        var en = HTML.getAttribute('data-lang') === 'en';
+        var list = queue; queue = [];
+        for (var i = 0; i < list.length; i++) {
+          var n = list[i];
+          if (n && (n.nodeType === 1 || n.nodeType === 3) && n.isConnected) walk(n, en);
+        }
+      }
+
+      function plan(node) {
+        if (!node) return;
+        queue.push(node);
+        if (!planned) {
+          planned = true;
+          Promise.resolve().then(flush);
+        }
+      }
+
+      new MutationObserver(function (ms) {
+        if (HTML.getAttribute('data-lang') !== 'en') return;
+        for (var i = 0; i < ms.length; i++) {
+          var m = ms[i];
+          if (m.type === 'characterData') { plan(m.target); continue; }
+          if (m.type === 'attributes') { plan(m.target); continue; }
+          for (var j = 0; j < m.addedNodes.length; j++) plan(m.addedNodes[j]);
+        }
+      }).observe(document.documentElement, {
+        childList: true, subtree: true, characterData: true,
+        attributes: true, attributeFilter: ATTRS
+      });
+
+      /* ---------- Перемикач у шапці ---------- */
+      var btn  = document.getElementById('langBtn');
+      var now  = document.getElementById('langNow');
+      var drop = document.getElementById('langDrop');
+
+      function paint(lang) {
+        if (now) now.textContent = lang === 'en' ? 'EN' : 'UA';
+        if (drop) {
+          [].forEach.call(drop.querySelectorAll('button'), function (b) {
+            b.setAttribute('aria-current', b.dataset.lang === lang ? 'true' : 'false');
+          });
+        }
+      }
+
+      function close() {
+        if (drop) drop.hidden = true;
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      }
+
+      window.OPTIX_setLang = function (lang) {
+        lang = (lang === 'en') ? 'en' : 'uk';
+        HTML.setAttribute('data-lang', lang);
+        HTML.lang = lang;
+        try { localStorage.setItem('optix-lang', lang); } catch (e) {}
+        paint(lang);
+        applyAll();
+      };
+
+      if (btn && drop) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var open = drop.hidden;
+          drop.hidden = !open;
+          btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+        drop.addEventListener('click', function (e) {
+          var b = e.target.closest('button[data-lang]');
+          if (!b) return;
+          close();
+          if (b.dataset.lang !== HTML.getAttribute('data-lang')) {
+            window.OPTIX_setLang(b.dataset.lang);
+          }
+        });
+        document.addEventListener('click', function (e) {
+          if (drop.hidden) return;
+          if (btn.contains(e.target) || drop.contains(e.target)) return;
+          close();
+        });
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') close();
+        });
+      }
+
+      paint(HTML.getAttribute('data-lang') === 'en' ? 'en' : 'uk');
+      applyAll();
     })();
   </script>
 </body>
