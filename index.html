@@ -3239,6 +3239,35 @@
     }
     .pdp-save b { font-weight: 700; }
 
+    /* ---------- Куди везти ----------
+       Дві плитки просто над рядком відправки. Стоять там, де людина
+       читає обіцянку строку: перемикати внизу те, що написано вгорі,
+       означало б міняти текст поза полем зору. */
+    .pdp-reg {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .pdp-reg button {
+      border: 0;
+      background: none;
+      font-family: var(--font-ui);
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--fg-3);
+      padding: 6px 13px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.18s ease, color 0.18s ease;
+    }
+    .pdp-reg button[aria-pressed='true'] {
+      background: var(--fg);
+      color: var(--bg);
+    }
+
     .pdp-ship {
       display: flex;
       align-items: flex-start;
@@ -6348,6 +6377,87 @@
         'titanium': 'Титан',
         'mixed':    'Комбінований'
       };
+      /* ---------- Два напрямки доставки ----------
+         Оправу викуповуємо в партнера в ЄС, вона приїжджає до нас — і
+         далі шляхи розходяться: в Україну щосуботи одним рейсом, по
+         Європі кур'єром одразу. Загальний строк однаковий, 7–14 днів,
+         бо основний час з'їдає не дорога, а викуп у партнера.
+         Конкретних дат немає ніде: дата — це обіцянка, а затримка
+         партнера робить винними нас. */
+      var DELIVERY = {
+        ua: {
+          chip:  'Україна',
+          title: 'Відправка в Україну щосуботи',
+          sub:   'Зазвичай 7–14 днів до відділення Нової Пошти',
+          steps: [
+            ['Ви оформлюєте замовлення', 'Викуповуємо оправу в партнера в ЄС'],
+            ['Оправа приїжджає до нас', 'Від 2 робочих днів, залежно від партнера'],
+            ['Відправка в Україну — щосуботи', 'Одна відправка на тиждень'],
+            ['Нова Пошта — 1–2 дні', 'Разом зазвичай 7–14 днів']
+          ]
+        },
+        eu: {
+          chip:  'Європа',
+          title: 'Доставка по Європі кур\'єром',
+          sub:   'Кур\'єр 2–4 дні, разом зазвичай 7–14 днів',
+          steps: [
+            ['Ви оформлюєте замовлення', 'Викуповуємо оправу в партнера в ЄС'],
+            ['Оправа приїжджає до нас', 'Від 2 робочих днів, залежно від партнера'],
+            ['Перевіряємо і відправляємо', 'Кур\'єром у вашу країну'],
+            ['Кур\'єр по ЄС — 2–4 дні', 'Разом зазвичай 7–14 днів']
+          ]
+        }
+      };
+
+      /* Вибір напрямку живе окремо від мови: українець у Варшаві
+         говорить українською, а везти йому треба по Європі. Перший
+         раз підказуємо мовою, далі перемагає те, що людина натиснула. */
+      var regionNow = null;
+      function region() {
+        if (regionNow) return regionNow;
+        var saved = null;
+        try { saved = localStorage.getItem('optix-region'); } catch (e) {}
+        if (saved === 'ua' || saved === 'eu') { regionNow = saved; return regionNow; }
+        regionNow = document.documentElement.getAttribute('data-lang') === 'en' ? 'eu' : 'ua';
+        return regionNow;
+      }
+      window.OPTIX_region = region;
+
+      function shipInner() {
+        var d = DELIVERY[region()];
+        return '<i></i><div><b>' + d.title + '</b><br><span>' + d.sub + '</span></div>';
+      }
+
+      function wayInner() {
+        var steps = DELIVERY[region()].steps;
+        return '<div class="pdp-way-t">' +
+                 '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+                   '<rect x="2" y="7" width="13" height="10" rx="1.5"/>' +
+                   '<path d="M15 10h4l3 3v4h-7z"/>' +
+                   '<circle cx="6.5" cy="18" r="1.8"/><circle cx="17.5" cy="18" r="1.8"/>' +
+                 '</svg>Шлях замовлення</div>' +
+               steps.map(function (s, n) {
+                 return '<div class="pdp-step' + (n === steps.length - 1 ? ' is-last' : '') + '">' +
+                          '<span class="pdp-step-dot"></span>' +
+                          '<div><div class="pdp-step-w">' + s[0] + '</div>' +
+                          '<div class="pdp-step-s">' + s[1] + '</div></div>' +
+                        '</div>';
+               }).join('');
+      }
+
+      /* Перемальовуємо тільки два блоки, а не всю картку: перезбір
+         картки скинув би прокрутку і на мить прибрав фото. */
+      function paintDelivery(host) {
+        var scope = host || document;
+        var ship = scope.querySelector('.pdp-ship');
+        var way  = scope.querySelector('.pdp-way');
+        if (ship) ship.innerHTML = shipInner();
+        if (way)  way.innerHTML  = wayInner();
+        [].forEach.call(scope.querySelectorAll('.pdp-reg button'), function (b) {
+          b.setAttribute('aria-pressed', b.dataset.reg === region() ? 'true' : 'false');
+        });
+      }
+
       /* Той самий матеріал, але в тій формі, якої вимагає речення
          «оправа з …». Називний відмінок там читається як помилка. */
       var MATERIAL_OF = {
@@ -6437,11 +6547,14 @@
         /* --- рядок відправки. Без конкретних дат: точна дата це
                обіцянка, а затримка партнера робить винними нас. --- */
         var ship =
-          '<div class="pdp-ship">' +
-            '<i></i>' +
-            '<div><b>Відправка в Україну щосуботи</b><br>' +
-            '<span>Зазвичай 7–14 днів до відділення Нової Пошти</span></div>' +
+          '<div class="pdp-reg" role="group" aria-label="Куди доставляємо">' +
+            ['ua', 'eu'].map(function (r) {
+              return '<button type="button" data-reg="' + r + '" ' +
+                     'aria-pressed="' + (r === region() ? 'true' : 'false') + '">' +
+                     DELIVERY[r].chip + '</button>';
+            }).join('') +
           '</div>' +
+          '<div class="pdp-ship">' + shipInner() + '</div>' +
           '<div class="pdp-orig">' +
             '<svg viewBox="0 0 24 24" aria-hidden="true">' +
               '<path d="M12 3l7.5 3v5.4c0 4.4-3 8.4-7.5 9.6-4.5-1.2-7.5-5.2-7.5-9.6V6z"/>' +
@@ -6507,28 +6620,7 @@
           '</div>';
 
         /* --- шлях замовлення --- */
-        var steps = [
-          ['Ви оформлюєте замовлення', 'Викуповуємо оправу в партнера в ЄС'],
-          ['Оправа приїжджає до нас', 'Від 2 робочих днів, залежно від партнера'],
-          ['Відправка в Україну — щосуботи', 'Одна відправка на тиждень'],
-          ['Нова Пошта — 1–2 дні', 'Разом зазвичай 7–14 днів']
-        ];
-        var way =
-          '<div class="pdp-way">' +
-            '<div class="pdp-way-t">' +
-              '<svg viewBox="0 0 24 24" aria-hidden="true">' +
-                '<rect x="2" y="7" width="13" height="10" rx="1.5"/>' +
-                '<path d="M15 10h4l3 3v4h-7z"/>' +
-                '<circle cx="6.5" cy="18" r="1.8"/><circle cx="17.5" cy="18" r="1.8"/>' +
-              '</svg>Шлях замовлення</div>' +
-            steps.map(function (s, n) {
-              return '<div class="pdp-step' + (n === steps.length - 1 ? ' is-last' : '') + '">' +
-                       '<span class="pdp-step-dot"></span>' +
-                       '<div><div class="pdp-step-w">' + s[0] + '</div>' +
-                       '<div class="pdp-step-s">' + s[1] + '</div></div>' +
-                     '</div>';
-            }).join('') +
-          '</div>';
+        var way = '<div class="pdp-way">' + wayInner() + '</div>';
 
         /* --- схожі моделі: той самий бренд, інші моделі, в наявності --- */
         var me = window.OPTIX_variantKey(p.code).model;
@@ -6706,6 +6798,17 @@
       }
 
       /* Перемикання між кольорами однієї моделі — не закриваючи картку */
+      /* Куди везти. Окремий обробник, щоб не заплутувати вибір кольору. */
+      bodyEl.addEventListener('click', function (e) {
+        var b = e.target.closest('.pdp-reg button[data-reg]');
+        if (!b) return;
+        e.preventDefault();
+        if (b.dataset.reg === region()) return;
+        regionNow = b.dataset.reg;
+        try { localStorage.setItem('optix-region', regionNow); } catch (err) {}
+        paintDelivery(bodyEl);
+      });
+
       bodyEl.addEventListener('click', function (e) {
         var chip = e.target.closest('[data-color-code]');
         if (!chip) return;
@@ -9086,6 +9189,16 @@
           'In #–# days the frame is at your branch. Usually #–# days in total.',
         'до відділення': 'to your branch',
         'Оправа приїжджає до нас': 'The frame arrives to us',
+        /* — другий напрямок: доставка по Європі — */
+        'Куди доставляємо': 'Where we ship',
+        'Україна': 'Ukraine',
+        'Європа': 'Europe',
+        'Доставка по Європі кур\'єром': 'Courier delivery across Europe',
+        'Кур\'єр #–# дні, разом зазвичай #–# днів':
+          'Courier #–# days, usually #–# days in total',
+        'Перевіряємо і відправляємо': 'We check it and ship',
+        'Кур\'єром у вашу країну': 'By courier to your country',
+        'Кур\'єр по ЄС — #–# дні': 'Courier across the EU — #–# days',
         'Артикул виробника на кожній моделі': 'Manufacturer reference on every model',
         'Артикул виробника на кожній моделі — той самий код, що на дужці. Його можна звірити на сайті бренду.':
           'The manufacturer reference on every model — the same code as on the temple. You can check it on the brand site.',
@@ -9341,8 +9454,15 @@
           node.__uk = node.nodeValue;
         }
         if (node.__uk === null) return;          /* позначений «не чіпати» */
-        var want = en ? tr(node.__uk) : null;
-        if (want == null) want = node.__uk;
+        var want = node.__uk;
+        if (en) {
+          /* Пробіли по краях повертаємо на місце. Вони не оформлення,
+             а частина речення: «Ваша вигода » і поруч сума окремим
+             вузлом. Загубиш пробіл — вийде «You save€48». */
+          var m = /^(\s*)([\s\S]*?)(\s*)$/.exec(node.__uk);
+          var t = tr(m[2]);
+          if (t != null) want = m[1] + t + m[3];
+        }
         if (node.nodeValue !== want) node.nodeValue = want;
       }
 
