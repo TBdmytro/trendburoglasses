@@ -6474,28 +6474,35 @@
             '</div>';
         }
 
-        /* --- короткий опис і артикул --- */
-        /* Свій опис завжди сильніший. Якщо його немає, збираємо з форми
-           й матеріалу — але українськими словами, а не службовими
-           ключами бази: до цього в картці стояло «Aviator, оправа з
-           metal», тобто дві латинки посеред українського речення. */
-        var descText = (p.description || '').trim();
-        if (!descText) {
-          var bits = [];
-          if (p.shape)    bits.push(SHAPE_LABELS[p.shape] || p.shape);
-          if (p.material) bits.push(MATERIAL_OF[p.material] ||
-                                    ('оправа з ' + String(p.material).toLowerCase()));
-          var line = bits.join(', ');
-          /* Форми немає — речення починається з матеріалу, і його
-             треба підняти у велику літеру. */
-          if (line) line = line.charAt(0).toUpperCase() + line.slice(1);
-          descText = line ? (line + '. Лінзи з захистом UV400.')
-                          : 'Лінзи з захистом UV400.';
+        /* --- артикул --- */
+        /* Опису в картці більше немає. У постачальника він однаковий
+           на десятки моделей — «класична оправа з фірмовим логотипом»
+           — і рішення не змінює: людина дивиться на фото, ціну і код.
+           Зайвий абзац лише відсуває кнопку покупки нижче.
+           Артикул лишається: це єдине, що можна звірити на сайті марки.
+           Повернути опис — поставити true, збірка з форми й матеріалу
+           нижче лишена навмисно й досі робоча. */
+        var SHOW_DESC = false;
+        var descHTML = '';
+        if (SHOW_DESC) {
+          var descText = (p.description || '').trim();
+          if (!descText) {
+            var bits = [];
+            if (p.shape)    bits.push(SHAPE_LABELS[p.shape] || p.shape);
+            if (p.material) bits.push(MATERIAL_OF[p.material] ||
+                                      ('оправа з ' + String(p.material).toLowerCase()));
+            var line = bits.join(', ');
+            /* Форми немає — речення починається з матеріалу, і його
+               треба підняти у велику літеру. */
+            if (line) line = line.charAt(0).toUpperCase() + line.slice(1);
+            descText = line ? (line + '. Лінзи з захистом UV400.')
+                            : 'Лінзи з захистом UV400.';
+          }
+          descHTML = '<div class="pdp-lbl">Опис</div>' +
+                     '<div class="pdp-desc">' + esc(descText) + '</div>';
         }
         var about =
-          '<div class="pdp-sec">' +
-            '<div class="pdp-lbl">Опис</div>' +
-            '<div class="pdp-desc">' + esc(descText) + '</div>' +
+          '<div class="pdp-sec">' + descHTML +
             '<div class="pdp-art">Артикул: <b>' + esc(p.code) + '</b></div>' +
           '</div>';
 
