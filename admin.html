@@ -1132,12 +1132,22 @@
     <div class="field"><label class="field-label">Напис на кнопці</label><input class="input" id="conCta" placeholder="Написати менеджеру"></div>
       </div>
       <div class="blk" data-blkbody="cat" hidden>
-        <p class="screen-sub" style="margin-top:-4px">Стоїть між рядами карток, після четвертої. Один на екран.</p>
+        <p class="screen-sub" style="margin-top:-4px">Два банери чергуються між рядами карток.
+    Перший після восьмої моделі — це рівно один екран. Далі проміжки 28, 20 і потім
+    кожні 40, приблизно раз на п'ять екранів. Кожен третій банер — плиткою
+    в одну колонку, як картка товару.</p>
+    <p class="field-label" style="margin:14px 0 6px">Перший банер</p>
     <div class="field"><label class="field-label">Маленький напис зверху</label><input class="input" id="promoEyebrow" placeholder="Друга пара"></div>
     <div class="field"><label class="field-label">Суть пропозиції</label><input class="input" id="promoTitle" placeholder="Дві оправи - знижка ще 10%"></div>
     <div class="field"><label class="field-label">Текст</label><textarea class="input" id="promoText" rows="2" placeholder="Рахується в кошику автоматично..."></textarea></div>
     <div class="field"><label class="field-label">Напис на кнопці</label><input class="input" id="promoCta" placeholder="Написати менеджеру"></div>
-    <label class="checkrow"><input type="checkbox" id="promoOff"><span>Прибрати банер із каталогу</span></label>
+    <label class="checkrow"><input type="checkbox" id="promoOff"><span>Прибрати перший банер</span></label>
+    <p class="field-label" style="margin:18px 0 6px">Другий банер</p>
+    <div class="field"><label class="field-label">Маленький напис зверху</label><input class="input" id="promo2Eyebrow" placeholder="Викуп поза каталогом"></div>
+    <div class="field"><label class="field-label">Суть пропозиції</label><input class="input" id="promo2Title" placeholder="Не знайшли свою модель?"></div>
+    <div class="field"><label class="field-label">Текст</label><textarea class="input" id="promo2Text" rows="2" placeholder="Напишіть артикул або надішліть фото..."></textarea></div>
+    <div class="field"><label class="field-label">Напис на кнопці</label><input class="input" id="promo2Cta" placeholder="Написати менеджеру"></div>
+    <label class="checkrow"><input type="checkbox" id="promo2Off"><span>Прибрати другий банер</span></label>
       </div>
       <div class="blk" data-blkbody="albk" hidden>
         <div class="field"><label class="field-label">Назва посилання</label><input class="input" id="aboutLinkT" placeholder="Про OPTIX"></div>
@@ -2292,7 +2302,7 @@
   }
 
   function loadHome() {
-    sanityQuery('*[_type=="settings" && !(_id in path("drafts.**"))] | order(_createdAt asc)[0]{_id,"heroAsset":heroImage.asset._ref,"b1Asset":b1Image.asset._ref,"b2Asset":b2Image.asset._ref,"b3Asset":b3Image.asset._ref,heroFocus,b1Focus,b2Focus,b3Focus,gAll,gWomen,gMen,gUni,catFootT,catFootCta,searchEmpty1,searchNone,searchNoneHint,navHome,navSearch,navWish,navCart,b1Title,b1Cta,b1Link,b1Off,b2Title,b2Link,b2Off,b3Kicker,b3Title,b3Link,b3Off,heroTitle,heroCta,saleTitle,saleSubtitle,aboutKicker,aboutTitle,aboutWhoTitle,aboutWhoText,aboutQuote,aboutStepsTitle,promoEyebrow,promoTitle,promoText,promoCta,promoOff,b1Kicker,b2Kicker,b2Cta,b3Cta,secBrands,secBrandsLink,secNew,secNewLink,lookKicker,lookTitle,trust1T,trust1S,trust2T,trust2S,trust3T,trust3S,conKicker,conTitle,conText,conCta,aboutLinkT,aboutLinkS,lookOff}')
+    sanityQuery('*[_type=="settings" && !(_id in path("drafts.**"))] | order(_createdAt asc)[0]{_id,"heroAsset":heroImage.asset._ref,"b1Asset":b1Image.asset._ref,"b2Asset":b2Image.asset._ref,"b3Asset":b3Image.asset._ref,heroFocus,b1Focus,b2Focus,b3Focus,gAll,gWomen,gMen,gUni,catFootT,catFootCta,searchEmpty1,searchNone,searchNoneHint,navHome,navSearch,navWish,navCart,b1Title,b1Cta,b1Link,b1Off,b2Title,b2Link,b2Off,b3Kicker,b3Title,b3Link,b3Off,heroTitle,heroCta,saleTitle,saleSubtitle,aboutKicker,aboutTitle,aboutWhoTitle,aboutWhoText,aboutQuote,aboutStepsTitle,promoEyebrow,promoTitle,promoText,promoCta,promoOff,promo2Eyebrow,promo2Title,promo2Text,promo2Cta,promo2Off,b1Kicker,b2Kicker,b2Cta,b3Cta,secBrands,secBrandsLink,secNew,secNewLink,lookKicker,lookTitle,trust1T,trust1S,trust2T,trust2S,trust3T,trust3S,conKicker,conTitle,conText,conCta,aboutLinkT,aboutLinkS,lookOff}')
       .then(function (s) {
         /* Документа налаштувань ще немає — це нормально для першого
            запуску. Порожні поля теж треба порахувати й зняти знімок,
@@ -2365,6 +2375,12 @@
         setVal('promoCta', s.promoCta);
         var po = document.getElementById('promoOff');
         if (po) po.checked = s.promoOff === true;
+        setVal('promo2Eyebrow', s.promo2Eyebrow);
+        setVal('promo2Title', s.promo2Title);
+        setVal('promo2Text', s.promo2Text);
+        setVal('promo2Cta', s.promo2Cta);
+        var po2 = document.getElementById('promo2Off');
+        if (po2) po2.checked = s.promo2Off === true;
         var lo = document.getElementById('lookOff');
         if (lo) lo.checked = s.lookOff === true;
         Object.keys(LIMITS).forEach(syncCounter);
@@ -2469,6 +2485,11 @@
       promoText: getVal('promoText'),
       promoCta: getVal('promoCta'),
       promoOff: !!(document.getElementById('promoOff') && document.getElementById('promoOff').checked),
+      promo2Eyebrow: getVal('promo2Eyebrow'),
+      promo2Title: getVal('promo2Title'),
+      promo2Text: getVal('promo2Text'),
+      promo2Cta: getVal('promo2Cta'),
+      promo2Off: !!(document.getElementById('promo2Off') && document.getElementById('promo2Off').checked),
       lookOff: !!(document.getElementById('lookOff') && document.getElementById('lookOff').checked)
     };
     /* Порожнє поле треба саме стерти, а не лишити старе значення —
@@ -2905,6 +2926,7 @@
     trust1T: 22, trust1S: 30, trust2T: 22, trust2S: 30, trust3T: 22, trust3S: 30,
     conKicker: 16, conTitle: 34, conCta: 24,
     promoEyebrow: 16, promoTitle: 38, promoCta: 24,
+    promo2Eyebrow: 22, promo2Title: 38, promo2Cta: 24,
     aboutLinkT: 22, aboutLinkS: 40
   };
 
@@ -2962,7 +2984,8 @@
     look:   ['lookKicker', 'lookTitle'],
     trust:  ['trust1T', 'trust1S', 'trust2T', 'trust2S', 'trust3T', 'trust3S'],
     con:    ['conKicker', 'conTitle', 'conText', 'conCta'],
-    cat:    ['promoEyebrow', 'promoTitle', 'promoText', 'promoCta'],
+    cat:    ['promoEyebrow', 'promoTitle', 'promoText', 'promoCta',
+             'promo2Eyebrow', 'promo2Title', 'promo2Text', 'promo2Cta'],
     albk:   ['aboutLinkT', 'aboutLinkS'],
     about:  ['aKicker', 'aTitle', 'aWhoTitle', 'aWhoText', 'aQuote', 'aStepsTitle'],
     catalog:['gAll', 'gWomen', 'gMen', 'gUni', 'catFootT', 'catFootCta'],
