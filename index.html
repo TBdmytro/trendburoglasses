@@ -2934,6 +2934,64 @@
     }
 
     /* ---------- банер між рядами ---------- */
+    /* ---------- Третій банер — плиткою в одну колонку ----------
+       Дві однакові широкі смуги око ще читає, третю вже пропускає.
+       Плитка ламає звичку: вона живе за правилами сітки, займає
+       половину ширини й не рве стрічку — але залита темним, тому
+       не губиться. З карткою товару її не сплутати: немає ні фото,
+       ні ціни. Тексту сюди влазить мало, тому опис у цій формі
+       не показуємо взагалі — лише мітка, заголовок і посилання. */
+    /* Два класи в селекторі — навмисно: у .cat-promo нижче стоїть
+       grid-column: 1 / -1 і свої відступи, і при однаковій вазі
+       перемагав би він, бо йде пізніше у файлі. */
+    .cat-promo.cat-promo--tile {
+      grid-column: auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 178px;
+      padding: 14px;
+      border-radius: 14px;
+    }
+    .cat-promo--tile .cat-promo-title {
+      font-size: 17px;
+      line-height: 1.2;
+      margin-top: 6px;
+      /* Довгий заголовок з адмінки не має розпирати плитку. */
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .cat-promo--tile .cat-promo-text { display: none; }
+    .cat-promo--tile .cat-promo-btn {
+      margin-top: 0;
+      height: auto;
+      padding: 0;
+      background: none;
+      border: 0;
+      color: inherit;
+      font-size: 10.5px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      gap: 6px;
+    }
+    /* Стрілка йде за останнім словом, а не притискається до краю:
+       «Написати менеджеру» в 171 пікселі лягає у два рядки, і стрілка
+       збоку зависала б навпроти порожнечі. */
+    .cat-promo--tile .cat-promo-btn {
+      display: block;
+      text-align: left;
+      line-height: 1.35;
+    }
+    .cat-promo--tile .cat-promo-btn svg {
+      display: inline;
+      width: 12px;
+      height: 12px;
+      margin-left: 5px;
+      vertical-align: -1px;
+    }
+
     .cat-promo {
       grid-column: 1 / -1;
       background: var(--fg);
@@ -4938,6 +4996,21 @@
           eyebrow: s.promoEyebrow, title: s.promoTitle,
           text: s.promoText, cta: s.promoCta, off: s.promoOff === true
         };
+        /* Другий банер каталогу. Вони чергуються: скидка → викуп поза
+           каталогом → знову скидка. Один і той самий текст утретє око
+           вже не читає, а два різні читаються як ритм. */
+        window.__OPTIX_PROMO2 = {
+          eyebrow: s.promo2Eyebrow, title: s.promo2Title,
+          text: s.promo2Text, cta: s.promo2Cta, off: s.promo2Off === true
+        };
+        /* Каталог малюється від списку товарів, а він приходить раніше
+           за налаштування. Тому на момент першої відмальовки банерів
+           цих текстів ще немає — і в них лишалось те, що вшите у файл.
+           Через це поля «Банер каталогу» в адмінці не робили нічого.
+           Розставляємо банери ще раз, уже з текстами. */
+        if (window.OPTIX_catPromo) {
+          window.OPTIX_catPromo(document.getElementById('productsGrid'));
+        }
 
         window.__OPTIX_ABOUT = {
           heroKicker: s.aboutKicker,
@@ -5102,36 +5175,75 @@
        як частина стрічки й заодно працює паузою для ока.
        Один на екран, не частіше — інакше каталог стає рекламою.
        ============================================================ */
-    window.OPTIX_catPromo = function (grid, afterN) {
+    window.OPTIX_catPromo = function (grid) {
       if (!grid) return;
-      var old = grid.querySelector('.cat-promo');
-      if (old) old.remove();
+      /* Прибираємо всі попередні: сітка домальовується порціями, і
+         щоразу ми розставляємо банери заново від нуля. Інакше після
+         третьої порції їх було б по три на одному місці. */
+      [].forEach.call(grid.querySelectorAll('.cat-promo'), function (n) { n.remove(); });
 
-      var t = window.__OPTIX_PROMO || {};
-      if (t.off === true) return;
-      var cards = grid.querySelectorAll('.product-card');
-      /* Менше ніж на два ряди банер не ставимо: він з'їв би півекрана
-         там, де товару і так мало. */
-      if (cards.length < afterN + 2) return;
+      /* Ритм міряний, не вигаданий: на телефоні в сітку влазить рівно
+         вісім карток (чотири ряди по дві). Перший банер після четвертої —
+         це кінець другого ряду, перша природна пауза, її бачить навіть
+         той, хто зараз піде. Далі крок 20 — приблизно один банер на
+         два з половиною екрани. Більше трьох не ставимо: хто догортав
+         до п'ятдесятої моделі, той і так дивиться серйозно, і нагадувати
+         йому втретє — це вже не пропозиція, а настирливість. */
+      var FIRST = 4, STEP = 20, MAX = 3, TAIL = 4;
 
-      var el = document.createElement('div');
-      el.className = 'cat-promo';
-      el.innerHTML =
-        '<span class="cat-promo-eyebrow">' +
-          window.OPTIX_esc(t.eyebrow || 'Друга пара') + '</span>' +
-        '<div class="cat-promo-title">' +
-          window.OPTIX_esc(t.title || 'Дві оправи — знижка ще 10%') + '</div>' +
-        '<div class="cat-promo-text">' +
-          window.OPTIX_esc(t.text || 'Рахується в кошику автоматично. Моделі можна брати з різних брендів.') +
-        '</div>' +
-        '<button type="button" class="cat-promo-btn">' +
-          window.OPTIX_esc(t.cta || 'Написати менеджеру') +
-          '<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>' +
-        '</button>';
-      el.querySelector('.cat-promo-btn').addEventListener('click', function () {
-        window.OPTIX_openTgChat('Доброго дня! Цікавить знижка на дві оправи.');
-      });
-      grid.insertBefore(el, cards[afterN]);
+      var variants = [];
+      var a = window.__OPTIX_PROMO || {};
+      var b = window.__OPTIX_PROMO2 || {};
+      if (a.off !== true) {
+        variants.push({
+          eyebrow: a.eyebrow || 'Друга пара',
+          title:   a.title   || 'Дві оправи — знижка ще 10%',
+          text:    a.text    || 'Рахується в кошику автоматично. Моделі можна брати з різних брендів.',
+          cta:     a.cta     || 'Написати менеджеру',
+          msg:     'Доброго дня! Цікавить знижка на дві оправи.'
+        });
+      }
+      if (b.off !== true) {
+        variants.push({
+          eyebrow: b.eyebrow || 'Викуп поза каталогом',
+          title:   b.title   || 'Не знайшли свою модель?',
+          text:    b.text    || 'Напишіть артикул або надішліть фото — знайдемо і привеземо під замовлення.',
+          cta:     b.cta     || 'Написати менеджеру',
+          msg:     'Доброго дня! Шукаю модель, якої немає в каталозі.'
+        });
+      }
+      if (!variants.length) return;
+
+      var cards = [].slice.call(grid.querySelectorAll('.product-card'));
+
+      function make(v, tile) {
+        var el = document.createElement('div');
+        el.className = 'cat-promo' + (tile ? ' cat-promo--tile' : '');
+        el.innerHTML =
+          '<span class="cat-promo-eyebrow">' + window.OPTIX_esc(v.eyebrow) + '</span>' +
+          '<div class="cat-promo-title">' + window.OPTIX_esc(v.title) + '</div>' +
+          '<div class="cat-promo-text">' + window.OPTIX_esc(v.text) + '</div>' +
+          '<button type="button" class="cat-promo-btn">' +
+            window.OPTIX_esc(v.cta) +
+            '<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>' +
+          '</button>';
+        el.querySelector('.cat-promo-btn').addEventListener('click', function () {
+          window.OPTIX_openTgChat(v.msg);
+        });
+        return el;
+      }
+
+      var put = 0;
+      for (var at = FIRST; put < MAX; at += STEP) {
+        /* Банер не ставимо, якщо після нього лишається менше двох рядів:
+           він з'їв би півекрана там, де товару і так нема. */
+        if (at + TAIL > cards.length) break;
+        /* Третій — плиткою в одну колонку. Дві однакові смуги око ще
+           читає, третю вже пропускає, і зміна форми повертає увагу. */
+        var tile = (put === MAX - 1);
+        grid.insertBefore(make(variants[put % variants.length], tile), cards[at]);
+        put++;
+      }
     };
 
     /* ---------------------------------------------------------
@@ -6028,9 +6140,9 @@
         var slice = catalogList.slice(catalogShown, catalogShown + CHUNK);
         catalogShown += slice.length;
         grid.insertAdjacentHTML('beforeend', cardsHTML(slice, wishlist));
-        /* Банер ставимо після четвертої картки — це кінець другого ряду,
-           перша природна пауза при гортанні. */
-        if (window.OPTIX_catPromo) window.OPTIX_catPromo(grid, 4);
+        /* Банери розставляє сам catPromo — крок і кількість там,
+           щоб ритм жив в одному місці, а не був розсипаний по файлу. */
+        if (window.OPTIX_catPromo) window.OPTIX_catPromo(grid);
       }
 
       function cardsHTML(products, wishlist) {
@@ -9653,6 +9765,8 @@
           'Hello! Could you help me choose a pair?',
         'Доброго дня! Цікавить знижка на дві оправи.':
           'Hello! I am interested in the two-frame discount.',
+        'Доброго дня! Шукаю модель, якої немає в каталозі.':
+          'Hello! I am looking for a model that is not in the catalog.',
         'Цікавить модель:': 'Interested in:',
         'Підкажіть, чи можемо їх замовити?': 'Could you tell me if we can order them?',
         'Підкажіть, чи можемо її замовити?': 'Could you tell me if we can order it?',
