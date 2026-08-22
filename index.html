@@ -3022,6 +3022,30 @@
       opacity: 0.72;
       margin: 0 0 15px;
     }
+
+    /* ---------- Сума великою ----------
+       Цифра читається швидше за слово. Тому сума йде окремим рядком
+       і найбільшим кеглем на банері, а пояснення поруч — дрібним.
+       Правила стоять після базових навмисно: у плитки свій розмір
+       заголовка, і при однаковій вазі перемагає те, що нижче. */
+    .cat-promo-title--sum {
+      font-family: var(--font-ui);
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 1.3;
+      opacity: 0.92;
+    }
+    .cat-promo-sum {
+      display: block;
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      margin-bottom: 4px;
+      opacity: 1;
+    }
+    .cat-promo--tile .cat-promo-title--sum { font-size: 13px; }
+    .cat-promo--tile .cat-promo-sum { font-size: 28px; }
     .cat-promo-btn {
       display: inline-flex;
       align-items: center;
@@ -5003,14 +5027,6 @@
           eyebrow: s.promo2Eyebrow, title: s.promo2Title,
           text: s.promo2Text, cta: s.promo2Cta, off: s.promo2Off === true
         };
-        /* Каталог малюється від списку товарів, а він приходить раніше
-           за налаштування. Тому на момент першої відмальовки банерів
-           цих текстів ще немає — і в них лишалось те, що вшите у файл.
-           Через це поля «Банер каталогу» в адмінці не робили нічого.
-           Розставляємо банери ще раз, уже з текстами. */
-        if (window.OPTIX_catPromo) {
-          window.OPTIX_catPromo(document.getElementById('productsGrid'));
-        }
 
         window.__OPTIX_ABOUT = {
           heroKicker: s.aboutKicker,
@@ -5046,6 +5062,17 @@
           if (window.OPTIX_cartRefresh) window.OPTIX_cartRefresh();
         }
         if (s.giftBrandsNote) window.__OPTIX_GIFT_NOTE = s.giftBrandsNote;
+
+        /* Банери каталогу перемальовуємо в самому кінці — коли вже
+           розібрані і тексти, і сума знижки. Каталог малюється від
+           списку товарів, а він приходить раніше за налаштування, тому
+           перша відмальовка банерів іде на вшитих текстах і без суми.
+           Саме через це поля «Банер каталогу» в адмінці не робили
+           нічого. Місце виклику тут не випадкове: вище по цьому ж
+           обробнику ще не існує __OPTIX_BUNDLE, і сума була б порожня. */
+        if (window.OPTIX_catPromo) {
+          window.OPTIX_catPromo(document.getElementById('productsGrid'));
+        }
       }).catch(function (e) { console.warn('Sanity settings load failed:', e); });
     })();
 
@@ -5202,15 +5229,31 @@
          раз на п'ять екранів це не настирливість. */
       var GAPS = [8, 28, 20, 40], TAIL = 4;
 
+      /* «від двох оправ» читається як речення, «від 2 оправ» — як звіт.
+         Числівник словом до п'яти, далі цифрою: «від восьми» вже важче
+         прочитати, ніж «від 8». */
+      var PAIRS = ['', 'однієї', 'двох', 'трьох', 'чотирьох', "п'яти"];
+      function pairsWord(n) { return PAIRS[n] || String(n); }
+
       var variants = [];
       var a = window.__OPTIX_PROMO || {};
       var b = window.__OPTIX_PROMO2 || {};
+      /* Суму й кількість пар банер бере звідти ж, звідки їх бере кошик.
+         Інакше рано чи пізно тут висітиме −€60, а в кошику рахуватиметься
+         −€80: два місця для одного числа — це двічі згадати про правку. */
+      var bundle = window.__OPTIX_BUNDLE;
+      var live = !!(bundle && bundle.off > 0);
       if (a.off !== true) {
         variants.push({
           eyebrow: a.eyebrow || 'Друга пара',
-          title:   a.title   || 'Дві оправи — знижка ще 10%',
-          text:    a.text    || 'Рахується в кошику автоматично. Моделі можна брати з різних брендів.',
-          cta:     a.cta     || 'Написати менеджеру',
+          /* Свій заголовок з адмінки перебиває все і показується як є.
+             Порожнє поле — збираємо з живих чисел. */
+          sum:     (!a.title && live) ? ('−' + window.OPTIX_money(bundle.off)) : '',
+          title:   a.title || (live
+                     ? ('від ' + pairsWord(bundle.min) + ' оправ')
+                     : 'Дві оправи — знижка ще 10%'),
+          text:    a.text  || 'Знижка рахується в кошику сама.',
+          cta:     a.cta   || 'Написати менеджеру',
           msg:     'Доброго дня! Цікавить знижка на дві оправи.'
         });
       }
@@ -5232,7 +5275,9 @@
         el.className = 'cat-promo' + (tile ? ' cat-promo--tile' : '');
         el.innerHTML =
           '<span class="cat-promo-eyebrow">' + window.OPTIX_esc(v.eyebrow) + '</span>' +
-          '<div class="cat-promo-title">' + window.OPTIX_esc(v.title) + '</div>' +
+          '<div class="cat-promo-title' + (v.sum ? ' cat-promo-title--sum' : '') + '">' +
+            (v.sum ? '<span class="cat-promo-sum">' + window.OPTIX_esc(v.sum) + '</span>' : '') +
+            window.OPTIX_esc(v.title) + '</div>' +
           '<div class="cat-promo-text">' + window.OPTIX_esc(v.text) + '</div>' +
           '<button type="button" class="cat-promo-btn">' +
             window.OPTIX_esc(v.cta) +
@@ -9756,6 +9801,13 @@
           '−#% already applied ✓ Add # more — it becomes −#%',
         'Дві оправи — знижка ще #%': 'Two frames — another #% off',
         'Друга пара': 'Second pair',
+        'від однієї оправ': 'from one frame',
+        'від двох оправ': 'from two frames',
+        'від трьох оправ': 'from three frames',
+        'від чотирьох оправ': 'from four frames',
+        'від п\'яти оправ': 'from five frames',
+        'від # оправ': 'from # frames',
+        'Знижка рахується в кошику сама.': 'Applied in the cart automatically.',
         'Рахується в кошику автоматично. Моделі можна брати з різних брендів.':
           'Applied automatically in the cart. The frames can be from different brands.',
         'фірмовий кейс у подарунок': 'branded case as a gift',
