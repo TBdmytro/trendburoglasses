@@ -3709,6 +3709,111 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    /* ---------- Зведення над списком обраного ----------
+       Людина приходить сюди майже вирішивши. Тому перше, що вона
+       бачить, — не «у вас 3 товари», а гроші: скільки коштує все
+       разом і скільки вона вже виграла. Три плашки, кожна відповідає
+       на одне питання: дорого? вигідно? встигну? */
+    .wish-top { padding: 16px 20px 4px; display: grid; gap: 10px; }
+
+    .wish-sum {
+      background: var(--fg);
+      color: var(--bg);
+      border-radius: 16px;
+      padding: 16px 18px;
+    }
+    .wish-sum-lbl {
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      opacity: 0.6;
+    }
+    .wish-sum-val {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-top: 4px;
+    }
+    .wish-sum-gain { font-size: 12.5px; margin-top: 6px; opacity: 0.85; }
+    /* Плашка перевертається разом з темою — вона залита кольором тексту.
+       Тому зелений тут теж перевернутий: у світлій темі підкладка темна
+       і потрібен світлий зелений, у темній підкладка кремова і потрібен
+       темний. Через --ok це не виразити: він міняється в інший бік. */
+    .wish-sum-gain b { color: #63b27f; font-weight: 800; }
+    [data-theme='dark'] .wish-sum-gain b { color: #2f7a4a; }
+
+    .wish-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      border-radius: 14px;
+      padding: 11px 13px;
+      font-size: 12.5px;
+      line-height: 1.45;
+      border: 1px solid var(--line);
+      background: var(--raise);
+      color: var(--fg-2);
+    }
+    /* Заголовок і пояснення — окремими рядками, кожен цілим реченням.
+       Так їх можна перекласти, не збираючи фразу зі шматків. */
+    .wish-note b { display: block; color: var(--fg); font-weight: 800; }
+    .wish-note span { display: block; margin-top: 2px; }
+    .wish-note svg {
+      width: 16px;
+      height: 16px;
+      flex: 0 0 16px;
+      margin-top: 1px;
+      stroke: var(--ok);
+      fill: none;
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .wish-note--gift { border-color: rgba(47, 122, 74, 0.28); }
+    .wish-note--when i {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--ok);
+      flex: 0 0 7px;
+      margin-top: 6px;
+    }
+
+    /* Мітка на рядку. Правило одне: не більше однієї на рядок.
+       Якщо кричить кожен рядок — не кричить жоден.
+       Стоїть окремим рядком під усім вмістом, а не в колонці з ціною:
+       колонка вузька, і «Ціна нижча на €48» ламалось у ній на три
+       рядки, роздуваючи всю позицію. */
+    /* Обгортка на всю ширину змушує мітку почати новий рядок завжди.
+       Без неї коротка мітка намагалась влізти в перший рядок, і flex
+       стискав сусідів: бренд «PRADA» перетворювався на «P.». */
+    .list-row-tagline { flex: 0 0 100%; }
+    .list-row-tag {
+      white-space: nowrap;
+      margin-top: 2px;
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      border-radius: 7px;
+      padding: 3px 7px;
+      background: var(--raise);
+      color: var(--fg-2);
+    }
+    .list-row-tag--down {
+      background: rgba(47, 122, 74, 0.12);
+      color: var(--ok);
+    }
+
+    .wish-fine {
+      font-size: 11.5px;
+      line-height: 1.45;
+      color: var(--fg-3);
+      text-align: center;
+      margin: 10px 4px 0;
+    }
+
     .list-items {
       list-style: none;
       padding: 18px 20px 12px;
@@ -3721,6 +3826,7 @@
     .list-row {
       display: flex;
       align-items: center;
+      flex-wrap: wrap;          /* мітці вистачає місця окремим рядком */
       gap: 14px;
       padding: 12px;
       background: var(--panel);
@@ -7673,7 +7779,124 @@
         return 'моделей';
       }
 
+      var money = window.OPTIX_money;
+      var parsePrice = window.OPTIX_parsePrice;
+
+      function plurDays(n) {
+        var m100 = n % 100, m10 = n % 10;
+        if (m100 >= 11 && m100 <= 14) return 'днів';
+        if (m10 === 1) return 'день';
+        if (m10 >= 2 && m10 <= 4) return 'дні';
+        return 'днів';
+      }
+      function plurColors(n) {
+        var m100 = n % 100, m10 = n % 10;
+        if (m100 >= 11 && m100 <= 14) return 'кольорах';
+        return (m10 === 1) ? 'кольорі' : 'кольорах';
+      }
+      /* «Разом за трьома» — числівник, а не цифра: рядок читається
+         як речення, а не як звіт. */
+      var WORD = ['', 'однією', 'двома', 'трьома', 'чотирма', "п'ятьма",
+                  'шістьма', 'сімома', 'вісьмома', "дев'ятьма", 'десятьма'];
+
+      function sums(items) {
+        var now = 0, was = 0;
+        items.forEach(function (p) {
+          var n = parsePrice(p.price) || 0;
+          now += n;
+          was += (parsePrice(p.oldPrice) || n);
+        });
+        return { now: now, was: was, gain: Math.max(0, was - now) };
+      }
+
+      /* Скільки днів до найближчої суботи. Субота — єдиний чесний
+         дедлайн, який у нас є: ми справді відправляємо раз на тиждень.
+         Ніяких зворотних відліків із секундами: оновив сторінку —
+         і таймер зрадив сам себе. */
+      function tillSaturday() {
+        var d = new Date().getDay();          /* 0 — неділя, 6 — субота */
+        var left = (6 - d + 7) % 7;
+        return left === 0 ? 7 : left;         /* сьогодні субота — значить наступна */
+      }
+
+      function summaryHTML(items) {
+        if (!items.length) return '';
+        var s = sums(items);
+        var n = items.length;
+        var out =
+          '<div class="wish-sum">' +
+            '<div class="wish-sum-lbl">Разом за ' + (WORD[n] || (n + ' моделями')) + '</div>' +
+            '<div class="wish-sum-val">' + money(s.now) + '</div>' +
+            (s.gain > 0
+              ? '<div class="wish-sum-gain">Твоя вигода вже <b>' + money(s.gain) +
+                '</b> проти початкової ціни</div>'
+              : '') +
+          '</div>';
+
+        /* Знижка за кілька пар. Абстрактна умова акції нікого не чіпає —
+           чіпає сума саме за ці моделі. */
+        var b = window.__OPTIX_BUNDLE;
+        if (b && b.off > 0) {
+          var need = b.min - n;
+          out += '<div class="wish-note wish-note--gift">' +
+                   '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+                     '<rect x="3" y="9" width="18" height="12" rx="1.5"/>' +
+                     '<path d="M3 13h18M12 9v12"/>' +
+                     '<path d="M12 9C10 5 7 4.5 6.5 6.5 6 8.5 9.5 9 12 9zM12 9c2-4 5-4.5 5.5-2.5.5 2-3 2.5-5.5 2.5z"/>' +
+                   '</svg><div>' +
+                     /* Після «від» іменник іде в родовому відмінку, і там
+                        він однаковий для будь-якого числа: від двох
+                        моделей, від п'яти моделей. */
+                     '<b>Знижка ' + money(b.off) + ' від ' + b.min + ' моделей</b>' +
+                     '<span>' + (need > 0
+                       ? 'Додай ще ' + need + ' ' + pluralize(need) + ' — і вона застосується.'
+                       : 'Знижка вже діє.') + '</span>' +
+                   '</div></div>';
+        }
+
+        /* Строк показуємо тільки для України: там субота справді є.
+           По Європі тижневого рейсу немає, і вигадувати його не будемо. */
+        var eu = window.OPTIX_region && window.OPTIX_region() === 'eu';
+        if (!eu) {
+          var d = tillSaturday();
+          out += '<div class="wish-note wish-note--when"><i></i><div>' +
+                   '<b>' + (d <= 3 ? 'Відправка цієї суботи'
+                                   : 'Найближча відправка — у суботу') + '</b>' +
+                   '<span>Лишилось ' + d + ' ' + plurDays(d) + '</span>' +
+                 '</div></div>';
+        }
+        return '<div class="wish-top">' + out + '</div>';
+      }
+
+      /* Мітка на рядку — рівно одна, за старшинством: спершу гроші,
+         потім вибір кольору. Дві мітки поруч гасять одна одну. */
+      function tagline(html) { return '<div class="list-row-tagline">' + html + '</div>'; }
+
+      function rowTag(p) {
+        var now = parsePrice(p.price) || 0;
+        var old = parsePrice(p.oldPrice) || 0;
+        if (old > now) {
+          return tagline('<span class="list-row-tag list-row-tag--down">Ціна нижча на ' +
+                         money(old - now) + '</span>');
+        }
+        var me = window.OPTIX_variantKey(p.code).model;
+        if (!me) return '';
+        var seen = {}, k = 0;
+        (window.OPTIX_PRODUCTS || []).forEach(function (q) {
+          if (q.code === p.code || q.inStock === false) return;
+          if (window.OPTIX_variantKey(q.code).model !== me) return;
+          if (seen[q.code]) return;
+          seen[q.code] = 1; k++;
+        });
+        if (k > 0) {
+          return tagline('<span class="list-row-tag">Є ще у ' + k + ' ' +
+                         plurColors(k) + '</span>');
+        }
+        return '';
+      }
+
       function buildOrderMessage(items) {
+        var s = sums(items);
         var msg = [
           'Доброго дня!',
           '',
@@ -7683,6 +7906,10 @@
         items.forEach(function (p, i) {
           msg.push((i + 1) + '. ' + p.brand + (p.model ? ' ' + p.model : '') + ' (' + p.code + ') — ' + p.price);
         });
+        msg.push('');
+        /* Розмова починається з цифри, а не з переліку артикулів. */
+        msg.push('Сума: ' + money(s.now));
+        if (s.gain > 0) msg.push('Вигода: ' + money(s.gain));
         msg.push('');
         msg.push('Підкажіть, чи можемо їх замовити?');
         return msg.join('\n');
@@ -7712,6 +7939,7 @@
 
         footerEl.hidden = false;
         bodyEl.innerHTML =
+          '<div id="wishTop"></div>' +
           '<ul class="list-items">' +
             items.map(function (p) {
               return '<li class="list-row" data-code="' + esc(p.code) + '">' +
@@ -7734,14 +7962,35 @@
                   '</button>' +
                   '<button type="button" class="list-move-to-cart" data-action="to-cart">Додати в кошик</button>' +
                 '</div>' +
+                rowTag(p) +
               '</li>';
             }).join('') +
           '</ul>';
 
+        paintTop();
+        paintFooter();
+      }
+
+      /* Зведення перераховуємо окремо від списку. Прибрали один рядок —
+         сума й підказки оновились, а сусідні рядки навіть не знають,
+         що щось сталося: жодного моргання. */
+      function paintTop() {
+        var host = document.getElementById('wishTop');
+        if (!host) return;
+        var items = window.OPTIX_wishlistGet().map(findProduct).filter(Boolean);
+        host.innerHTML = summaryHTML(items);
+      }
+
+      function paintFooter() {
+        var items = window.OPTIX_wishlistGet().map(findProduct).filter(Boolean);
+        if (!items.length) { footerEl.hidden = true; return; }
+        footerEl.hidden = false;
         footerEl.innerHTML =
           '<button type="button" class="checkout-btn" data-action="all-to-cart">' +
             'Додати всі ' + items.length + ' ' + pluralize(items.length) + ' у кошик' +
-          '</button>';
+          '</button>' +
+          '<p class="wish-fine">Без передоплати. Підтверджуємо наявність ' +
+            'і пишемо вам у Telegram.</p>';
       }
 
       openBtn.addEventListener('click', function () {
@@ -7804,11 +8053,9 @@
         var n = bodyEl.querySelectorAll('.list-row').length;
         titleEl.textContent = n ? 'Обране (' + n + ')' : 'Обране';
         if (!n) { render(); return; }          /* спорожніло — показуємо заглушку */
-        footerEl.hidden = false;
-        var btn = footerEl.querySelector('[data-action="all-to-cart"]');
-        if (btn) {
-          btn.textContent = 'Додати всі ' + n + ' ' + pluralize(n) + ' у кошик';
-        }
+        /* Сума й підказки живуть від кількості так само, як кнопка. */
+        paintTop();
+        paintFooter();
       }
 
       bodyEl.addEventListener('click', function (e) {
@@ -9310,6 +9557,41 @@
         'Обране (#)': 'Wishlist (#)',
         'Кошик (#)': 'Cart (#)',
         'Список обраного порожній': 'Your wishlist is empty',
+        /* — зведення над списком обраного —
+             Кожен рядок тут — ціле речення в одному вузлі. Різати їх
+             на шматки між <b> не можна: в англійській інший порядок
+             слів, і зі шматків складеться нісенітниця. */
+        'Разом за однією': 'One frame, total',
+        'Разом за двома': 'Two frames, total',
+        'Разом за трьома': 'Three frames, total',
+        'Разом за чотирма': 'Four frames, total',
+        'Разом за п\'ятьма': 'Five frames, total',
+        'Разом за шістьма': 'Six frames, total',
+        'Разом за сімома': 'Seven frames, total',
+        'Разом за вісьмома': 'Eight frames, total',
+        'Разом за дев\'ятьма': 'Nine frames, total',
+        'Разом за десятьма': 'Ten frames, total',
+        'Разом за # моделями': '# frames, total',
+        'Твоя вигода вже': 'You already save',
+        'проти початкової ціни': 'against the original price',
+        'Знижка €# від # моделей': '€# off from # frames',
+        'Знижка €# від # моделі': '€# off from # frames',
+        'Знижка €# від # модель': '€# off from # frame',
+        'Додай ще # моделей — і вона застосується.': 'Add # more and it applies.',
+        'Додай ще # моделі — і вона застосується.': 'Add # more and it applies.',
+        'Додай ще # модель — і вона застосується.': 'Add # more and it applies.',
+        'Знижка вже діє.': 'Already applied.',
+        'Відправка цієї суботи': 'Shipping this Saturday',
+        'Найближча відправка — у суботу': 'Next shipment is on Saturday',
+        'Лишилось # днів': '# days left',
+        'Лишилось # дні': '# days left',
+        'Лишилось # день': '# day left',
+        'Ціна нижча на €#': '€# cheaper now',
+        'Є ще у # кольорі': '# more color',
+        'Є ще у # кольорах': '# more colors',
+        'Без передоплати. Підтверджуємо наявність і пишемо вам у Telegram.':
+          'No prepayment. We confirm availability and message you on Telegram.',
+        'Вигода:': 'You save:',
         'Кошик порожній': 'Your cart is empty',
         'Додавайте моделі що сподобались — повернетесь до них пізніше':
           'Save the models you like — come back to them later',
